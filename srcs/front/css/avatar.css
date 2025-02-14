@@ -12,7 +12,7 @@
     height: 100vh;
     /* width: 100vw; */
     /* position: relative; */
-    background-image: url('public/mountey_snow.jpg');
+    background-image: url('../public/mountey_snow.jpg');
     background-size: cover;
     background-position-x: center;
     background-position-y: center;
@@ -24,7 +24,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: url('public/profile_bg.jpg');
+    background-image: url('../public/profile_bg.jpg');
 	background-size: cover;
     background-position-x: center;
     background-position-y: center;
