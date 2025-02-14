@@ -1,0 +1,253 @@
+#app {
+
+    height: 100vh;
+    /* width: 100vw; */
+    position: relative;
+    /* background-image: url('public/antarctis.jpg'); */
+    background-size: cover;
+    background-position-x: center;
+    background-position-y: center;
+    /* display: flex;
+	align-items: center;
+	justify-content: center; */
+}
+
+#app-child-accueil {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('public/antarctis.jpg');
+    background-size: cover;
+    background-position-x: center;
+    background-position-y: center;
+
+}
+
+#container-accueil {
+    height: 75%;
+    display: grid;
+    position: relative;
+    grid-template-rows: 2fr 3fr 2fr;
+    grid-template-areas:
+        "login"
+        "pengpong"
+        "welcome";
+}
+
+#penguins {
+    grid-area: pengpong;
+    display: flex;
+    justify-content: center;
+    position: relative;
+}
+
+#ball {
+    background-color: #780000;
+    height: clamp(10px, 2.8vw, 3.5rem);
+    width: clamp(10px, 2.8vw, 3.5rem);
+    /* height: 2.8vw;
+    width: 2.8vw; */
+    border: 0.8px solid #124559;
+    position: relative;
+    /* bottom: 20vw; */
+    bottom: clamp(15px, 20vw, 147%);
+    left: -51%;
+    /* animation: none; */
+    animation: flyBallFly 3s linear 1.5s infinite;
+}
+
+#welcome {
+    grid-area: welcome;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    bottom: 6%;
+}
+
+.penguin {
+    height: 11vw;
+   /* height: 12vw;*/
+    /* height: 80%; */
+    /* width: 6%; */
+}
+
+#penguinleft {
+    position: absolute;
+    left: 4%;
+    /* bottom: 12vw; */
+    bottom: clamp(15px, 12vw, 82%);
+    animation: rotation-left 3s ease-in infinite;
+}
+
+#penguinright {
+    position: absolute;
+    right: 4%;
+    bottom: 9vw;
+    animation: rotation-right 3s ease-in 1.5s infinite;
+}
+
+
+#ballcontainer {
+    width: 76%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+#welcomeheading {
+    color: #23022e;
+    text-align: center;
+    margin: -0.2em 0 1em 0;
+    font-family: Roboto, sans-serif;
+    text-transform: uppercase;
+    font-weight: 1000;
+    font-size: clamp(15px, 3.5rem, 4vw);
+   
+
+}
+
+.emojis {
+    display: none;
+}
+
+#logo {
+    width: 16%;
+}
+
+#login {
+    grid-area: login;
+    /* grid-row: 1/3; */
+    justify-self: center;
+    align-self: center;
+    text-align: center;
+}
+
+#auth42_btn {
+    display: flex;
+    justify-content: center;
+    border-radius: 2em;
+    padding: 0px;
+
+    background-color: #e7ecef;
+    z-index: 10;
+    max-width: 320px;
+}
+
+#auth42_btn:hover {
+    background-color: #ddd;
+    
+    /* transform: translateY(-0.3em); */
+
+}
+
+#auth42_btn:active {
+    background-color: #c1121f;
+}
+
+button span {
+    padding: 0 0.3em 0 0;
+    font-size: 1.7em;
+    align-self: center;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-shadow: 1.5px 1.5px 1.5px #124559;
+}
+
+#peng {
+    animation: peng 3s steps(1, end) 1.5s infinite;
+}
+
+#pong {
+    animation: peng 3s steps(1, end) 3s infinite;
+}
+
+@keyframes peng {
+
+    25% {
+        color: #ffbe0b;
+    }
+ 75% {
+        color: #23022e;
+    } 
+}
+
+
+@keyframes flyBallFly {
+    0% {
+        bottom: clamp(15px, 20vw, 147%);
+        /* bottom: 20vw; */
+    left: -51%;
+    }
+
+    25% {
+
+        bottom: 0;
+        left: 0;
+    }
+
+    50% {
+        bottom: 17vw;
+        left: 51%;
+    }
+
+    75% {
+        bottom: 0;
+        left: 0;
+    }
+
+    100% {
+        bottom: clamp(15px, 20vw, 147%);
+        /* bottom: 20vw; */
+        left: -51%;
+    }
+}
+
+@keyframes rotation-right {
+    25% {
+        transform: rotate(0deg);
+    }
+
+    50% {
+        transform: rotate(-20deg);
+    }
+
+    75% {
+        transform: rotate(0deg);
+    }
+}
+
+@keyframes flyBallFlyMin {
+    0% {
+        bottom: 0;
+        left: 0;
+    }
+
+    25% {
+        bottom: 14vw;
+        left: -39%;
+    }
+
+    50% {
+        bottom: 0;
+        left: 0%;
+    }
+
+    75% {
+        bottom: 15vw;
+        /* bottom: 74%; */
+        left: 46%
+    }
+
+    100% {
+        bottom: 0;
+        left: 0%;
+    }
+}
+
+#login-link {
+    text-decoration: none;
+}

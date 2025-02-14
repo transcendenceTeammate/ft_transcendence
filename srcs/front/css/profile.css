@@ -1,0 +1,25 @@
+body {
+    
+    background-image: url('public/profile_bg2.jpg');
+    background-size: cover;
+   
+}
+
+#myfriends, .navigation {
+    background-color: rgb(240, 248, 255, 0.5);
+}
+
+#st-peng {
+    animation: pong 1s steps(1, end) .5s infinite;
+}
+
+#st-pong {
+    animation: pong 1s steps(1, end) 1s infinite;
+}
+
+
+@keyframes pong {
+    50% {
+        color: #ffbe0b;
+    }
+}

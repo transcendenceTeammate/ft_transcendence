@@ -1,0 +1,56 @@
+# curl -X POST -H "Content-Type: application/x-www-form-urlencoded" --data-urlencode "grant_type=client_credentials" --data-urlencode "client_id=u-s4t2ud-7e815db8d5a02c4bc8db72c89950919829137fa2edec5484bf6a224fc36e3303" --data-urlencode "client_secret=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" https://api.intra.42.fr/oauth/token
+
+GET https://api.intra.42.fr/oauth/authorize
+
+Content-Type: application/json
+
+{
+	"client_id" : "u-s4t2ud-7e815db8d5a02c4bc8db72c89950919829137fa2edec5484bf6a224fc36e3303",
+	"redirect_uri" : "http://127.0.0.1:8000/success/",
+	"response_type" : "code"
+}
+
+###
+
+POST https://api.intra.42.fr/oauth/token
+Content-Type: application/json
+
+{
+	"grant_type": "authorization_code",
+	"client_id": "u-s4t2ud-7e815db8d5a02c4bc8db72c89950919829137fa2edec5484bf6a224fc36e3303",
+	"client_secret": "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",
+	"code": "0e17095c20f17f903cd158b50faad1ee134662370dd54ee522d2943c5f52bc13",
+	"redirect_uri": "http://127.0.0.1:8000/success/"
+}
+
+###
+
+GET https://api.intra.42.fr/v2/me
+Host : api.intra.42.fr
+Authorization: Bearer 6212520dedaf4e2da79e28bcccaf08131df61999953a24af48e3d12367065a71
+
+###
+
+POST http://127.0.0.1:8000/register/
+Content-Type: application/json
+
+{
+	"username": "Blabla",
+	"password": "123456"
+}
+
+###
+
+POST http://127.0.0.1:8000/login/
+Content-Type: application/json
+
+{
+	"username": "ouiiiiiii",
+	"password": "adsfsf!"
+}
+
+###
+
+GET http://127.0.0.1:8000/test_token
+
+### https://api.intra.42.fr/oauth/authorize?client_id=u-s4t2ud-7e815db8d5a02c4bc8db72c89950919829137fa2edec5484bf6a224fc36e3303&redirect_uri=http%3A%2F%2F127.0.0.1%3A8000%2Fsuccess%2F&response_type=code

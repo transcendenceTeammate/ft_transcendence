@@ -1,0 +1,112 @@
+/* body {
+    height: 100vh;
+    width: 100vw;
+    position: relative;
+    background-image: url('../public/avatars/glowing_iceberg.jpg');
+    background-size: cover;
+    background-position-x: 80%;
+    background-position-y: 10%;
+} */
+
+#avatar-body {
+    height: 100vh;
+    /* width: 100vw; */
+    /* position: relative; */
+    background-image: url('public/mountey_snow.jpg');
+    background-size: cover;
+    background-position-x: center;
+    background-position-y: center;
+}
+
+#app-child-avatar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('public/profile_bg.jpg');
+	background-size: cover;
+    background-position-x: center;
+    background-position-y: center;
+	/* display: flex;
+	justify-content: center;
+	align-items: center; */
+
+}
+
+#gallerydiv {
+ background-color: rgb(240, 248, 255, 0.5);
+}
+
+#gallerydiv,
+#choosediv {
+   
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* border-radius: 5%; */
+}
+
+.avatar-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.avatar-item {
+    border: 2px solid transparent;
+    border-radius: 50%;
+    transition: border-color 0.3s;
+    aspect-ratio: 1/1;
+}
+
+.avatar-item img {
+    border-radius: 50%;
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+  
+}
+
+.avatar-item:hover {
+    cursor: grab;
+    border-color: #0d6efd;
+    /* Bootstrap primary color */
+}
+
+#avatar-btn {
+    justify-self: center;
+    width: 12vw;
+}
+
+.drop-zone {
+    justify-self: center;
+    align-self: flex-start;
+    /* margin: 30px auto; */
+    /* width: 32vh;
+    height: 32vh; */
+    border: 2px dashed #ccc;
+    /* border-radius: 50%; */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+}
+
+#dropzone_col {
+    display: grid;
+    align-self: flex-start;
+}
+
+.drop-zone img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+#circle {
+    aspect-ratio: 1/1;
+}

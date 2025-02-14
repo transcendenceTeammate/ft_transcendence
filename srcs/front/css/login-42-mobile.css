@@ -1,0 +1,78 @@
+@media screen and (max-width: 440px) {
+    #container {
+        grid-template-areas:
+            "login"
+            "welcome"
+            "pengpong";
+    }
+
+    #penguins {
+        visibility: hidden;
+    }
+
+    #pengpong {
+        display: block;
+    }
+
+    #peng {
+        animation: pong 1s steps(1, end) .5s infinite;
+    }
+
+    #pong {
+        animation: pong 1s steps(1, end) 1s infinite;
+    }
+
+    @keyframes pong {
+        50% {
+            color: #ffbe0b;
+        }
+    }
+
+    #welcomeheading {
+        font-size: 2rem;
+        line-height: 3rem;
+        margin-top: 2vh;
+    }
+
+    .emojis {
+        display: inline;
+        visibility: hidden;
+    }
+
+    #peng,
+    #pong {
+        animation-duration: 1s;
+    }
+
+    #pengemoji {
+        animation: penganim 1s steps(1, end) .5s infinite;
+    }
+
+    #pongemoji {
+        animation: penganim 1s steps(1, end) 1s infinite;
+    }
+
+
+}
+
+@keyframes penganim {
+    50% {
+        visibility: visible;
+    }
+}
+
+@keyframes ponganim {
+    0% {
+        visibility: visible;
+    }
+
+    50% {
+        visibility: hidden;
+    }
+
+    100% {
+        visibility: visible;
+    }
+
+
+}

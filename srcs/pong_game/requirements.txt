@@ -1,0 +1,6 @@
+django>=3.0,<4.0
+daphne
+channels
+channels_redis
+websockets
+django-cors-headers

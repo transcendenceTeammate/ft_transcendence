@@ -1,0 +1,126 @@
+body {
+    background-color: #ffecd1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    height: 100vh;
+    /* margin: 0; */
+}
+
+#maincontain {
+    height: 55%;
+    width: 50%;
+    background-color: #fb8b24;
+    /* position: absolute; */
+}
+
+#row {
+    
+    border-width: 5px !important;
+}
+
+#leftfield {
+    border-right: 5px dashed wheat;
+    /* display: grid; */
+    /* justify-content: flex-start; */
+  
+}
+
+#rightfield {
+    border-left: 5px dashed wheat;
+}
+
+#rightracket {
+    /* justify-self: flex-end; */
+    /* align-self: right; */
+    height: 40%;
+    width: 8%;
+    border: 2px solid #001524;
+    background-color: #0f4c5c;
+    animation: rightanim 3s infinite;
+    position: absolute;
+}
+
+#leftracket {
+    /* justify-self: flex-start; */
+    /* align-self: left; */
+    position: absolute;
+    height: 40%;
+    width: 8%;
+    border: 2px solid #001524;
+    background-color: #0f4c5c;
+    animation: leftanim 3s infinite;
+
+}
+
+#ball {
+    background-color: #9a031e;
+    height: 2.3rem;
+    width: 2.3rem;
+    border: 2px solid #001524;
+    z-index: 10;
+    
+    bottom: 46%;
+    /* bottom: 70%; */
+    left: 47%;
+    animation: flyBallFly 3s linear infinite;
+    /* border-radius: 50%;
+    top: 50%;
+    left: 50%; */
+}
+
+/* .fields {
+    border-color: black !important;
+    border-style: dashed !important;
+    border-bottom: 0px !important;
+} */
+
+.row {
+    height: 100%;
+    width: 100%;
+}
+
+@keyframes flyBallFly {
+ 
+    15% {
+        left: 4%;
+        bottom: 70%;
+    }
+
+  40% {
+    left: 90%;
+    bottom: 70%;
+  }
+  65% {
+    left: 4%;
+    bottom: 16%;
+  }
+
+  90% {
+    left: 90%;
+    bottom: 16%;
+  } 
+}
+
+@keyframes leftanim {
+    15% {
+        top: 0;
+    }
+   
+    
+    65% {
+        bottom: 0;
+    }
+}
+
+@keyframes rightanim {
+    40% {
+        top: 0;
+    }
+    90% {
+        bottom: 0;
+    }
+
+}

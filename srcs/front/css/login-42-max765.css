@@ -1,0 +1,83 @@
+@media screen and (max-width: 765px) and (min-width: 640px) {
+
+    #login {
+        align-self: flex-end;
+    }
+
+    .penguin {
+        height: 16vw;
+    }
+
+    #penguinleft {
+        bottom: 9vw;
+        /* width: 8%; */
+    }
+
+    #penguinright {
+        /* width: 8%; */
+        bottom: 4vw;
+    }
+
+    #ball {
+        bottom: 21vw;
+        left: -46%;
+        border-width: 0.6px;
+        /* animation: none; */
+        animation-name: flyBallFly765;
+        height: 3.7vw;
+        width: 3.7vw;
+
+    }
+}
+
+@keyframes flyBallFly765 {
+    0% {
+        bottom: 21vw;
+        left: -46%;
+    }
+
+    25% {
+        bottom: 0;
+        left: 0; 
+    }
+
+    50% {
+        bottom: 16vw;
+        left: 46%;  
+    }
+
+    75% {
+        bottom: 0;
+        left: 0%;
+    }
+
+    /* 100% {
+        bottom: 0;
+        left: 0%;
+    } */
+}
+
+@keyframes rotation-left {
+    25% {
+        transform: rotate(0deg);
+    }
+    50% {
+        transform: rotate(20deg);
+    }
+
+    75% {
+        transform: rotate(0deg);
+    }
+
+    /* 50% {
+        
+    } */
+
+    /* 75% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(0deg);
+    }  */
+}

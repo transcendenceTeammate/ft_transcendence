@@ -1,0 +1,107 @@
+@media screen and  (max-width: 640px) and (min-width: 440px), (min-height: 924px) and (max-width: 1750px){
+    
+    #login {
+        align-self: flex-end;
+    }
+
+    #penguins {
+        display: grid;
+        grid-template-columns: 2fr 11fr 3fr;
+    }
+
+    .pengdiv {
+        position: relative;
+    }
+
+    .penguin {
+        /* width: 11%; */
+        /* height: 55%; */
+        height: clamp(20px, 55%, 25vw);
+    }
+    #penguinleft {
+        bottom: 22%;
+        animation-duration: 2s;
+        right: 0;
+        left: auto;
+        /* bottom: 7.5vw; */
+    }
+
+    #ballcontainer {
+        width: auto;
+        position: relative;
+    }
+
+    #penguinright {
+        bottom: 2%;
+        left: 0;
+        /* right: 11%; */
+        animation-duration: 2s;
+        animation-delay: 1s;
+        /* bottom: 1vw; */
+    }
+
+    #ball {
+       left: -46%;
+       bottom: 64%;
+       border-width: 0.5px;
+        /* bottom: 67%;
+        left: 0; */
+        /* bottom: 22vh; */
+        /* left: -33vw;  */
+        height: clamp(10px, 3rem, 4.5vw);
+        width: clamp(10px, 3rem, 4.5vw);
+        /* height: 4vw;
+        width: 4vw; */
+        /* animation:none; */
+        animation-name: flyBallFly640;
+        animation-duration: 2s;
+        animation-delay: 1s;
+        border-width: 0.5px;
+    }
+
+    #peng {
+        animation-duration: 2s;
+        animation-delay: 1s;
+    }
+    #pong {
+        animation-duration: 2s;
+        animation-delay: 2s;
+    }
+
+    #welcomeheading {
+        font-size: clamp(15px, 2.5rem, 4vw);
+    }
+}
+
+
+
+@keyframes flyBallFly640 {
+    0% {
+        left: -46%;
+       bottom: 64%;
+        /* bottom: 67%; */
+        /* left: -45%;  */
+        /* left: -33vw;  */
+    }
+
+    25% {
+        bottom: 0;
+        left: 0; 
+    }
+
+    50% {
+        bottom: 44%;
+        left: 46%;
+       
+    }
+
+    75% {
+        bottom: 0;
+        left: 0%;
+    }
+
+    /* 100% {
+        bottom: 0;
+        left: 0%;
+    } */
+}

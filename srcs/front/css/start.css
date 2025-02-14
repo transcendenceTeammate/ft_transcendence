@@ -1,0 +1,73 @@
+#body-start {
+    background-image: url('public/startGame_bg.jpg');
+    background-size: cover;
+    
+    /* display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; */
+ 
+    /* top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%; */
+   height: 100vh;
+   
+   
+}
+
+#app-child-start {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('public/startGame_bg.jpg');
+	background-size: cover;
+    /* background-position-x: center;
+    background-position-y: center; */
+}
+
+.start-nav {
+    color: #333 ;
+    font-weight: bold;
+}
+
+.startpage-btn {
+    /* display: block; */
+    width: 100%;
+    font-weight: bold;
+    cursor: url('public/cursor.cur'), auto;
+
+
+}
+
+#start-main {
+    height: 70%;
+    /* font-weight: bold; */
+}
+
+#startPageButtonDiv {
+    height: 100%;
+}
+
+/* overriding Bottstrap's bs */
+.startpage-btn:not(:disabled):not(.disabled) {
+    cursor: url('public/cursor.cur'), auto;
+
+}
+
+#st-peng {
+    animation: pong 1s steps(1, end) .5s infinite;
+}
+
+#st-pong {
+    animation: pong 1s steps(1, end) 1s infinite;
+}
+
+
+@keyframes pong {
+    50% {
+        color: #ffbe0b;
+    }
+}
