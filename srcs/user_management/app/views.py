@@ -44,6 +44,14 @@ def login(request):
 	if not user.check_password(request.data['password']):
 		return Response({"error": "Invalid password"}, status=status.HTTP_401_UNAUTHORIZED)
 	
+	try:
+		user_type = user.user_type.user_type
+	except UserType.DoesNotExist:
+		return Response({"error": "User type not found"}, status=status.HTTP_404_NOT_FOUND)
+
+	if user_type != 'PENG':
+		return Response({"error": "User is not a peng"}, status=status.HTTP_403_FORBIDDEN)
+
 	access_token = AccessToken.for_user(user)
 
 	serializer = UserSerializer(instance=user)
@@ -61,16 +69,20 @@ def signup(request):
 
 	serializer = UserSerializer(data=request.data)
 	if serializer.is_valid():
-		serializer.save()
-		user = User.objects.get(username=request.data['username'])
-		user.set_password(request.data['password'])
-		user.save()
+		user = serializer.save()
+		user_type = user.user_type.user_type
+
 		access_token = AccessToken.for_user(user)
+
 		response = Response({
-			"user": serializer.data
+			"user": serializer.data,
+			"user_type": user_type
 		})
+
 		response.set_cookie('access_token', str(access_token), httponly=False, secure=False, samesite='Lax')
+
 		return response
+
 	return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 def index(request):

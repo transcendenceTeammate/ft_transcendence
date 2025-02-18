@@ -1,2 +1,2 @@
 from django.contrib import admin
-from app.models import userType
+from app.models import UserType
