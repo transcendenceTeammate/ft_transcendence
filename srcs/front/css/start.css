@@ -1,16 +1,6 @@
 #body-start {
-    background-image: url('../public/startGame_bg.jpg');
+    background-image: url('../assets/startGame_bg.jpg');
     background-size: cover;
-    
-    /* display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center; */
- 
-    /* top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%; */
    height: 100vh;
    
    
@@ -24,8 +14,6 @@
     height: 100%;
     background-image: url('../public/startGame_bg.jpg');
 	background-size: cover;
-    /* background-position-x: center;
-    background-position-y: center; */
 }
 
 .start-nav {
@@ -34,7 +22,6 @@
 }
 
 .startpage-btn {
-    /* display: block; */
     width: 100%;
     font-weight: bold;
     cursor: url('../public/cursor.cur'), auto;
@@ -44,7 +31,6 @@
 
 #start-main {
     height: 70%;
-    /* font-weight: bold; */
 }
 
 #startPageButtonDiv {
@@ -71,3 +57,11 @@
         color: #ffbe0b;
     }
 }
+
+#nav-avatar {
+    aspect-ratio: 1/1;
+}
+
+
+
+

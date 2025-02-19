@@ -2,6 +2,7 @@ import CONFIG from "../config.js";
 
 export default class AbstractView{
     static username = null;
+    static avatar = "http://127.0.0.1:8000/public/avatars/default/peng_head_def.png"
     constructor() {
 
     }
@@ -36,7 +37,7 @@ export default class AbstractView{
                 let elems = document.querySelectorAll(classSelector);
                 if (elems.length > 0) {
                     clearInterval(checkExist);
-                    console.log('elements loaded!!!!!');
+                    // console.log('elements loaded!!!!!');
                     console.dir(elems);
                     resolve(elems);
                 }
@@ -94,7 +95,7 @@ export default class AbstractView{
 			if (response.ok) {
 				const data = await response.json();
                 this.username = data.username;
-                console.log(`hello from AbstractView! this.username is: ${this.username}`)
+                // console.log(`hello from AbstractView! this.username is: ${this.username}`)
 				// return data.username;
 			} else {
 				console.error("Failed to fetch username");
@@ -123,21 +124,47 @@ export default class AbstractView{
 		return cookieValue;
 	}
 
-    // async bindEvent(selector, event, callback) {
-    //     console.log('bindEvent in AbstractView called');
-    //     const attachEvent = async () => {
-    //         try {
-    //             let elem = await this.loadElement(selector);
-    //             elem.addEventListener(event, callback);
-    //         } catch (error) {
-    //             console.log(error);
-    //         }
-    //     }
-    //     attachEvent();
-    //     document.addEventListener("DOMContentLoaded", attachEvent.bind(this));
-    // }
+    async getHtml() {
+        return "";
+    }
 
-    // async getHtml() {
-    //     return "";
-    // }
+    async getNavbar() {
+        // console.log("hello from getNavbar function!!");
+        console.log('wtf is with the avatar?' + AbstractView.avatar)
+        console.log(`wtf is with the username? ${AbstractView.username}`)
+        return `
+        <nav class="navbar navbar-expand-lg bg-body-tertiary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="start_game" data-link><span id="st-peng" data-link>Peng</span><span id="st-pong" data-link>Pong</span></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText"
+                aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarText">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#">My profile</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">All players</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Smth else</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav  mb-2 mb-lg-0">
+                    <a href="profile" class="nav-link" data-link>
+                        <img src="${AbstractView.avatar}" alt="User's avatar" class="rounded-circle border border-black object-fit-cover" height="35" id="nav-avatar" data-link>
+                        <span data-link>${AbstractView.username}</span>
+                    </a>
+                    <div class="d-flex align-items-center">
+                        <a href='#' class='nav-link pt-0 text-danger'>Log out</a>
+                    </div>
+                </ul>
+
+            </div>
+        </div>
+    </nav>
+        `
+    }
 }
