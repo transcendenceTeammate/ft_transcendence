@@ -8,12 +8,6 @@ export $(grep -v '^#' .env | xargs)
 : "${DB_PORT:?DB_PORT is not set}"
 : "${DB_USER:?DB_USER is not set}"
 
-# Wait for the database to be ready
-until pg_isready -h $DB_HOST -p $DB_PORT -U $DB_USER; do
-  echo "Waiting for the PostgreSQL database..."
-  sleep 1
-done
-
 # Run makemigrations and migrate
 echo "Running makemigrations..."
 python manage.py makemigrations
