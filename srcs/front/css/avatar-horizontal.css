@@ -1,19 +1,7 @@
-/* body {
-    height: 100vh;
-    width: 100vw;
-    position: relative;
-    background-image: url('../public/avatars/glowing_iceberg.jpg');
-    background-size: cover;
-    background-position-x: 80%;
-    background-position-y: 10%;
-} */
 
 #avatar-body {
     height: 100vh;
-    /* width: 100vw; */
-    /* position: relative; */
-    /* Old URL: background-image: url('public/avatar_bg_noblur.jpg'); */
-    background-image: url('../public/another_avatar_bg_flipped.jpg');
+    background-image: url('../assets/another_avatar_bg_flipped.jpg');
     background-size: cover;
     background-position-x: center;
     background-position-y: center;
@@ -23,20 +11,20 @@
     position: absolute;
     top: 0;
     left: 0;
+
     width: 100%;
     height: 100%;
-    /* Old URL: background-image: url('public/profile_bg.jpg'); */
     background-image: url('../public/another_avatar_bg_flipped.jpg');
     background-size: cover;
     background-position-x: center;
     background-position-y: center;
-    /* display: flex;
-       justify-content: center;
-       align-items: center; */
+
 }
 
+
 #own-avatar {
-    background-color: rgb(240, 248, 255, 0.7);   
+    background-color: rgb(240, 248, 255, 0.7);
+
 }
 
 .avatar-gallery {
@@ -50,7 +38,10 @@
 .avatar-item {
     border: 2px solid transparent;
     border-radius: 50%;
+    display: block;
+    width: fit-content;
     transition: border-color 0.3s;
+    aspect-ratio: 1/1;
 }
 
 .avatar-item img {
@@ -100,4 +91,30 @@
 #avatar-heading {
     font-weight: 600;
     color: #115;
+}
+
+@media screen and (max-height: 750px) and (min-width: 1200px){
+
+    /*new id*/
+    #invisible-div {
+        display: none;
+    }
+
+    /*new id*/
+    #own-avatar-h {
+        margin-top: 0;
+    }
+
+    #avatar-btn {
+        margin-top: 0 !important;
+    }
+
+    #circle {
+        margin: 0 !important;
+    }
+}
+
+.penguin-cursor button:not(:disabled):not(.disabled) {
+    cursor: url('../assets/cursor.cur'), auto;
+
 }

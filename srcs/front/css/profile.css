@@ -1,15 +1,30 @@
-body {
+#body-profile {
     
-    background-image: url('../public/profile_bg2.jpg');
-    background-size: cover;
+    /* background-image: url('../assets/snow_crystal.jpg');
+    background-size: cover; */
+    background-image: url('../public/crystals.jpg');
+    background-size: contain;
    
 }
 
-#myfriends, .navigation {
-    background-color: rgb(240, 248, 255, 0.5);
+#app-child-profile {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('../public/crystals.jpg');
+    background-size: contain;
+   
 }
 
-#st-peng {
+
+
+#myfriends, .navigation {
+    background-color: rgb(240, 248, 255, 0.7);
+}
+
+/* #st-peng {
     animation: pong 1s steps(1, end) .5s infinite;
 }
 
@@ -22,4 +37,4 @@ body {
     50% {
         color: #ffbe0b;
     }
-}
+} */

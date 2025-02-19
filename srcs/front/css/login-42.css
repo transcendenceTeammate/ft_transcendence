@@ -3,7 +3,7 @@
     height: 100vh;
     /* width: 100vw; */
     position: relative;
-    /* background-image: url('public/antarctis.jpg'); */
+    /* background-image: url('../assets/antarctis.jpg'); */
     background-size: cover;
     background-position-x: center;
     background-position-y: center;
@@ -106,8 +106,6 @@
     text-transform: uppercase;
     font-weight: 1000;
     font-size: clamp(15px, 3.5rem, 4vw);
-   
-
 }
 
 .emojis {
@@ -120,7 +118,6 @@
 
 #login {
     grid-area: login;
-    /* grid-row: 1/3; */
     justify-self: center;
     align-self: center;
     text-align: center;
@@ -139,9 +136,6 @@
 
 #auth42_btn:hover {
     background-color: #ddd;
-    
-    /* transform: translateY(-0.3em); */
-
 }
 
 #auth42_btn:active {
@@ -250,4 +244,8 @@ button span {
 
 #login-link {
     text-decoration: none;
+}
+
+.penguin-cursor{
+    cursor: url('../public/cursor.cur'), auto;
 }
