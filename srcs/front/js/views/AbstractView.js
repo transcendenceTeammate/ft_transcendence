@@ -1,6 +1,6 @@
 export default class AbstractView{
     static username = null;
-    static avatar = "http://127.0.0.1:8000/public/avatars/default/peng_head_def.png"
+    static avatar = "https://localhost:8000/public/avatars/default/peng_head_def.png"
     constructor() {
 
     }
@@ -58,7 +58,7 @@ export default class AbstractView{
 		}
 		console.log("Access token found:", accessToken);
 		try {
-			const response = await fetch("http://127.0.0.1:8000/api/token/verify/", {
+			const response = await fetch("http://localhost:8000/api/token/verify/", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -82,12 +82,15 @@ export default class AbstractView{
 		const accessToken = this.getCookie('access_token');
 	
 		try {
-			const response = await fetch("http://127.0.0.1:8000/get_user_info/", {
+			const response = await fetch("http://localhost:8000/get_user_info/", {
 				method: "GET",
 				headers: {
 					"Content-Type": "application/json",
-					"Authorization": `Bearer ${accessToken}`
-				}
+					"Authorization": `Bearer ${accessToken}`,
+                    "Accept": "application/json"
+				},
+                credentials: "include"
+
 			});
 	
 			if (response.ok) {
