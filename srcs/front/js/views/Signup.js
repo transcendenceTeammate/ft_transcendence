@@ -92,7 +92,6 @@ export default class extends AbstractView {
     }
 
     async validateForm() {
-
         this.form.addEventListener('submit', async (e) => {
             e.preventDefault();
             try {
@@ -103,7 +102,10 @@ export default class extends AbstractView {
                         "Content-Type": "application/json",
                         "Accept": "application/json"
                     },
-                    body: JSON.stringify({ username: this.login.value, password: this.pass.value }),
+                    body: JSON.stringify({ 
+                        username: this.login.value, 
+                        password: this.pass.value 
+                    }),
                     credentials: "include"
                 });
 
@@ -121,7 +123,7 @@ export default class extends AbstractView {
                 this.errorMessageElement.textContent = "An error occurred : " + error.message;
             }
             this.submitButton.disabled = true;
-        })
+        });
     }
 
     findLabel = (element) => {
