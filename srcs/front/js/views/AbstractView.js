@@ -87,12 +87,10 @@ export default class AbstractView{
 			const response = await fetch(`${CONFIG.BASE_URL}/api/users/me/`, {
 				method: "GET",
 				headers: {
-					"Content-Type": "application/json",
 					"Authorization": `Bearer ${accessToken}`,
-                    "Accept": "application/json"
+					"Content-Type": "application/json",
 				},
-                credentials: "include"
-
+				credentials: 'include'
 			});
 	
 			if (response.ok) {
