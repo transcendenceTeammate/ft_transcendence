@@ -4,7 +4,7 @@ import AbstractView from "./AbstractView.js";
 export default class extends AbstractView {
     constructor() {
         super();
-        this.setTitle("Signup_alt");
+        this.setTitle("Signup");
         this.validPass = true;
         this.validRep = true;
         this.validLog = true;
@@ -100,15 +100,17 @@ export default class extends AbstractView {
                 const response = await fetch(`${CONFIG.BASE_URL}/api/auth/signup/`, {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
                     },
-                    body: JSON.stringify({ username: this.login.value, password: this.pass.value })
+                    body: JSON.stringify({ username: this.login.value, password: this.pass.value }),
+                    credentials: "include"
                 });
 
                 if (response.ok) {
                     const data = await response.json();
                     console.dir(data);
-                    takeMeThere(window.location.origin + '/avatar');
+                    takeMeThere(location.origin + '/avatar');
                 } else {
                     const errorData = await response.json();
                     this.errorMessageElement.textContent = errorData.error || "An error occurred";

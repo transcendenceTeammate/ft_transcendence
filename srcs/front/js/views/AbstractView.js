@@ -2,7 +2,7 @@ import CONFIG from "../config.js";
 
 export default class AbstractView{
     static username = null;
-    static avatar = "http://127.0.0.1:8000/public/avatars/default/peng_head_def.png"
+    static avatar = "https://localhost:8000/public/avatars/default/peng_head_def.png"
     constructor() {
 
     }
@@ -88,8 +88,11 @@ export default class AbstractView{
 				method: "GET",
 				headers: {
 					"Content-Type": "application/json",
-					"Authorization": `Bearer ${accessToken}`
-				}
+					"Authorization": `Bearer ${accessToken}`,
+                    "Accept": "application/json"
+				},
+                credentials: "include"
+
 			});
 	
 			if (response.ok) {
