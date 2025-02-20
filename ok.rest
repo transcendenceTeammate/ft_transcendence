@@ -31,7 +31,7 @@ Authorization: Bearer 6212520dedaf4e2da79e28bcccaf08131df61999953a24af48e3d12367
 
 ###
 
-POST http://127.0.0.1:8000/register/
+POST http://127.0.0.1:8000/signup/
 Content-Type: application/json
 
 {
@@ -41,7 +41,7 @@ Content-Type: application/json
 
 ###
 
-POST http://127.0.0.1:8000/login/
+POST https://127.0.0.1:8000/login/
 Content-Type: application/json
 
 {

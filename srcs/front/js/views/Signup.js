@@ -48,7 +48,7 @@ export default class extends AbstractView {
             let logValue = this.login.value.trim();
             if (logValue.length > 0) {
                 try {
-                    const checkResponse = await fetch(`http://127.0.0.1:8000/check_username/?username=${encodeURIComponent(logValue)}`);
+                    const checkResponse = await fetch(`http://localhost:8000/check_username/?username=${encodeURIComponent(logValue)}`);
                     if (!checkResponse.ok) {
                         const errorText = await checkResponse.text();
                         console.error('Error:', errorText);
@@ -105,23 +105,30 @@ export default class extends AbstractView {
     }
 
     async validateForm() {
-
         this.form.addEventListener('submit', async (e) => {
             e.preventDefault();
             try {
-
-                const response = await fetch("http://127.0.0.1:8000/signup/", {
+                const response = await fetch("http://localhost:8000/signup/", {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
                     },
-                    body: JSON.stringify({ username: this.login.value, password: this.pass.value })
+                    body: JSON.stringify({ 
+                        username: this.login.value, 
+                        password: this.pass.value 
+                    }),
+                    credentials: "include"
                 });
 
                 if (response.ok) {
                     const data = await response.json();
-                    console.dir(data);
-                    takeMeThere(window.location.origin + '/avatar');
+
+                    if (data.user) {
+                        AbstractView.username = data.user.username;
+                    }
+                    
+                    takeMeThere(location.origin + '/avatar');
                 } else {
                     const errorData = await response.json();
                     this.errorMessageElement.textContent = errorData.error || "An error occurred";
@@ -132,7 +139,7 @@ export default class extends AbstractView {
                 this.errorMessageElement.textContent = "An error occurred : " + error.message;
             }
             this.submitButton.disabled = true;
-        })
+        });
     }
 
     findLabel = (element) => {
