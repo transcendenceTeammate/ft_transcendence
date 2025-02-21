@@ -1,5 +1,5 @@
 #body-start {
-    background-image: url('../assets/startGame_bg.jpg');
+    background-image: url('../public/startGame_bg.jpg');
     background-size: cover;
    height: 100vh;
    
