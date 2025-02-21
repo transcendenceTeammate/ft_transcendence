@@ -2,7 +2,8 @@ import CONFIG from "../config.js";
 
 export default class AbstractView{
     static username = null;
-    static avatar = "https://localhost:8000/public/avatars/default/peng_head_def.png"
+    static avatar = "https://localhost:8443/public/avatars/default/peng_head_def.png"
+    static newUser = true;
     constructor() {
 
     }
@@ -20,7 +21,6 @@ export default class AbstractView{
                     clearInterval(checkExist);
                     resolve(elem);
                 }
-                // console.log(`Element not found: ${selector}, retrying...`);
             }, 100);
            
             setTimeout(() => {
@@ -105,7 +105,7 @@ export default class AbstractView{
 			}
 		} catch (error) {
 			console.error("Error fetching username:", error);
-            this.username = 'Unknown'
+            this.username = 'ErrorName'
 			// return "Unknown";
 		}
 	}
