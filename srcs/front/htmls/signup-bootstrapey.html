@@ -11,7 +11,7 @@
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
  <!--   {% load static %}-->
     <!-- <link rel="stylesheet" href="{% static 'styles/signup.css' %}"> -->
-    <link rel="stylesheet" href="../../static/styles/signup.css">
+    <link rel="stylesheet" href="../css/signup.css">
 </head>
 
 <body id="body-signup-html">
@@ -23,22 +23,22 @@
                <div class="form-floating mb-4">
                     <input type="text" class="form-control" name="username"
                         placeholder="think of a nice login" id="login">
-                        <img src="../../static/assets/green_check.svg" alt="no check" class="check" id="loginCheck">
+                        <img src="../public/green_check.svg" alt="no check" class="check" id="loginCheck">
                     <label for="login">Login:</label>
                 </div>
                 
                 <div id="passdiv" style="position:relative" class="form-floating mb-4">
                     <input type="password" class="form-control" name="password" id="pass" class="pass text-wrap"
                         placeholder="8 symbols, uppercase, lowercase, digit, special character">
-                    <img src="../../static/assets/eye_open.png" alt="oops" class="eye" id="passEye">
-                    <img src="../../static/assets/green_check.svg" alt="no check" class="check" id="passCheck">
+                    <img src="../public/eye_open.png" alt="oops" class="eye" id="passEye">
+                    <img src="../public/green_check.svg" alt="no check" class="check" id="passCheck">
                     <label for="pass" id="passlabel">Password:</label>
                 </div>
                 <div id="reppassdiv" style="position:relative" class="form-floating mb-4">
                     <input type="password" class="form-control" name="reppassword" id="reppass" class="pass"
                         placeholder="8 symbols, uppercase, lowercase, digit, special character">
-                    <img src="../../static/assets/eye_open.png" alt="oops" class="eye" id="repPassEye">
-                    <img src="../../static/assets/green_check.svg" alt="no check" class="check" id="repPassCheck">
+                    <img src="../public/eye_open.png" alt="oops" class="eye" id="repPassEye">
+                    <img src="../public/green_check.svg" alt="no check" class="check" id="repPassCheck">
                     <label for="reppass" id="reppasslabel" class="object-fit-contain">Repeat password:</label>
                 </div>
                 <button type="submit" id="subm" class="btn btn-primary bg-gradient form-control">Submit</button>
