@@ -100,7 +100,8 @@ export default class extends AbstractView {
                 if (response.ok) {
                     const data = await response.json();
                     console.log(data.user.username);
-                    AbstractView.username = data.user.username;
+                    // AbstractView.username = data.user.username;
+                    AbstractView.newUser = false;
                     takeMeThere(location.origin + '/start_game');
                     // window.location.href = "/success";
                 } else {

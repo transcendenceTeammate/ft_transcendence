@@ -7,8 +7,6 @@ export default class extends AbstractView {
         this.validRep = true;
         this.validLog = true;
         this.gottaHideRepEye = false;
-        // this.validatedLogin = false;
-        // this.passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     }
 
     async loadElements() {
@@ -42,7 +40,6 @@ export default class extends AbstractView {
     async validateLogin() {
 
         this.pass.addEventListener('click', async () => {
-            // if (this.validatedLogin) return;
             let logValue = this.login.value.trim();
             if (logValue.length > 0) {
                 try {
@@ -56,7 +53,6 @@ export default class extends AbstractView {
                     }
                     else {  
                         this.signalInvalid(true, this.login, "Login already exists", "Login:");
-                        // this.validatedLogin = true;
                     }
                 } catch (error) {
                     console.error('Error:', error);

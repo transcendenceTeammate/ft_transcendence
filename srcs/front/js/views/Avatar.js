@@ -66,7 +66,7 @@ export default class extends AbstractView {
     }
 
     async attachAllJs() {
-        await AbstractView.isAuthenticated();
+        // await AbstractView.isAuthenticated();
         await AbstractView.assignUsername();
        
         await this.loadElements();
