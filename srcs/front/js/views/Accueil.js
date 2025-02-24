@@ -22,7 +22,7 @@ export default class extends AbstractView {
                     // Construire l'URL d'autorisation
                     const authUrl = 'https://api.intra.42.fr/oauth/authorize?' +
                         new URLSearchParams({
-                            client_id: 'u-s4t2ud-7ae040ee0824ffe8ba2a3661b6798a480ca7ab1c7cfd07ff7f6e8f4d50ead5b3',
+                            client_id: 'u-s4t2ud-ad3ca528669469064a92d4a634b22ed93e0904bdf52cc369a96959a9aa2e46d0',
                             redirect_uri: 'http://localhost:8000/auth42/',
                             response_type: 'code',
                         }).toString();
