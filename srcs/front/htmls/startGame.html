@@ -18,29 +18,87 @@
 
 <body id="body-start">
 
+    <div class="modal" tabindex="-1" id="play_game_div">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border border-dark border-5 rounded-0">
+                <div class="modal-header">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-4 offset-5">
+                                <h2 class="modal-title">MODE</h2>
+                            </div>
+                            <div class="col-1 ms-auto">
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-body m-3">
+                    <div class="container-fluid">
+                        <div class="row my-3 p-4">
+                            <div class="col">
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-dark btn-lg p-3" type="button">CLASSIC MODE</button>
+
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="row my-3 p-4">
+                            <div class="col">
+                                <div class="col">
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-dark btn-lg p-3 " type="button">TOURNAMENT MODE</button>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row my-3 p-4">
+                            <div class="col-8 offset-2">
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-dark btn-lg p-3 rounded-circle" type="button">PLAY</button>
+
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal" tabindex="-1" id="create_join_div">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border border-dark border-5 rounded-0">
+                <div class="modal-header">
+                    <!-- <h5 class="modal-title">Modal title</h5> -->
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
                 <div class="modal-body m-3">
                     <div class="container-fluid">
-                        <div class="row my-3 py-5">
+                        <div class="row my-3 p-4">
                             <div class="col">
                                 <div class="d-grid gap-2">
-                                    <button class="btn btn-dark btn-lg p-3" type="button">CREATE GAME</button>
-                                   
-                                  </div>
+                                    <button class="btn btn-dark btn-lg p-3" type="button" data-bs-toggle="modal"
+                                        data-bs-target="#play_game_div">CREATE GAME</button>
+
+                                </div>
                             </div>
-                            
+
                         </div>
-                        <div class="row my-3 py-5">
+                        <div class="row my-3 p-4">
                             <div class="col">
                                 <div class="input-group mb-3">
-                                    <input type="text" class="form-control" placeholder="Recipient's username" aria-label="Recipient's username" aria-describedby="button-addon2">
+                                    <input type="text" class="form-control" placeholder="Game code"
+                                        aria-label="Game code" aria-describedby="button-addon2">
                                     <button class="btn btn-dark p-3" type="button" id="button-addon2">JOIN GAME</button>
-                                  </div>
+                                </div>
                             </div>
                         </div>
-                        
+
                     </div>
                 </div>
             </div>
@@ -84,7 +142,8 @@
 
     <main class="container mt-5" id="start-main">
         <div class="col-10 offset-1 d-flex flex-column  justify-content-center" id="startPageButtonDiv">
-            <button class="btn btn-light btn-lg d-block my-5 py-4 startpage-btn">PLAY GAME</button>
+            <button class="btn btn-light btn-lg d-block my-5 py-4 startpage-btn" data-bs-toggle="modal"
+                data-bs-target="#play_game_div">PLAY GAME</button>
             <button type="button" class="btn btn-light btn-lg d-block my-5 py-4 startpage-btn" data-bs-toggle="modal"
                 data-bs-target="#create_join_div">PLAY TOURNAMENT</button>
 
