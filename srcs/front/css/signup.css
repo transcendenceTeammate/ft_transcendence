@@ -4,7 +4,7 @@
 	align-items: center;
 	justify-content: center;
 	/* background-color: blanchedalmond; */
-	/* background-image: url('public/icey_ice.jpg'); */
+	/* background-image: url('../assets/icey_ice.jpg'); */
 	/* background-size: cover; */
 	/* background-position-x: center;
     background-position-y: center; */
@@ -123,4 +123,19 @@ input {
 	z-index: 10;
 	width: 4%;
 	visibility: hidden;
+}
+
+#su-peng {
+    animation: pong 1s steps(1, end) .5s infinite;
+}
+
+#su-pong {
+    animation: pong 1s steps(1, end) 1s infinite;
+}
+
+
+@keyframes pong {
+    50% {
+        color: #ffbe0b;
+    }
 }

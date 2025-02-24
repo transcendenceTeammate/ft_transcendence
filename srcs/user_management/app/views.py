@@ -103,7 +103,7 @@ def auth42Page(request):
 		'client_id': os.getenv('CLIENT_ID'),
 		'client_secret': os.getenv('CLIENT_SECRET'),
 		'code': code,
-		'redirect_uri': 'http://127.0.0.1:8000/auth42/',
+		'redirect_uri': 'http://localhost:8000/auth42/',
 	}
 
 	token_response = requests.post(token_url, data=token_data)
@@ -134,7 +134,7 @@ def get_access_token(request):
 	if request.method == "POST":
 		client_id = "VOTRE_CLIENT_ID"
 		client_secret = "VOTRE_CLIENT_SECRET"
-		redirect_uri = "http://127.0.0.1:8000/auth42/"
+		redirect_uri = "http://localhost:8000/auth42/"
 		code = request.POST.get("code")
 
 		url = "https://api.intra.42.fr/oauth/token"
@@ -148,10 +148,21 @@ def get_access_token(request):
 		response = requests.post(url, data=data)
 		return JsonResponse(response.json(), safe=False)
 
-@api_view(['GET'])
+@api_view(['GET', 'OPTIONS'])
 @permission_classes([IsAuthenticated])
 def get_user_info(request):
+	if request.method == "OPTIONS":
+		response = Response()
+		response["Access-Control-Allow-Origin"] = "https://localhost:8443"
+		response["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+		response["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+		response["Access-Control-Allow-Credentials"] = "true"
+		return response
+
 	user = request.user
-	return Response({
+	response = Response({
 		"username": user.username,
 	})
+	response["Access-Control-Allow-Origin"] = "https://localhost:8443"
+	response["Access-Control-Allow-Credentials"] = "true"
+	return response

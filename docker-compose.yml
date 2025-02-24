@@ -43,10 +43,13 @@ services:
         condition: service_healthy
     env_file:
       - .env
+    volumes:
+      - ./srcs/nginx/ssl:/etc/ssl
     ports:
       - "8000:8000"
+    command: python manage.py runserver 0.0.0.0:8000
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      test: ["CMD", "curl", "-f", "https://localhost:8000"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -58,13 +61,21 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-
-      
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     ports:
       - "8001:8000"
+
+  cli_game:
+    build:
+      context: ./srcs/cli_game
+      dockerfile: Dockerfile
+    container_name: cli-game
+    depends_on:
+      - user_management
+    stdin_open: true
+    tty: true
 
 volumes:
   postgres_data:
