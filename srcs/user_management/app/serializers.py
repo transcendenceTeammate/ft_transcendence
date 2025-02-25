@@ -14,21 +14,21 @@ class UserSerializer(serializers.ModelSerializer):
 		}
 
 	def create(self, validated_data):
-	user_type = validated_data.pop('user_type')
+		user_type = validated_data.pop('user_type')
 
-	user = User.objects.filter(username=validated_data['username']).first()
+		user = User.objects.filter(username=validated_data['username']).first()
 
-	if user:
-		user_type_instance = UserType.objects.filter(user=user).first()
-		if user_type_instance and user_type_instance.user_type != user_type:
-			raise serializers.ValidationError("User already exists with a different userType")
+		if user:
+			user_type_instance = UserType.objects.filter(user=user).first()
+			if user_type_instance and user_type_instance.user_type != user_type:
+				raise serializers.ValidationError("User already exists with a different userType")
+			return user
+
+		user = User.objects.create_user(
+			username=validated_data['username'],
+			password=validated_data['password']
+		)
+
+		UserType.objects.create(user=user, user_type=user_type)
+
 		return user
-
-	user = User.objects.create_user(
-		username=validated_data['username'],
-		password=validated_data['password']
-	)
-
-	UserType.objects.create(user=user, user_type=user_type)
-
-	return user
