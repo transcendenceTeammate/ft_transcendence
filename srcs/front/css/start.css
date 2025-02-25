@@ -30,6 +30,8 @@
 
 }
 
+
+
 #start-main {
     height: 70%;
 }
@@ -73,6 +75,19 @@
     
 }
 
+.blackie:hover, .orangie:hover {
+    background-color: #14213d;
+}
+.blackie:hover {
+    color: #ffc300;
+}
+
+.orangie:hover {
+    color: #001d3d;
+    
+    background-color: #fca311;
+    border-color: #001d3d;
+}
 
 
 
