@@ -18,9 +18,61 @@
 
 <body id="body-start">
 
+    <div class="modal" tabindex="-1" id="waiting_modal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border border-black border-5 rounded-0" >
+                <div class="modal-header">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-5 offset-6">
+                                <!-- <h2 class="modal-title">Room code: 12345</h2> -->
+                                <p class="text-center" style="background-color: #e5e5e5;">Room code: 12345</p>
+                            </div>
+                            <div class="col-1">
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <div class="container-fluid">
+                        <div class="row my-3">
+                            <div class="col">
+                                <div class="d-flex justify-content-center">
+                                    <h2 class="fw-bold">Waiting...</h2>
+                                    <!-- <button class="btn btn-dark btn-lg p-3" type="button">CLASSIC MODE</button> -->
+
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="row my-3 py-3">
+                            <div class="col-6 d-flex justify-content-center">
+                                <button class="btn   btn-lg py-3 px-5 " type="button" style="background-color: black; color: white">PLAYER 1</button>
+                            </div>
+                            <div class="col-6 d-flex justify-content-center">
+                                <button class="btn btn-lg py-3 px-5 " type="button" style="background-color: black; color: white">.................</button>
+                            </div>
+                        </div>
+                        <div class="row my-3 p-4">
+                            <div class="col-8 offset-2">
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-lg p-3 rounded-pill fw-bold orangie"  type="button">PLAY</button>
+
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal" tabindex="-1" id="play_game_div">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border border-dark border-5 rounded-0">
+            <div class="modal-content border border-black border-5 rounded-0">
                 <div class="modal-header">
                     <div class="container">
                         <div class="row">
@@ -58,7 +110,7 @@
                         <div class="row my-3 p-4">
                             <div class="col-8 offset-2">
                                 <div class="d-grid gap-2">
-                                    <button class="btn btn-dark btn-lg p-3 rounded-circle" type="button">PLAY</button>
+                                    <button class="btn btn-lg p-3 rounded-circle orangie fw-bold" type="button">PLAY</button>
 
                                 </div>
                             </div>
@@ -74,7 +126,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border border-dark border-5 rounded-0">
                 <div class="modal-header">
-                    <!-- <h5 class="modal-title">Modal title</h5> -->
+
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body m-3">
@@ -82,8 +134,8 @@
                         <div class="row my-3 p-4">
                             <div class="col">
                                 <div class="d-grid gap-2">
-                                    <button class="btn btn-dark btn-lg p-3" type="button" data-bs-toggle="modal"
-                                        data-bs-target="#play_game_div">CREATE GAME</button>
+                                    <button class="btn btn-lg p-3 blackie" type="button" data-bs-toggle="modal"
+                                        data-bs-target="#waiting_modal" data-bs-toggle="modal">CREATE GAME</button>
 
                                 </div>
                             </div>
@@ -94,7 +146,8 @@
                                 <div class="input-group mb-3">
                                     <input type="text" class="form-control" placeholder="Game code"
                                         aria-label="Game code" aria-describedby="button-addon2">
-                                    <button class="btn btn-dark p-3" type="button" id="button-addon2">JOIN GAME</button>
+                                    <button class="btn  p-3 blackie " type="button" id="button-addon2"
+                                        data-bs-target="#waiting_modal" data-bs-toggle="modal">JOIN GAME</button>
                                 </div>
                             </div>
                         </div>
