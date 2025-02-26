@@ -29,7 +29,7 @@ export default class extends AbstractView {
 		}
 		console.log("Access token found:", accessToken);
 		try {
-			const response = await fetch("http://localhost:8000/api/token/verify/", {
+			const response = await fetch("https://localhost:8000/api/token/verify/", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",

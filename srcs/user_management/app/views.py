@@ -91,7 +91,7 @@ def auth42Page(request):
 		'client_id': os.getenv('CLIENT_ID'),
 		'client_secret': os.getenv('CLIENT_SECRET'),
 		'code': code,
-		'redirect_uri': 'http://localhost:8000/auth42/',
+		'redirect_uri': 'https://localhost:8000/auth42/',
 	}
 
 	token_response = requests.post(token_url, data=token_data)
@@ -122,7 +122,7 @@ def get_access_token(request):
 	if request.method == "POST":
 		client_id = "VOTRE_CLIENT_ID"
 		client_secret = "VOTRE_CLIENT_SECRET"
-		redirect_uri = "http://localhost:8000/auth42/"
+		redirect_uri = "https://localhost:8000/auth42/"
 		code = request.POST.get("code")
 
 		url = "https://api.intra.42.fr/oauth/token"

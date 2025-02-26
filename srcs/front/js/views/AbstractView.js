@@ -58,7 +58,7 @@ export default class AbstractView{
 		}
 		console.log("Access token found:", accessToken);
 		try {
-			const response = await fetch("http://localhost:8000/api/token/verify/", {
+			const response = await fetch("https://localhost:8000/api/token/verify/", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -82,7 +82,7 @@ export default class AbstractView{
 		const accessToken = this.getCookie('access_token');
 	
 		try {
-			const response = await fetch("http://localhost:8000/get_user_info/", {
+			const response = await fetch("https://localhost:8000/get_user_info/", {
 				method: "GET",
 				headers: {
 					"Authorization": `Bearer ${accessToken}`,

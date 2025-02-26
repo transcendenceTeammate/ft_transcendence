@@ -46,7 +46,7 @@ export default class extends AbstractView {
             let logValue = this.login.value.trim();
             if (logValue.length > 0) {
                 try {
-                    const checkResponse = await fetch(`http://localhost:8000/check_username/?username=${encodeURIComponent(logValue)}`);
+                    const checkResponse = await fetch(`https://localhost:8000/check_username/?username=${encodeURIComponent(logValue)}`);
                     if (!checkResponse.ok) {
                         const errorText = await checkResponse.text();
                         console.error('Error:', errorText);
@@ -93,7 +93,7 @@ export default class extends AbstractView {
         this.form.addEventListener('submit', async (e) => {
             e.preventDefault();
             try {
-                const response = await fetch("http://localhost:8000/signup/", {
+                const response = await fetch("https://localhost:8000/signup/", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
