@@ -96,17 +96,13 @@ export default class AbstractView{
 			if (response.ok) {
 				const data = await response.json();
                 this.username = data.username;
-                // console.log(`hello from AbstractView! this.username is: ${this.username}`)
-				// return data.username;
 			} else {
 				console.error("Failed to fetch username");
                 this.username = 'Unknown'
-				// return "Unknown";
 			}
 		} catch (error) {
 			console.error("Error fetching username:", error);
             this.username = 'ErrorName'
-			// return "Unknown";
 		}
 	}
 
@@ -130,7 +126,6 @@ export default class AbstractView{
     }
 
     async getNavbar() {
-        // console.log("hello from getNavbar function!!");
         console.log('wtf is with the avatar?' + AbstractView.avatar)
         console.log(`wtf is with the username? ${AbstractView.username}`)
         return `

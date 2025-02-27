@@ -6,6 +6,7 @@ import NotFound from "./views/NotFound.js";
 import Avatar from "./views/Avatar.js";
 import StartGame from "./views/StartGame.js";
 import Profile from "./views/Profile.js";
+import AbstractView from "./views/AbstractView.js";
 
 // const navigateTo = url => {
 //     history.pushState(null, null, url);
@@ -14,25 +15,24 @@ import Profile from "./views/Profile.js";
 //     router();
 // }
 
-window.takeMeThere = function(url) {
+window.takeMeThere = function (url) {
     history.pushState(null, null, url);
     router();
 }
 
 const router = async () => {
     const routes = [
-        { path: '/', view: Accueil},
-        { path: '/login', view: Login},
-        {path: '/signup', view: Signup},
-        {path: '/success', view: Success},
-        {path: '/notfound', view: NotFound},
-        {path: '/avatar', view: Avatar},
-        {path: '/start_game', view: StartGame},
-        {path: '/profile', view: Profile}
-       
+        { path: '/', view: Accueil },
+        { path: '/login', view: Login },
+        { path: '/signup', view: Signup },
+        { path: '/success', view: Success },
+        { path: '/notfound', view: NotFound },
+        { path: '/avatar', view: Avatar },
+        { path: '/start_game', view: StartGame },
+        { path: '/profile', view: Profile }
+
     ];
 
-    //test each route for potential match
     const potentialMatches = routes.map(route => {
         return {
             route: route,
@@ -41,7 +41,7 @@ const router = async () => {
     })
 
     let match = potentialMatches.find(potentialMatch => potentialMatch.isMatch)
-  
+
     if (!match) {
         console.log('no match!');
         match = {
@@ -50,31 +50,45 @@ const router = async () => {
         };
     }
 
+    let accessibleToAll = match.route.path === '/' || match.route.path === '/login' || match.route.path === '/signup' || match.route.path === '/notfound'
+    if (accessibleToAll) {
+        const view = new match.route.view();
+
+        document.querySelector("#app").innerHTML = await view.getHtml();
+        Accueil.accessDenied = false;   
+        return;
+    }
+
+
+    let isAuthenticated = await AbstractView.isAuthenticated();
+    if (!isAuthenticated) {
+        Accueil.accessDenied = true;
+        return takeMeThere(location.origin + '/')
+
+    } else Accueil.accessDenied = false;
+
     const view = new match.route.view();
-    // console.log(`what's the title? ${document.title}`);
 
     document.querySelector("#app").innerHTML = await view.getHtml();
-    // console.log(match.route.view());
 }
 
-// window.addEventListener("popstate", router);
 window.addEventListener("popstate", () => {
     router();
 });
 
 
 document.addEventListener("DOMContentLoaded", () => {
-  
+
     document.body.addEventListener("click", e => {
-        
+
         if (e.target.matches("[data-link]")) {
-       
-         
+
+
             e.preventDefault();
             console.log(`does e.target match href? ${e.target.matches('[href]')}`)
             // console.log(`does e.target match datalink? ${e.target.matches('data-link')}`)
             if (!e.target.matches('[href]')) takeMeThere(e.target.parentElement.href)
-           else  takeMeThere(e.target.href)
+            else takeMeThere(e.target.href)
             // navigateTo(e.target.href);
         }
     })

@@ -1,15 +1,33 @@
 import CONFIG from "../config.js";
 
 import AbstractView from "./AbstractView.js";
-export default class extends AbstractView {
+export default class Accueil extends AbstractView {
+    static accessDenied = false;
     constructor() {
         super();
         this.setTitle("Accueil");
+        
     }
 
     async pengCursor() {
         this.pageDiv = await super.loadElement('app-child-accueil');
         this.pageDiv.classList.toggle('penguin-cursor')
+    }
+
+    async alertDiv(){ 
+      
+        if (Accueil.accessDenied){
+            console.log('ACCESS DENIED hello from accueil');
+            this.alertDiv = await super.loadElement('alertDiv');
+            this.alertDiv.classList.remove('d-none')
+        }
+      
+            
+           
+        
+
+        this.alertDiv = await super.loadElement('alertDiv');
+
     }
 
     async auth42() {
@@ -41,8 +59,13 @@ export default class extends AbstractView {
     async getHtml() {
         this.auth42();
         this.pengCursor();
+        this.alertDiv();
         return `
         <div id="app-child-accueil">
+        <div class="alert alert-danger alert-dismissible fade show d-none" role="alert" id="alertDiv">
+  You're not authorized. Log in or sign up first
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
         <div id="container-accueil">
         <div id="login">
             <div>
