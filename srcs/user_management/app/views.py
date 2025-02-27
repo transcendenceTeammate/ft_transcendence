@@ -97,7 +97,7 @@ def generate_random_password(length=12):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
-def auth42Page(request):
+def auth42(request):
 	code = request.GET.get('code')
 	if not code:
 		return Response({'error': 'No authorization code provided'}, status=status.HTTP_400_BAD_REQUEST)
@@ -145,26 +145,6 @@ def auth42Page(request):
 	response.set_cookie('access_token', str(access_token), httponly=False, secure=False, samesite='Lax')
 
 	return response
-
-
-
-def get_access_token(request):
-	if request.method == "POST":
-		client_id = "VOTRE_CLIENT_ID"
-		client_secret = "VOTRE_CLIENT_SECRET"
-		redirect_uri = "http://localhost:8000/auth42/"
-		code = request.POST.get("code")
-
-		url = "https://api.intra.42.fr/oauth/token"
-		data = {
-			"grant_type": "authorization_code",
-			"client_id": client_id,
-			"client_secret": client_secret,
-			"code": code,
-			"redirect_uri": redirect_uri,
-		}
-		response = requests.post(url, data=data)
-		return JsonResponse(response.json(), safe=False)
 
 @api_view(['GET', 'OPTIONS'])
 @permission_classes([IsAuthenticated])

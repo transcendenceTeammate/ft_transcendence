@@ -23,7 +23,7 @@ export default class extends AbstractView {
                     const authUrl = 'https://api.intra.42.fr/oauth/authorize?' +
                         new URLSearchParams({
                             client_id: 'u-s4t2ud-ad3ca528669469064a92d4a634b22ed93e0904bdf52cc369a96959a9aa2e46d0',
-                            redirect_uri: 'http://localhost:8000/auth42/',
+                            redirect_uri: `${CONFIG.BASE_URL}/auth42/`,
                             response_type: 'code',
                         }).toString();
 
