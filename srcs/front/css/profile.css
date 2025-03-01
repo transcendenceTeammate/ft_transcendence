@@ -24,6 +24,10 @@
     background-color: rgb(240, 248, 255, 0.7);
 }
 
+#editPhotoSpan {
+    aspect-ratio: 1/1;
+}
+
 /* #st-peng {
     animation: pong 1s steps(1, end) .5s infinite;
 }
