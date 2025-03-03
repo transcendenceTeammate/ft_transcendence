@@ -1,3 +1,5 @@
+import CONFIG from "../config.js";
+
 import AbstractView from "./AbstractView.js";
 export default class extends AbstractView {
     constructor() {
@@ -48,7 +50,7 @@ export default class extends AbstractView {
             let logValue = this.login.value.trim();
             if (logValue.length > 0) {
                 try {
-                    const checkResponse = await fetch(`http://127.0.0.1:8000/check_username/?username=${encodeURIComponent(logValue)}`);
+                    const checkResponse = await fetch(`${CONFIG.BASE_URL}/check_username/?username=${encodeURIComponent(logValue)}`);
                     if (!checkResponse.ok) {
                         const errorText = await checkResponse.text();
                         console.error('Error:', errorText);
@@ -110,7 +112,7 @@ export default class extends AbstractView {
             e.preventDefault();
             try {
 
-                const response = await fetch("http://127.0.0.1:8000/signup/", {
+                const response = await fetch(`${CONFIG.BASE_URL}/api/auth/signup/`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"

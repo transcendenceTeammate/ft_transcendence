@@ -1,3 +1,5 @@
+import CONFIG from "../config.js";
+
 import AbstractView from "./AbstractView.js";
 export default class extends AbstractView {
     constructor() {
@@ -88,7 +90,7 @@ export default class extends AbstractView {
             const name = this.login.value.trim();
             const password = this.pass.value.trim();
             try {
-                const response = await fetch("http://localhost:8000/login/", {
+                const response = await fetch(`${CONFIG.BASE_URL}/api/auth/login/`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
