@@ -1,3 +1,5 @@
+import CONFIG from "../config.js";
+
 import AbstractView from "./AbstractView.js";
 export default class extends AbstractView {
 	constructor() {
@@ -29,7 +31,7 @@ export default class extends AbstractView {
 		}
 		console.log("Access token found:", accessToken);
 		try {
-			const response = await fetch("http://127.0.0.1:8000/api/token/verify/", {
+			const response = await fetch(`${CONFIG.BASE_URL}/api/token/verify/`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -53,7 +55,7 @@ export default class extends AbstractView {
 		const accessToken = this.getCookie('access_token');
 	
 		try {
-			const response = await fetch("http://127.0.0.1:8000/get_user_info/", {
+			const response = await fetch("${CONFIG.BASE_URL}/api/users/me/", {
 				method: "GET",
 				headers: {
 					"Content-Type": "application/json",

@@ -80,7 +80,7 @@ def generate_random_password(length=12):
 	characters = string.ascii_letters + string.digits + string.punctuation
 	return ''.join(random.choice(characters) for i in range(length))
 
-def auth42Page(request):
+def auth42(request):
 	code = request.GET.get('code')
 	if not code:
 		return JsonResponse({'error': 'No authorization code provided'}, status=400)
