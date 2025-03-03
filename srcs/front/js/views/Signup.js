@@ -4,13 +4,11 @@ import AbstractView from "./AbstractView.js";
 export default class extends AbstractView {
     constructor() {
         super();
-        this.setTitle("Signup_alt");
+        this.setTitle("Signup");
         this.validPass = true;
         this.validRep = true;
         this.validLog = true;
         this.gottaHideRepEye = false;
-        this.validatedLogin = false;
-        // this.passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     }
 
     async loadElements() {
@@ -42,11 +40,8 @@ export default class extends AbstractView {
     }
 
     async validateLogin() {
-        
-        console.log('calling validateLogin!')
 
         this.pass.addEventListener('click', async () => {
-            if (this.validatedLogin) return;
             let logValue = this.login.value.trim();
             if (logValue.length > 0) {
                 try {
@@ -56,15 +51,10 @@ export default class extends AbstractView {
                         console.error('Error:', errorText);
                         this.signalInvalid(false, this.login, "Login already exists", "Login:");
                         this.validatedLogin = false;
-                        this.pass.disabled = true;
+                        if(this.pass.value.length === 0) this.pass.disabled = true;
                     }
-                    else {
-                        if (window.confirm(`Login: \n\n${logValue}\n\nYou won't be able to change it if you continue`)) {
-                            this.signalInvalid(true, this.login, "Login already exists", "Login:");
-                            this.validatedLogin = true;
-                            this.login.disabled = true;
-                        }
-                        else this.pass.disabled = true;
+                    else {  
+                        this.signalInvalid(true, this.login, "Login already exists", "Login:");
                     }
                 } catch (error) {
                     console.error('Error:', error);
@@ -79,35 +69,25 @@ export default class extends AbstractView {
             const passLabel = this.findLabel(this.pass);
             passLabel.innerText = "8 characters, uppercase, lowercase, digit, special character"
             if (passwordRegex.test(this.pass.value)) {
-                // alert("Make sure you remembered your password! Now you'll have to repeat it");
-                //  this.signalInvalid(true, this.pass, "blabla", "Password");
-
+        
                 this.repPass.disabled = false;
             }
         })
         this.repPass.addEventListener('click', () => {
             this.signalInvalid(true, this.pass, "blabla", "Password");
-
-            // this.passEye.style.visibility = 'visible';
             this.passEye.style.top = '5%'
         })
         this.repPass.addEventListener('input', () => {
 
             if (this.repPass.value.trim() === this.pass.value.trim()) {
                 this.signalInvalid(true, this.repPass, "blabla", "Repeat password");
-                console.log(`wtf is the eye in rep pass not goin up? ${this.validatedLogin}`)
                 this.repEye.style.top = '5%'
-                console.dir(this.repEye.style.top);
-                //    this.passEye.style.visibility = 'hidden';
-                //    this.gottaHideRepEye = true;
-                //    this.repEye.style.visibility = 'hidden';
                 this.submitButton.disabled = false;
             }
         })
     }
 
     async validateForm() {
-
         this.form.addEventListener('submit', async (e) => {
             e.preventDefault();
             try {
@@ -115,15 +95,20 @@ export default class extends AbstractView {
                 const response = await fetch(`${CONFIG.BASE_URL}/api/auth/signup/`, {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
                     },
-                    body: JSON.stringify({ username: this.login.value, password: this.pass.value })
+                    body: JSON.stringify({ 
+                        username: this.login.value, 
+                        password: this.pass.value 
+                    }),
+                    credentials: "include"
                 });
 
                 if (response.ok) {
                     const data = await response.json();
                     console.dir(data);
-                    takeMeThere(window.location.origin + '/avatar');
+                    takeMeThere(location.origin + '/start_game');
                 } else {
                     const errorData = await response.json();
                     this.errorMessageElement.textContent = errorData.error || "An error occurred";
@@ -134,7 +119,7 @@ export default class extends AbstractView {
                 this.errorMessageElement.textContent = "An error occurred : " + error.message;
             }
             this.submitButton.disabled = true;
-        })
+        });
     }
 
     findLabel = (element) => {
@@ -146,14 +131,12 @@ export default class extends AbstractView {
     findCheck = (element) => {
         let sibl = element.nextElementSibling;
         while (sibl && !sibl.classList.contains('check')) sibl = sibl.nextElementSibling;
-        console.dir(sibl)
         return sibl;
     }
 
     findEye = (element) => {
         let sibl = element.nextElementSibling;
         while (sibl && !sibl.classList.contains('eye')) sibl = sibl.nextElementSibling;
-        console.dir(sibl)
         return sibl;
     } 
 
@@ -164,10 +147,10 @@ export default class extends AbstractView {
         if (!validity) {
             element.style.border = '';
             element.classList.add('is-invalid');
-            console.log(`element: ${element.id}. value: ${element.value}`);
             if (element.value.length === 0) lab.innerText = "Shouldn't be empty";
             else lab.innerText = warning;
             lab.style.color = 'rgb(128, 0, 0, 0.6)';
+            check.style.visibility = 'hidden'
         } else {
             element.classList.remove('is-invalid');
             lab.innerText = orig;
@@ -183,23 +166,20 @@ export default class extends AbstractView {
                 field.addEventListener(whatsgoinon, () => {
                     if (field.value.length > 0 ) {
                         eye.style.visibility = 'visible';
-                        // console.log(`are validPass and validRep true? ${this.validPass} and ${this.validRep}`)
-                        // if (field === this.pass && !this.validPass) eye.style.top = '5%';
-                        // else if (field === this.repPass && !this.validRep) eye.style.top = '5%';
                         eye.addEventListener('mousedown', () => {
-                            eye.src = 'public/eye_closed.png';
+                            eye.src = '../public/eye_closed.png';
                             field.type = 'text';
                         });
                         eye.addEventListener('mouseup', () => {
-                            eye.src = 'public/eye_open.png';
+                            eye.src = '../public/eye_open.png';
                             field.type = 'password';
                         });
                         eye.addEventListener('touchstart', () => {
-                            eye.src = 'public/eye_closed.png';
+                            eye.src = '../public/eye_closed.png';
                             field.type = 'text';
                         });
                         eye.addEventListener('touchend', () => {
-                            eye.src = 'public/eye_open.png';
+                            eye.src = '../public/eye_open.png';
                             field.type = 'password';
                         });
                     } else {
@@ -212,13 +192,11 @@ export default class extends AbstractView {
                 document.addEventListener('mousedown', (event) => {
                     if (!(div.contains(event.target))) {
                         eye.style.visibility = 'hidden';
-                        console.log(`hello from showHideEyes. just added the hidden thingie. what's the top of the eye now? ${eye.style.top}`)
                     }
                 });
                 document.addEventListener('focusin', (event) => {
                     if (!(div.contains(event.target))) {
                         eye.style.visibility = 'hidden';
-                        console.log(`hello from showHideEyes. just added the hidden thingie. what's the top of the eye now? ${eye.style.top}`)
                     }
 
                     
@@ -226,7 +204,6 @@ export default class extends AbstractView {
                 document.addEventListener('touchstart', (event) => {
                     if (!(div.contains(event.target))) {
                         eye.style.visibility = 'hidden';
-                        console.log(`hello from showHideEyes. just added the hidden thingie. what's the top of the eye now? ${eye.style.top}`)
                     }
                 });
 
@@ -259,27 +236,27 @@ export default class extends AbstractView {
         return `
         <div id="app-child-signup">
             <div id="container-signup" class="container-s">
-        <h1>Sign up to PengPongApp</h1>
+        <h1 class="p-5">Sign up to <span id="su-peng">Peng</span><span id="su-pong">Pong</span>App</h1>
         <div id="formdiv">
             <form action="avatar" id="form" class="form-floating">
 
                 <div class="form-floating mb-4">
                     <input type="text" class="form-control" name="login" placeholder="think of a nice login" id="login-signup" required>
-                    <embed src="public/green_check.svg" alt="no check" class="check" id="passCheck">
+                    <embed src="../public/green_check.svg" alt="no check" class="check" id="passCheck">
                     <label for="login-signup">Login:</label>
                 </div>
                 <div id="passdiv" style="position:relative" class="form-floating mb-4">
                     <input type="password" class="form-control" name="password" id="pass" class="pass"
                         placeholder="8 symbols, uppercase, lowercase, digit, special character" required disabled>
-                    <img src="public/eye_open.png" alt="oops" class="eye" id="passEye">
-                    <img src="public/green_check.svg" alt="no check" class="check" id="passCheck">
+                    <img src="../public/eye_open.png" alt="oops" class="eye" id="passEye">
+                    <img src="../public/green_check.svg" alt="no check" class="check" id="passCheck">
                     <label for="pass" id="passlabel">Password:</label>
                 </div>
                 <div id="reppassdiv" style="position:relative" class="form-floating mb-4">
                     <input type="password" class="form-control" name="password" id="reppass" class="pass"
                         placeholder="8 symbols, uppercase, lowercase, digit, special character" required disabled>
-                    <img src="public/eye_open.png" alt="oops" class="eye" id="repPassEye">
-                    <img src="public/green_check.svg" alt="no check" class="check" id="repPassCheck">
+                    <img src="../public/eye_open.png" alt="oops" class="eye" id="repPassEye">
+                    <img src="../public/green_check.svg" alt="no check" class="check" id="repPassCheck">
                     <label for="reppass" id="reppasslabel" class="object-fit-contain">Repeat password:</label>
                 </div>
                 <div style="text-align: center;">

@@ -11,6 +11,8 @@ export default class extends AbstractView {
             this.dropZone = await super.loadElement('circle');
             this.upload = await super.loadElement('upload');
             this.usernameHeading = await super.loadElement('username-h')
+            this.avatarBtn = await super.loadElement('avatar-btn');
+            this.pageDiv = await super.loadElement('app-child-avatar');
         } catch (e) {
             console.log(e);
         }
@@ -25,26 +27,35 @@ export default class extends AbstractView {
     }
 
     drop() {
-        console.log(`hello from drop function. Has dropZone been loaded? ${this.dropZone}`);
+        // console.log(`hello from drop function. Has dropZone been loaded? ${this.dropZone}`);
         this.dropZone.addEventListener('drop', (event) => {
             event.preventDefault();
-            console.log('hello from drop function!!')
             const dropZone = event.target.closest('.drop-zone');
             const data = event.dataTransfer.getData("text");
+            console.log(`image data: ${data}`);
 
             if (data) {
                 dropZone.innerHTML = `<img src="${data}" alt="Selected Avatar">`;
+                this.avatarBtn.innerText = "Let's go!";
+                AbstractView.avatar = data;
+                this.pageDiv.classList.toggle('penguin-cursor')
+                this.avatarBtn.classList.toggle('penguin-cursor')
+    
             }
         });
     }
 
+
+
     uploadAvatar() {
         this.upload.addEventListener('change', (event) => {
             const file = event.target.files[0];
+            // console.log('hello from upload.eventListener')
+            // console.dir(event.target)
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    // const dropZone = document.querySelector('.drop-zone');
+                    console.log(`uploaded avatars url: ${e.target.result}`)
                     this.dropZone.innerHTML = `<img src="${e.target.result}" alt="Uploaded Avatar">`;
                 };
                 reader.readAsDataURL(file);
@@ -55,9 +66,9 @@ export default class extends AbstractView {
     }
 
     async attachAllJs() {
+        // await AbstractView.isAuthenticated();
         await AbstractView.assignUsername();
-        console.log(AbstractView.username);
-        console.log(`username from super: ${AbstractView.username}`)
+       
         await this.loadElements();
         this.usernameHeading.innerText = `Welcome ${AbstractView.username}!`
         this.avatars.forEach(element => {
@@ -65,11 +76,17 @@ export default class extends AbstractView {
                 event.dataTransfer.setData("text", event.target.src);
             });
         });
+        this.avatarBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            // console.log('hello from button event listener!!!')
+            takeMeThere(location.origin + '/start_game')
+        })
         this.drop();
         this.dropZone.addEventListener('dragover', (event) => {
             event.preventDefault();
         });
         this.uploadAvatar();
+       
 
     }
 
@@ -111,14 +128,14 @@ export default class extends AbstractView {
                 </div>
             </div>
         </div>
-        <div class="row pb-xl-4"></div>
+        <div class="row pb-xl-4" id='invisible-div'></div>
         <div class="row">
             <div class="col-xxl-6 col pt-xxl-5 d-flex flex-column justify-content-end align-items-center">
                 <button class="btn btn-lg btn-light border border-black mt-5" id="avatar-btn">Continue without choosing</button>
             </div>
             <div class="col-4 offset-1 pt-xxl-5">
                 <div id="own-avatar" class="m-0 p-0 rounded-3">
-                    <h3 class="mt-5 py-3 fw-xxl-bold">Or Upload Your Own Avatar</h3>
+                    <h3 class="mt-5 py-3 fw-xxl-bold" id='own-avatar-h'>Or Upload Your Own Avatar</h3>
                     <input type="file" id="upload" accept="image/*" class="form-control mt-2">
                 </div>
             </div>

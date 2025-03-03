@@ -5,11 +5,12 @@
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Log in without 42</title>
-		<!-- <link rel="cssheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+		<!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
         integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous"> -->
-		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="cssheet"
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-        <link rel="cssheet" href="css/signup.css">
+        {% load static %}
+        <link rel="stylesheet" href="../css/signup.css">
 	</head>
 	
 	<body>
@@ -26,20 +27,20 @@
                 <div id="passdiv" style="position:relative" class="form-floating mb-4">
                     <input type="password" class="form-control" name="password" id="pass" class="pass"
                         placeholder="8 symbols, uppercase, lowercase, digit, special character" required>
-                    <img src="public/eye_open.png" alt="oops" class="eye" id="passEye">
+                    <img src="../static/assets/eye_open.png" alt="oops" class="eye" id="passEye">
                     <label for="pass" id="passlabel">Password:</label>
                 </div>
                 <!-- <small>Password should contain at least 8 characters, one uppercase, one lowercase, one digit, and one special character</small> -->
                 <!-- <div id="reppassdiv" style="position:relative" class="form-floating mb-4">
                     <input type="password" class="form-control" name="password" id="reppass" class="pass"
                         placeholder="8 symbols, uppercase, lowercase, digit, special character">
-                    <img src="public/eye_open.png" alt="oops" class="eye" id="repPassEye">
+                    <img src="../static/assets/eye_open.png" alt="oops" class="eye" id="repPassEye">
                     <label for="reppass" id="reppasslabel" class="object-fit-contain">Repeat password:</label>
                 </div> -->
                 <!-- <div id="reppassdiv" style="position:relative" class="input-group has-validation mb-4">
                     <input type="password" class="form-control" name="password" id="reppass" class="pass"
                     placeholder="should match password">
-                    <img src="public/eye_open.png" alt="oops" class="eye" id="repPassEye">
+                    <img src="../static/assets/eye_open.png" alt="oops" class="eye" id="repPassEye">
                     <label for="reppass">Repeat password:</label>
                     <div class="invalid-tooltip">shoud contain 8 symbols, a lowercase, an uppercase, a digit</div>
                 </div> -->
@@ -54,9 +55,9 @@
             </form>
         </div>
     </div>
-    <script src="js/loginRequest.js"></script>
-    <!-- <script src="public/js/signup.js"></script> -->
-    <!-- <script src="public/js/signupRequest.js"></script> --
+    <script src="{% static 'js_files/loginRequest.js' %}"></script>
+    <!-- <script src="../static/js_files/signup.js"></script> -->
+    <!-- <script src="../static/js_files/signupRequest.js"></script> --
      >
 </body>
 

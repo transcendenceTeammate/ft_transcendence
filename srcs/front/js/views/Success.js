@@ -59,8 +59,10 @@ export default class extends AbstractView {
 				method: "GET",
 				headers: {
 					"Content-Type": "application/json",
-					"Authorization": `Bearer ${accessToken}`
-				}
+					"Authorization": `Bearer ${accessToken}`,
+					"Accept": "application/json"
+				},
+				credentials: 'include'
 			});
 	
 			if (response.ok) {

@@ -39,19 +39,19 @@ export default class extends AbstractView {
                         if (field === this.pass && !this.validPass) eye.style.top = '5%';
                         else if (field === this.repPass && !this.validRep) eye.style.top = '5%';
                         eye.addEventListener('mousedown', () => {
-                            eye.src = 'public/eye_closed.png';
+                            eye.src = '../public/eye_closed.png';
                             field.type = 'text';
                         });
                         eye.addEventListener('mouseup', () => {
-                            eye.src = 'public/eye_open.png';
+                            eye.src = '../public/eye_open.png';
                             field.type = 'password';
                         });
                         eye.addEventListener('touchstart', () => {
-                            eye.src = 'public/eye_closed.png';
+                            eye.src = '../public/eye_closed.png';
                             field.type = 'text';
                         });
                         eye.addEventListener('touchend', () => {
-                            eye.src = 'public/eye_open.png';
+                            eye.src = '../public/eye_open.png';
                             field.type = 'password';
                         });
                     } else {
@@ -102,7 +102,8 @@ export default class extends AbstractView {
                 if (response.ok) {
                     const data = await response.json();
                     console.log(data.user.username);
-                    AbstractView.username = data.user.username;
+                    // AbstractView.username = data.user.username;
+                    AbstractView.newUser = false;
                     takeMeThere(location.origin + '/start_game');
                     // window.location.href = "/success";
                 } else {
@@ -144,7 +145,7 @@ export default class extends AbstractView {
         return `
             <div id="app-child-login">
             <div id="container-login" class="container-s">
-			<h1>Have an account? Log in here</h1>
+			<h1 class="p-4">Have an account? Log in here</h1>
 			<div id="formdiv">
 				<form action="success" id="form" class="form-floating">
 					
@@ -157,7 +158,7 @@ export default class extends AbstractView {
                 <div id="passdiv" style="position:relative" class="form-floating mb-4">
                     <input type="password" class="form-control" name="password" id="pass" class="pass"
                         placeholder="8 symbols, uppercase, lowercase, digit, special character" required>
-                    <img src="public/eye_open.png" alt="oops" class="eye" id="passEye">
+                    <img src="../public/eye_open.png" alt="oops" class="eye" id="passEye">
                     <label for="pass" id="passlabel">Password:</label>
                 </div>
                 <div style="text-align: center;">
