@@ -91,7 +91,7 @@ export default class extends AbstractView {
         this.form.addEventListener('submit', async (e) => {
             e.preventDefault();
             try {
-                const response = await fetch(`${CONFIG.BASE_URL}/auth/signup/`, {
+                const response = await fetch(`${CONFIG.BASE_URL}/api/auth/signup/`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",

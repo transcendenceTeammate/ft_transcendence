@@ -90,7 +90,7 @@ export default class extends AbstractView {
             const name = this.login.value.trim();
             const password = this.pass.value.trim();
             try {
-                const response = await fetch(`${CONFIG.BASE_URL}/auth/login/`, {
+                const response = await fetch(`${CONFIG.BASE_URL}/api/auth/login/`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"

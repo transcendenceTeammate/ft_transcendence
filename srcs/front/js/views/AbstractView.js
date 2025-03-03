@@ -82,7 +82,7 @@ export default class AbstractView{
 		const accessToken = this.getCookie('access_token');
 	
 		try {
-			const response = await fetch(`${CONFIG.BASE_URL}/users/me/`, {
+			const response = await fetch(`${CONFIG.BASE_URL}/api/users/me/`, {
 				method: "GET",
 				headers: {
 					"Authorization": `Bearer ${accessToken}`,

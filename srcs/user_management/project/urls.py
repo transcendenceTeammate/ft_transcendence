@@ -9,8 +9,8 @@ urlpatterns = [
 	path('auth42/', views.auth42),
 
 	# Authentication
-	path('auth/signup/', views.signup),
-	path('auth/login/', views.login),
+	path('api/auth/signup/', views.signup),
+	path('api/auth/login/', views.login),
 
 	# Token
 	path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
@@ -18,7 +18,7 @@ urlpatterns = [
     path('check_username/', views.check_username, name='check_username'),
 
 	# User info
-	path('users/me', views.get_user_info),
+	path('api/users/me', views.get_user_info),
 
 	path('', views.index),
 	re_path(r'^.*$', views.index),
