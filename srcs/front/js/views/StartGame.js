@@ -15,19 +15,19 @@ export default class extends AbstractView {
         }
     }
 
-    async handleOldUser() {
-        if (AbstractView.newUser){
-            return
-        }
-        console.log('yeah its an old user gotta know their username!')
+    async welcomeUser() {
+        // if (AbstractView.newUser){
+        //     return
+        // }
+        // console.log('yeah its an old user gotta know their username!')
         await AbstractView.assignUsername();
         console.log(`And that username is: ${AbstractView.username}`)
     }
 
     async getHtml() {
-        await this.handleOldUser();
+        await this.welcomeUser();
        await this.loadElements();
-        console.log(`wtf is with the avatar in Abstract View? ${AbstractView.avatar}`)
+        // console.log(`wtf is with the avatar in Abstract View? ${AbstractView.avatar}`)
        
         return `
         <div id="app-child-start">` + 

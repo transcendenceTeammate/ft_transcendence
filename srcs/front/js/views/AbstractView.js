@@ -2,8 +2,8 @@ import CONFIG from "../config.js";
 
 export default class AbstractView{
     static username = null;
-    static avatar = "https://localhost:8443/public/avatars/default/peng_head_def.png"
-    static newUser = true;
+    // static avatar = "https://localhost:8443/public/avatars/default/peng_head_def.png"
+    // static newUser = true;
     constructor() {
 
     }
