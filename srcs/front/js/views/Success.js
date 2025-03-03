@@ -55,7 +55,7 @@ export default class extends AbstractView {
 		const accessToken = this.getCookie('access_token');
 	
 		try {
-			const response = await fetch("${CONFIG.BASE_URL}/api/users/me/", {
+			const response = await fetch(`${CONFIG.BASE_URL}/api/users/me/`, {
 				method: "GET",
 				headers: {
 					"Content-Type": "application/json",
