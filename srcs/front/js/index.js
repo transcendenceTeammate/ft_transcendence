@@ -7,6 +7,7 @@ import Avatar from "./views/Avatar.js";
 import StartGame from "./views/StartGame.js";
 import Profile from "./views/Profile.js";
 import AbstractView from "./views/AbstractView.js";
+import Game from "./views/Game.js"
 
 // const navigateTo = url => {
 //     history.pushState(null, null, url);
@@ -29,7 +30,8 @@ const router = async () => {
         { path: '/notfound', view: NotFound },
         { path: '/avatar', view: Avatar },
         { path: '/start_game', view: StartGame },
-        { path: '/profile', view: Profile }
+        { path: '/profile', view: Profile },
+        { path: '/game', view: Game}
 
     ];
 
