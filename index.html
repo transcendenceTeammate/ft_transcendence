@@ -1,88 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pong Game</title>
-    <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(90deg, #1a1a2e, #16213e, #1a1a2e);
-            color: white;
-            position: relative;
-            animation: gradientAnimation 10s ease infinite;
-        }
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Pong Game</title>
+	<style>
+		body {
+			font-family: 'Roboto', sans-serif;
+			text-align: center;
+			margin: 0;
+			padding: 0;
+			background: linear-gradient(90deg, #1a1a2e, #16213e, #1a1a2e);
+			color: white;
+			position: relative;
+			animation: gradientAnimation 10s ease infinite;
+		}
 
-        #closeButton {
-            position: absolute;
-            top: 40px;
-            right: 20px;
-            width: 40px;
-            height: 40px;
-            background-color: #e74c3c;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 26px;
-            font-weight: bold;
-            color: white;
-            cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-            user-select: none;
-            transition: all 0.3s ease;
-        }
+		#closeButton {
+			position: absolute;
+			top: 40px;
+			right: 20px;
+			width: 40px;
+			height: 40px;
+			background-color: #e74c3c;
+			border-radius: 50%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 26px;
+			font-weight: bold;
+			color: white;
+			cursor: pointer;
+			box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+			user-select: none;
+			transition: all 0.3s ease;
+		}
 
-        #closeButton:hover {
-            background-color: #c0392b;
-            transform: scale(1.1);
-        }
+		#closeButton:hover {
+			background-color: #c0392b;
+			transform: scale(1.1);
+		}
 
-        #gameContainer {
-            position: relative;
-            display: inline-block;
-            margin-top: 80px;
-        }
+		#gameContainer {
+			position: relative;
+			display: inline-block;
+			margin-top: 80px;
+		}
 
-        canvas {
-            background: #000;
-            display: block;
-            border-radius: 15px;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.7);
-            border: 2px solid #2c3e50;
-        }
+		canvas {
+			background: #000;
+			display: block;
+			border-radius: 15px;
+			box-shadow: 0 6px 12px rgba(0, 0, 0, 0.7);
+			border: 2px solid #2c3e50;
+		}
 
-        #scoreContainer {
-            font-size: 35px;
-            font-weight: 700;
-            color: #f39c12;
-            position: absolute;
-            top: -60px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            padding: 15px 30px;
-            border-radius: 15px;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
-            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6);
-        }
-    </style>
+		#scoreContainer {
+			font-size: 35px;
+			font-weight: 700;
+			color: #f39c12;
+			position: absolute;
+			top: -60px;
+			left: 50%;
+			transform: translateX(-50%);
+			background: rgba(0, 0, 0, 0.8);
+			padding: 15px 30px;
+			border-radius: 15px;
+			box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+			text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6);
+		}
+	</style>
 </head>
 <body>
 
-    <div id="closeButton">&times;</div>
+	<div id="closeButton">&times;</div>
 
-    <div id="gameContainer">
-        <div id="scoreContainer">
-            <span id="player1Score">0</span> - <span id="player2Score">0</span>
-        </div>
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
-    </div>
+	<div id="gameContainer">
+		<div id="scoreContainer">
+			<span id="player1Score">0</span> - <span id="player2Score">0</span>
+		</div>
+		<canvas id="gameCanvas" width="800" height="600"></canvas>
+	</div>
 
-    <script src="app.js"></script>
+	<script src="app.js"></script>
 
 </body>
 </html>
