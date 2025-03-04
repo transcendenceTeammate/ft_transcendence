@@ -1,6 +1,6 @@
 import AbstractView from "./AbstractView.js";
 
-export default class extends AbstractView {
+export default class StartGame extends AbstractView {
     constructor() {
         super();
         this.setTitle("StartGame");
@@ -9,24 +9,38 @@ export default class extends AbstractView {
     async loadElements() {
         try {
            
-            this.navbar = await super.getNavbar();
+            // this.navbar = await super.getNavbar();
+            this.buttonOne = await super.loadElement('bigButton1')
+            this.waitingModal = await super.loadElement('waiting_modal')
+            this.playButton = await super.loadElement("playbutton");
+           
         } catch (e) {
             console.log(e);
         }
     }
 
     async welcomeUser() {
-        // if (AbstractView.newUser){
-        //     return
-        // }
-        // console.log('yeah its an old user gotta know their username!')
         await AbstractView.assignUsername();
         console.log(`And that username is: ${AbstractView.username}`)
     }
 
+    async attachAllJs(){
+        await this.loadElements();
+        this.playButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('wut?? not adding the event listener?');
+            document.body.classList.remove('modal-open');
+            document.body.style=""
+            takeMeThere(location.origin + '/game')
+           })
+    }
+
     async getHtml() {
-        await this.welcomeUser();
-       await this.loadElements();
+        this.navbar = await super.getNavbar();
+        // await this.welcomeUser();
+   
+    this.attachAllJs(); 
+       
         // console.log(`wtf is with the avatar in Abstract View? ${AbstractView.avatar}`)
        
         return `
@@ -115,7 +129,7 @@ export default class extends AbstractView {
                         <div class="row my-3 p-4">
                             <div class="col-8 offset-2">
                                 <div class="d-grid gap-2">
-                                    <button class="btn btn-lg p-3 rounded-pill orangie fw-bold orangie startpage-btn" type="button">PLAY</button>
+                                    <button class="btn btn-lg p-3 rounded-pill orangie fw-bold orangie startpage-btn" type="button" id="playbutton">PLAY</button>
                                 </div>
                             </div>
                         </div>
@@ -165,7 +179,7 @@ export default class extends AbstractView {
     `<main class="container mt-5" id="start-main">
         <div class="col-10 offset-1 d-flex flex-column  justify-content-center" id="startPageButtonDiv">
             <button class="btn btn-light btn-lg d-block my-5 py-4 startpage-btn" data-bs-toggle="modal"
-                data-bs-target="#play_game_div">PLAY GAME</button>
+                data-bs-target="#play_game_div" id='bigButton1'>PLAY GAME</button>
             <button type="button" class="btn btn-light btn-lg d-block my-5 py-4 startpage-btn" data-bs-toggle="modal"
                 data-bs-target="#create_join_div">PLAY TOURNAMENT</button>
         </div>

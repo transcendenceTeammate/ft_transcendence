@@ -2,7 +2,7 @@ import CONFIG from "../config.js";
 
 export default class AbstractView{
     static username = null;
-    // static avatar = "https://localhost:8443/public/avatars/default/peng_head_def.png"
+    static avatar = null;
     // static newUser = true;
     constructor() {
 
@@ -19,6 +19,8 @@ export default class AbstractView{
                 let elem = document.getElementById(selector);
                 if (elem) { 
                     clearInterval(checkExist);
+                    console.log("element loaded!!")
+                    console.dir(elem)
                     resolve(elem);
                 }
             }, 100);
@@ -126,8 +128,8 @@ export default class AbstractView{
     }
 
     async getNavbar() {
-        console.log('wtf is with the avatar?' + AbstractView.avatar)
-        console.log(`wtf is with the username? ${AbstractView.username}`)
+        // console.log('wtf is with the avatar?' + AbstractView.avatar)
+        // console.log(`wtf is with the username? ${AbstractView.username}`)
         return `
         <nav class="navbar navbar-expand-lg bg-body-tertiary">
         <div class="container-fluid">
