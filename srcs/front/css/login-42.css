@@ -43,7 +43,7 @@
     position: relative;
 }
 
-#ball {
+#ball-game {
     background-color: #780000;
     height: clamp(10px, 2.8vw, 3.5rem);
     width: clamp(10px, 2.8vw, 3.5rem);

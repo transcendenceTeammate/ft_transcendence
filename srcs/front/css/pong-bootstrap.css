@@ -16,7 +16,7 @@ body {
     /* position: absolute; */
 }
 
-#row {
+#row-game {
     
     border-width: 5px !important;
 }
@@ -55,7 +55,7 @@ body {
 
 }
 
-#ball {
+#ball-game {
     background-color: #9a031e;
     height: 2.3rem;
     width: 2.3rem;
