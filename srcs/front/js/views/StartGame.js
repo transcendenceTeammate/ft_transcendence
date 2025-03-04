@@ -29,8 +29,8 @@ export default class StartGame extends AbstractView {
         this.playButton.addEventListener('click', (e) => {
             e.preventDefault();
             console.log('wut?? not adding the event listener?');
-            document.body.classList.remove('modal-open');
-            document.body.style=""
+            // document.body.classList.remove('modal-open');
+            // document.body.style=""
             takeMeThere(location.origin + '/game')
            })
     }
@@ -129,7 +129,7 @@ export default class StartGame extends AbstractView {
                         <div class="row my-3 p-4">
                             <div class="col-8 offset-2">
                                 <div class="d-grid gap-2">
-                                    <button class="btn btn-lg p-3 rounded-pill orangie fw-bold orangie startpage-btn" type="button" id="playbutton">PLAY</button>
+                                    <button class="btn btn-lg p-3 rounded-pill orangie fw-bold orangie startpage-btn" type="button" id="playbutton" data-bs-dismiss="modal">PLAY</button>
                                 </div>
                             </div>
                         </div>
