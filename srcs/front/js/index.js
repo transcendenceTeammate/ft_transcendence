@@ -103,5 +103,3 @@ document.addEventListener("DOMContentLoaded", () => {
 	// console.log('hello from DOMcontentloaded just before calling the router!!!!')
 	router();
 });
-
-
