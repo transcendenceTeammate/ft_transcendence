@@ -13,6 +13,9 @@ export default class extends AbstractView {
             this.usernameButton = await super.loadElement('usernameButton');
             this.unameInput = await super.loadElement('unameInput')
             this.uname = await super.loadElement('uname');
+            this.upload = await super.loadElement('upload');
+            this.userpic = await super.loadElement('userpic')
+            this.change_avatar_modal = await super.loadElement('change_avatar_div')
 
         } catch (e) {
             console.log(e);
@@ -35,19 +38,78 @@ export default class extends AbstractView {
             usernameForm.classList.add('d-none');
             usernameHeading.classList.remove('d-none');
         })
+
+        this.upload.addEventListener('change', (event) => {
+            event.preventDefault();
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                 
+                    userpic.src = e.target.result;
+                    document.activeElement.blur();
+                    console.dir(this.change_avatar_modal)
+                    const modalInstance = bootstrap.Modal.getInstance(this.change_avatar_modal);
+                    if (modalInstance) {
+                        
+                        modalInstance.hide();
+                      
+                    } else {
+                        console.warn("Modal instance not found!");
+                    }   
+                };
+                reader.readAsDataURL(file);
+
+            }
+
+        })
     }
 
     async getHtml() {
         this.navbar = await super.getNavbar();
        this.attachAllJs();
 
-        return `<div id="app-child-profile">` + this.navbar +
+        return `<div id="app-child-profile">` 
+        + `
+        <div class="modal" tabindex="-1" id="change_avatar_div">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Upload new avatar</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div>
+                        <input class="form-control form-control-lg" id="upload" type="file">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+        ` 
+        + this.navbar +
             `
                 <main class="container mt-5">
         <div class="row">
             <div class="col-6 offset-2 mt-3">
                 <div class="card" style="width: 30rem;">
-                    <img src="${AbstractView.avatar}" class="card-img-top" alt="Profile picture">
+                    <div class="position-relative">
+                        <span class="position-absolute bottom-0 end-0 p-2 bg-light border border-light rounded-pill"
+                            id="editPhotoSpan">
+                            <a class="icon-link link-dark px-1" role="button" data-bs-toggle="modal"
+                                data-bs-target="#change_avatar_div" data-bs-title="Edit profile pic">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                    class="bi bi-camera" viewBox="0 0 16 16">
+                                    <path
+                                        d="M15 12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1.172a3 3 0 0 0 2.12-.879l.83-.828A1 1 0 0 1 6.827 3h2.344a1 1 0 0 1 .707.293l.828.828A3 3 0 0 0 12.828 5H14a1 1 0 0 1 1 1zM2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4z" />
+                                    <path
+                                        d="M8 11a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5m0 1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7M3 6.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0" />
+                                </svg>
+                            </a>
+                        </span>
+                        <img src="../public/avatars/Heine/Heine_playing.webp" class="card-img-top" alt="..."
+                            id="userpic">
+                    </div>
                     <div class="card-body">
                         <div class="d-none" id="usernameForm">
                             <div class="input-group mb-1">
