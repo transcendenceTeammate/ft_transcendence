@@ -89,7 +89,9 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function (e) {
+                    console.log('inside onload function')
                     const dropZone = document.querySelector('.drop-zone');
+                    console.dir(dropZone)
                     dropZone.innerHTML = `<img src="${e.target.result}" alt="Uploaded Avatar">`;
                 };
                 reader.readAsDataURL(file);
