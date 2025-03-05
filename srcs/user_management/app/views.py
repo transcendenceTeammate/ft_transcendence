@@ -73,13 +73,14 @@ def signup(request):
 	serializer = UserSerializer(data=request.data)
 	if serializer.is_valid():
 		user = serializer.save()
-		UserType.objects.create(user=user, user_type="PENG")
+
+		user_type_instance = UserType.objects.get(user=user)
 
 		access_token = AccessToken.for_user(user)
 
 		response = Response({
-			"user": serializer.data,
-			"user_type": user_type
+			"user": serializer.data.get('username'),
+			"user_type": user_type_instance.user_type
 		})
 
 		response.set_cookie('access_token', str(access_token), httponly=False, secure=False, samesite='Lax')
