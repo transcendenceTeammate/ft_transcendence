@@ -13,6 +13,21 @@
 </head>
 
 <body class="d-flex flex-column vh-100" id="body-profile">
+    <div class="modal" tabindex="-1" id="change_avatar_div">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Upload new avatar</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div>
+                        <input class="form-control form-control-lg" id="upload" type="file">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <nav class="navbar navbar-expand-lg bg-body-tertiary">
         <div class="container-fluid">
             <a class="navbar-brand" href="#"><span id="st-peng">Peng</span><span id="st-pong">Pong</span></a>
@@ -26,11 +41,7 @@
                         <a class="nav-link active" aria-current="page" href="#">My profile</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">All players</a> <!-- <div class="card-body">
-
-                            <a href="#" class="card-link">Edit</a>
-                            <a href="#" class="card-link">Log out</a>
-                        </div> -->
+                        <a class="nav-link" href="#">All players</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#">Smth else</a>
@@ -52,8 +63,8 @@
                     <div class="position-relative">
                         <span class="position-absolute bottom-0 end-0 p-2 bg-light border border-light rounded-pill"
                             id="editPhotoSpan">
-                            <a class="icon-link link-dark px-1" role="button" href="#" data-bs-toggle="tooltip"
-                                data-bs-placement="bottom" data-bs-title="Edit profile pic">
+                            <a class="icon-link link-dark px-1" role="button" data-bs-toggle="modal"
+                                data-bs-target="#change_avatar_div" data-bs-title="Edit profile pic">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                     class="bi bi-camera" viewBox="0 0 16 16">
                                     <path
@@ -63,15 +74,16 @@
                                 </svg>
                             </a>
                         </span>
-                        <img src="../public/avatars/Heine/Heine_playing.webp" class="card-img-top" alt="...">
+                        <img src="../public/avatars/Heine/Heine_playing.webp" class="card-img-top" alt="..."
+                            id="userpic">
                     </div>
                     <div class="card-body">
                         <div class="d-none" id="usernameForm">
                             <div class="input-group mb-1">
-                                <input type="text" class="form-control" 
-                                    aria-label="change username" value='Steampunk penguin' id='unameInput' required>
+                                <input type="text" class="form-control" aria-label="change username"
+                                    value='Steampunk penguin' id='unameInput' required>
                                 <button class="btn btn-outline-secondary" type="button"
-                                 id="usernameButton">Submit</button>
+                                    id="usernameButton">Submit</button>
                             </div>
                         </div>
                         <div id="usernameHeading">
@@ -159,6 +171,9 @@
         const usernameButton = document.getElementById('usernameButton');
         const unameInput = document.getElementById('unameInput')
         const uname = document.getElementById('uname');
+        const upload = document.getElementById('upload');
+        const userpic = document.getElementById('userpic')
+        const change_avatar_modal = document.getElementById('change_avatar_div')
 
         pencil.addEventListener('click', (e) => {
             e.preventDefault();
@@ -169,9 +184,35 @@
         usernameButton.addEventListener('click', (e) => {
             e.preventDefault();
             uname.textContent = unameInput.value;
-           
+
             usernameForm.classList.add('d-none');
             usernameHeading.classList.remove('d-none');
+
+        })
+
+        upload.addEventListener('change', (event) => {
+            event.preventDefault();
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                 
+                    userpic.src = e.target.result;
+                    // document.activeElement.blur();
+                    document.body.focus();
+                    const modalInstance = bootstrap.Modal.getInstance(change_avatar_modal);
+                    if (modalInstance) {
+                        
+                        modalInstance.hide();
+                      
+                    } else {
+                        console.warn("Modal instance not found!");
+                    }
+                   
+                };
+                reader.readAsDataURL(file);
+
+            }
 
         })
     </script>
