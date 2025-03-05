@@ -2,7 +2,7 @@ import CONFIG from "../config.js";
 
 export default class AbstractView{
     static username = null;
-    static avatar = null;
+    static avatar = '../../public/avatars/bro/bro_playing.webp';
     // static newUser = true;
     constructor() {
 
