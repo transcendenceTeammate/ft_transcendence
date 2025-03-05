@@ -10,7 +10,7 @@ export $(grep -v '^#' .env | xargs)
 
 # Run makemigrations and migrate
 echo "Running makemigrations..."
-python manage.py makemigrations
+python manage.py makemigrations app
 
 echo "Running migrate..."
 python manage.py migrate
