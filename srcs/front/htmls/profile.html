@@ -198,8 +198,7 @@
                 reader.onload = (e) => {
                  
                     userpic.src = e.target.result;
-                    // document.activeElement.blur();
-                    document.body.focus();
+                    document.activeElement.blur();
                     const modalInstance = bootstrap.Modal.getInstance(change_avatar_modal);
                     if (modalInstance) {
                         
@@ -207,8 +206,7 @@
                       
                     } else {
                         console.warn("Modal instance not found!");
-                    }
-                   
+                    }   
                 };
                 reader.readAsDataURL(file);
 
