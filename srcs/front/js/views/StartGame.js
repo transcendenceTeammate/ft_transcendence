@@ -8,12 +8,10 @@ export default class StartGame extends AbstractView {
 
     async loadElements() {
         try {
-           
-            // this.navbar = await super.getNavbar();
             this.buttonOne = await super.loadElement('bigButton1')
             this.waitingModal = await super.loadElement('waiting_modal')
             this.playButton = await super.loadElement("playbutton");
-           
+
         } catch (e) {
             console.log(e);
         }
@@ -24,28 +22,25 @@ export default class StartGame extends AbstractView {
         console.log(`And that username is: ${AbstractView.username}`)
     }
 
-    async attachAllJs(){
+    async attachAllJs() {
         await this.loadElements();
         this.playButton.addEventListener('click', (e) => {
             e.preventDefault();
             console.log('wut?? not adding the event listener?');
-            // document.body.classList.remove('modal-open');
-            // document.body.style=""
             takeMeThere(location.origin + '/game')
-           })
+        })
     }
 
     async getHtml() {
         this.navbar = await super.getNavbar();
-        // await this.welcomeUser();
-   
-    this.attachAllJs(); 
-       
+
+        this.attachAllJs();
+
         // console.log(`wtf is with the avatar in Abstract View? ${AbstractView.avatar}`)
-       
+
         return `
-        <div id="app-child-start">` + 
-        `<div class="modal" tabindex="-1" id="waiting_modal">
+        <div id="app-child-start">` +
+            `<div class="modal" tabindex="-1" id="waiting_modal">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border border-black border-5 rounded-0" >
                 <div class="modal-header">
@@ -172,11 +167,11 @@ export default class StartGame extends AbstractView {
         </div>
     </div>
         ` +
-        
-        this.navbar +
-        
-       
-    `<main class="container mt-5" id="start-main">
+
+            this.navbar +
+
+
+            `<main class="container mt-5" id="start-main">
         <div class="col-10 offset-1 d-flex flex-column  justify-content-center" id="startPageButtonDiv">
             <button class="btn btn-light btn-lg d-block my-5 py-4 startpage-btn" data-bs-toggle="modal"
                 data-bs-target="#play_game_div" id='bigButton1'>PLAY GAME</button>
