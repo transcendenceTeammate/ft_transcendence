@@ -69,17 +69,16 @@ def login(request):
 def signup(request):
 	if User.objects.filter(username=request.data['username']).exists():
 		return Response({"error": "Username already exists"}, status=status.HTTP_400_BAD_REQUEST)
-
+	request.data['user_type'] = "PENG"
 	serializer = UserSerializer(data=request.data)
+
 	if serializer.is_valid():
 		user = serializer.save()
-		user_type = user.user_type.user_type
 
 		access_token = AccessToken.for_user(user)
 
 		response = Response({
 			"user": serializer.data,
-			"user_type": user_type
 		})
 
 		response.set_cookie('access_token', str(access_token), httponly=False, secure=False, samesite='Lax')
