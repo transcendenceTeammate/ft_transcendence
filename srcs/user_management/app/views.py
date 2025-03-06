@@ -70,6 +70,7 @@ def signup(request):
 	if User.objects.filter(username=request.data['username']).exists():
 		return Response({"error": "Username already exists"}, status=status.HTTP_400_BAD_REQUEST)
 
+	request.data['user_type'] = "PENG"
 	serializer = UserSerializer(data=request.data)
 	if serializer.is_valid():
 		user = serializer.save()
