@@ -100,7 +100,7 @@ export default class extends AbstractView {
                     },
                     body: JSON.stringify({ 
                         username: this.login.value, 
-                        password: this.pass.value 
+                        password: this.pass.value,
                     }),
                     credentials: "include"
                 });
