@@ -97,6 +97,20 @@ def generate_random_password(length=12):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+def oauth_redirect_uri(request):
+	load_dotenv()
+	client_id = os.getenv('CLIENT_ID')
+	redirect_uri = 'http://localhost:8000/auth42/'
+	query = urlencode({
+		'client_id': client_id,
+		'redirect_uri': redirect_uri,
+		'response_type': 'code',
+	})
+	url = f'https://api.intra.42.fr/oauth/authorize?{query}'
+	return HttpResponseRedirect(url)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def auth42(request):
 	code = request.GET.get('code')
 	if not code:
@@ -126,7 +140,7 @@ def auth42(request):
 
 	user_data = user_response.json()
 	username = user_data.get('login')
-
+	user_type = '42'
 	user = User.objects.filter(username=username).first()
 	
 	if user:
@@ -142,6 +156,7 @@ def auth42(request):
 
 	serializer = UserSerializer(instance=user)
 
+	response = Response(serializer.data)
 	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.localhost')
 
 	return response
