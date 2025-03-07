@@ -44,19 +44,10 @@ MIDDLEWARE = [
 	# 'corsheaders.middleware.CorsMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "https://localhost:8443",
-    "https://127.0.0.1:8443",
-    "https://localhost:8000",
-    "https://127.0.0.1:8000",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000"
-    "localhost",
-    "https://localhost",
-    "http://localhost"
-]
+# CORS_ALLOWED_ORIGINS = [
+# ]
 
-CORS_ALLOW_CREDENTIALS = True
+# CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'project.urls'
 
