@@ -17,88 +17,89 @@ import Game from "./views/Game.js"
 // }
 
 window.takeMeThere = function (url) {
-    history.pushState(null, null, url);
-    router();
+	history.pushState(null, null, url);
+	router();
 }
 
 const router = async () => {
-    const routes = [
-        { path: '/', view: Accueil },
-        { path: '/login', view: Login },
-        { path: '/signup', view: Signup },
-        { path: '/success', view: Success },
-        { path: '/notfound', view: NotFound },
-        { path: '/start_game', view: StartGame },
-        { path: '/profile', view: Profile },
-        { path: '/game', view: Game}
+	const routes = [
+		{ path: '/', view: Accueil },
+		{ path: '/login', view: Login },
+		{ path: '/signup', view: Signup },
+		{ path: '/success', view: Success },
+		{ path: '/notfound', view: NotFound },
+		{ path: '/start_game', view: StartGame },
+		{ path: '/profile', view: Profile },
+		{ path: '/game', view: Game}
 
-    ];
+	];
 
-    // const potentialMatches = routes.map(route => {
-    //     return {
-    //         route: route,
-    //         isMatch: location.pathname === route.path
-    //     }
-    // })
+	// const potentialMatches = routes.map(route => {
+	//     return {
+	//         route: route,
+	//         isMatch: location.pathname === route.path
+	//     }
+	// })
 
-    // let match = potentialMatches.find(potentialMatch => potentialMatch.isMatch)
+	// let match = potentialMatches.find(potentialMatch => potentialMatch.isMatch)
 
-    let match = routes.find(route => location.pathname === route.path )
-    console.log('hello from router!! Match is:')
-    console.dir(match)
+	let match = routes.find(route => location.pathname === route.path )
+	console.log('hello from router!! Match is:')
+	console.dir(match)
 
-    if (!match) {
-        console.log('no match!');
-        match = {
-            route: routes[4],
-            isMatch: true
-        };
-    }
+	if (!match) {
+		console.log('no match!');
+		match = {
+			route: routes[4],
+			isMatch: true
+		};
+	}
 
-    // let accessibleToAll = match.route.path === '/' || match.route.path === '/login' || match.route.path === '/signup' || match.route.path === '/notfound'
-    // if (accessibleToAll) {
-    //     const view = new match.route.view();
+	// let accessibleToAll = match.route.path === '/' || match.route.path === '/login' || match.route.path === '/signup' || match.route.path === '/notfound'
+	// if (accessibleToAll) {
+	//     const view = new match.route.view();
 
-    //     document.querySelector("#app").innerHTML = await view.getHtml();
-    //     Accueil.accessDenied = false;   
-    //     return;
-    // }
+	//     document.querySelector("#app").innerHTML = await view.getHtml();
+	//     Accueil.accessDenied = false;   
+	//     return;
+	// }
 
 
-    // let isAuthenticated = await AbstractView.isAuthenticated();
-    // if (!isAuthenticated) {
-    //     Accueil.accessDenied = true;
-    //     return takeMeThere(location.origin + '/')
+	// let isAuthenticated = await AbstractView.isAuthenticated();
+	// if (!isAuthenticated) {
+	//     Accueil.accessDenied = true;
+	//     return takeMeThere(location.origin + '/')
 
-    // } else Accueil.accessDenied = false;
+	// } else Accueil.accessDenied = false;
 
-    const view = new match.view();
+	const view = new match.view();
 
-    document.querySelector("#app").innerHTML = await view.getHtml();
+	document.querySelector("#app").innerHTML = await view.getHtml();
+
+	view.onLoaded();
+	
 }
 
 window.addEventListener("popstate", () => {
-    router();
+	router();
 });
 
 
 document.addEventListener("DOMContentLoaded", () => {
 
-    document.body.addEventListener("click", e => {
+	document.body.addEventListener("click", e => {
 
-        if (e.target.matches("[data-link]")) {
+		if (e.target.matches("[data-link]")) {
 
 
-            e.preventDefault();
-            console.log(`does e.target match href? ${e.target.matches('[href]')}`)
-            // console.log(`does e.target match datalink? ${e.target.matches('data-link')}`)
-            if (!e.target.matches('[href]')) takeMeThere(e.target.parentElement.href)
-            else takeMeThere(e.target.href)
-            // navigateTo(e.target.href);
-        }
-    })
-    // console.log('hello from DOMcontentloaded just before calling the router!!!!')
-    router();
+			e.preventDefault();
+			console.log(`does e.target match href? ${e.target.matches('[href]')}`)
+			// console.log(`does e.target match datalink? ${e.target.matches('data-link')}`)
+			if (!e.target.matches('[href]')) takeMeThere(e.target.parentElement.href)
+			else takeMeThere(e.target.href)
+			// navigateTo(e.target.href);
+		}
+	})
+	// console.log('hello from DOMcontentloaded just before calling the router!!!!')
+	router();
 });
-
-
