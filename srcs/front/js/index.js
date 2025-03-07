@@ -22,6 +22,7 @@ window.takeMeThere = function (url) {
 }
 
 const router = async () => {
+
 	const routes = [
 		{ path: '/', view: Accueil },
 		{ path: '/login', view: Login },
@@ -34,15 +35,6 @@ const router = async () => {
 
 	];
 
-	// const potentialMatches = routes.map(route => {
-	//     return {
-	//         route: route,
-	//         isMatch: location.pathname === route.path
-	//     }
-	// })
-
-	// let match = potentialMatches.find(potentialMatch => potentialMatch.isMatch)
-
 	let match = routes.find(route => location.pathname === route.path )
 	console.log('hello from router!! Match is:')
 	console.dir(match)
@@ -54,24 +46,6 @@ const router = async () => {
 			isMatch: true
 		};
 	}
-
-	// let accessibleToAll = match.route.path === '/' || match.route.path === '/login' || match.route.path === '/signup' || match.route.path === '/notfound'
-	// if (accessibleToAll) {
-	//     const view = new match.route.view();
-
-	//     document.querySelector("#app").innerHTML = await view.getHtml();
-	//     Accueil.accessDenied = false;   
-	//     return;
-	// }
-
-
-	// let isAuthenticated = await AbstractView.isAuthenticated();
-	// if (!isAuthenticated) {
-	//     Accueil.accessDenied = true;
-	//     return takeMeThere(location.origin + '/')
-
-	// } else Accueil.accessDenied = false;
-
 	const view = new match.view();
 
 	document.querySelector("#app").innerHTML = await view.getHtml();

@@ -61,7 +61,7 @@ def login(request):
 	response = Response({
 		"user": serializer.data
 	})
-	response.set_cookie('access_token', str(access_token), httponly=False, secure=False, samesite='Lax') # httponly=True, secure=True
+	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.localhost') # httponly=True, secure=True
 	return response
 
 @api_view(['POST'])
@@ -83,9 +83,7 @@ def signup(request):
 			"user": serializer.data.get('username'),
 			"user_type": user_type_instance.user_type
 		})
-
-		response.set_cookie('access_token', str(access_token), httponly=False, secure=False, samesite='Lax')
-
+		response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.localhost')
 		return response
 
 	return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

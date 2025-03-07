@@ -24,15 +24,15 @@ services:
       context: ./srcs/nginx
       dockerfile: Dockerfile
     ports:
-      - "8443:443"
+      - "443:443"
     depends_on:
-      - user_management
-      - pong_game
+      - user-management
+      - pong-game
     volumes:
       - ./srcs/front:/etc/frontend
       - ./srcs/nginx/ssl:/etc/nginx/ssl
 
-  user_management:
+  user-management:
     build:
       context: ./srcs/user_management
       dockerfile: Dockerfile
@@ -43,8 +43,6 @@ services:
       - .env
     volumes:
       - ./srcs/nginx/ssl:/etc/ssl
-    ports:
-      - "8000:8000"
     command: python manage.py runserver 0.0.0.0:8000
     healthcheck:
       test: ["CMD", "curl", "-f", "https://localhost:8000"]
@@ -52,7 +50,7 @@ services:
       timeout: 10s
       retries: 3
 
-  pong_game:
+  pong-game:
     build:
       context: ./srcs/pong_game
       dockerfile: Dockerfile
@@ -62,16 +60,14 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    ports:
-      - "8001:8000"
 
-  cli_game:
+  cli-game:
     build:
       context: ./srcs/cli_game
       dockerfile: Dockerfile
     container_name: cli-game
     depends_on:
-      - user_management
+      - user-management
     stdin_open: true
     tty: true
 

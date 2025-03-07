@@ -31,7 +31,7 @@ export default class extends AbstractView {
 		}
 		console.log("Access token found:", accessToken);
 		try {
-			const response = await fetch(`${CONFIG.BASE_URL}/api/token/verify/`, {
+			const response = await fetch(`${CONFIG.API_URL}/api/token/verify/`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -55,7 +55,7 @@ export default class extends AbstractView {
 		const accessToken = this.getCookie('access_token');
 	
 		try {
-			const response = await fetch(`${CONFIG.BASE_URL}/api/users/me/`, {
+			const response = await fetch(`${CONFIG.API_URL}/api/users/me/`, {
 				method: "GET",
 				headers: {
 					"Content-Type": "application/json",

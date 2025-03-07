@@ -12,6 +12,7 @@ RUN mkdir -p /etc/nginx/ssl
 # certificates will be generated at runtime in the entrypoint if needed
 
 COPY conf/default.conf /etc/nginx/conf.d/default.conf
+COPY conf/snippets /etc/nginx/snippets
 COPY conf/nginx.conf /etc/nginx/nginx.conf
 COPY entrypoint.sh /entrypoint.sh
 

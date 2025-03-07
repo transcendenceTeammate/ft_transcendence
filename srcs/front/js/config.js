@@ -1,5 +1,6 @@
 const CONFIG = {
-	BASE_URL: "http://localhost:8000",
+	BASE_URL: "https://app.localhost",
+	API_URL: "https://api.app.localhost"
 };
 
 export default CONFIG;
