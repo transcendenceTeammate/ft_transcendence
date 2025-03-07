@@ -7,14 +7,7 @@ import Avatar from "./views/Avatar.js";
 import StartGame from "./views/StartGame.js";
 import Profile from "./views/Profile.js";
 import AbstractView from "./views/AbstractView.js";
-import Game from "./views/Game.js"
-
-// const navigateTo = url => {
-//     history.pushState(null, null, url);
-//     console.log(`location pathname: ${location.pathname}`)
-//     console.log(`url: ${url}`)
-//     router();
-// }
+import Game from "./views/Game.js";
 
 window.takeMeThere = function (url) {
 	history.pushState(null, null, url);

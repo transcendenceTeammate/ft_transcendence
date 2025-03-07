@@ -33,10 +33,7 @@ export default class StartGame extends AbstractView {
 
     async getHtml() {
         this.navbar = await super.getNavbar();
-
         this.attachAllJs();
-
-        // console.log(`wtf is with the avatar in Abstract View? ${AbstractView.avatar}`)
 
         return `
         <div id="app-child-start">` +
