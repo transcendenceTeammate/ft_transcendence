@@ -41,10 +41,32 @@ const router = async () => {
 	}
 	const view = new match.view();
 
-	document.querySelector("#app").innerHTML = await view.getHtml();
 
-	view.onLoaded();
+
+
 	
+        let accessibleToAll = match.route.path === '/' || match.route.path === '/login' || match.route.path === '/signup' || match.route.path === '/notfound'
+        if (accessibleToAll) {
+            
+
+            document.querySelector("#app").innerHTML = await view.getHtml();
+            Accueil.accessDenied = false;   
+			view.onLoaded();
+            return;
+        }
+
+
+        let isAuthenticated = await AbstractView.isAuthenticated();
+        if (!isAuthenticated) {
+            Accueil.accessDenied = true;
+            return takeMeThere(location.origin + '/')
+
+        } else Accueil.accessDenied = false;
+
+
+
+    document.querySelector("#app").innerHTML = await view.getHtml();
+	view.onLoaded();
 }
 
 window.addEventListener("popstate", () => {
