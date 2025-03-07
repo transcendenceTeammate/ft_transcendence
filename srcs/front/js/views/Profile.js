@@ -15,7 +15,8 @@ export default class extends AbstractView {
             this.uname = await super.loadElement('uname');
             this.upload = await super.loadElement('upload');
             this.userpic = await super.loadElement('userpic')
-            this.change_avatar_modal = await super.loadElement('change_avatar_div')
+            this.change_avatar_modal = await super.loadElement('change_avatar_div');
+            // this.backdrops = await super.loadAllElements('modal-backdrop')
 
         } catch (e) {
             console.log(e);
@@ -49,14 +50,19 @@ export default class extends AbstractView {
                     userpic.src = e.target.result;
                     document.activeElement.blur();
                     console.dir(this.change_avatar_modal)
-                    const modalInstance = bootstrap.Modal.getInstance(this.change_avatar_modal);
-                    if (modalInstance) {
+                    setTimeout(() => {
+                        Modal.getOrCreateInstance(this.change_avatar_modal).hide();
+                    }, 50);
+                    // window.modalInstance = new bootstrap.Modal(this.change_avatar_modal);
+                    // if (window.modalInstance) {
+                    //     document.body.classList.remove('modal-open');
                         
-                        modalInstance.hide();
+                    //     window.modalInstance.hide();
+                    //     window.modalInstance.dispose();
                       
-                    } else {
-                        console.warn("Modal instance not found!");
-                    }   
+                    // } else {
+                    //     console.warn("Modal instance not found!");
+                    // }   
                 };
                 reader.readAsDataURL(file);
 
