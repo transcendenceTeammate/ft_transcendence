@@ -40,6 +40,10 @@ export default class extends AbstractView {
             usernameHeading.classList.remove('d-none');
         })
 
+        // this.change_avatar_modal.addEventListener('shown.bs.modal', () => {
+        //     // myInput.focus()
+        //   })
+
         this.upload.addEventListener('change', (event) => {
             event.preventDefault();
             const file = event.target.files[0];
@@ -47,18 +51,37 @@ export default class extends AbstractView {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                  
-                    userpic.src = e.target.result;
+                    this.userpic.src = e.target.result;
                     document.activeElement.blur();
-                    console.dir(this.change_avatar_modal)
-                    setTimeout(() => {
-                        Modal.getOrCreateInstance(this.change_avatar_modal).hide();
-                    }, 50);
-                    // window.modalInstance = new bootstrap.Modal(this.change_avatar_modal);
-                    // if (window.modalInstance) {
-                    //     document.body.classList.remove('modal-open');
-                        
-                    //     window.modalInstance.hide();
-                    //     window.modalInstance.dispose();
+
+                    // const modalElement = document.querySelector(".modal.show");
+                    // if (modalElement) {
+                    //     modalElement.classList.remove("show");
+                    //     modalElement.style.display = "none";
+                    //     document.body.classList.remove("modal-open");
+                    
+                    //     // Remove any existing modal backdrop
+                    //     const backdrop = document.querySelector(".modal-backdrop");
+                    //     if (backdrop) {
+                    //         backdrop.remove();
+                    //     }
+                    // }
+
+                    // bootstrap.Modal.remove()
+                    // setTimeout(() => {
+                    // }, 50);
+                    console.dir(bootstrap.Modal)
+                    const modalInstance = bootstrap.Modal.getOrCreateInstance(this.change_avatar_modal);
+                    console.dir(modalInstance);
+                    modalInstance.hide();
+
+                    // bootstrap.Modal.prototype._hideModal()
+                    // const modalInstance = new bootstrap.Modal(this.change_avatar_modal);
+                    // if (modalInstance) {
+                    //     // document.body.classList.remove('modal-open');
+                    //     console.log('modal instance there!!!')
+                    //     modalInstance.hide();
+                    //     modalInstance.dispose();
                       
                     // } else {
                     //     console.warn("Modal instance not found!");
