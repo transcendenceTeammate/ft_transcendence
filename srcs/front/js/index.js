@@ -34,25 +34,12 @@ const router = async () => {
 
     ];
 
-    // const potentialMatches = routes.map(route => {
-    //     return {
-    //         route: route,
-    //         isMatch: location.pathname === route.path
-    //     }
-    // })
 
-    // let match = potentialMatches.find(potentialMatch => potentialMatch.isMatch)
-
-    let match = routes.find(route => location.pathname === route.path )
-    console.log('hello from router!! Match is:')
-    console.dir(match)
-
-    if (!match) {
+    let route = routes.find(route => location.pathname === route.path)
+  
+    if (!route) {
         console.log('no match!');
-        match = {
-            route: routes[4],
-            isMatch: true
-        };
+        route = routes[4]
     }
 
     // let accessibleToAll = match.route.path === '/' || match.route.path === '/login' || match.route.path === '/signup' || match.route.path === '/notfound'
@@ -72,7 +59,7 @@ const router = async () => {
 
     // } else Accueil.accessDenied = false;
 
-    const view = new match.view();
+    const view = new route.view();
 
     document.querySelector("#app").innerHTML = await view.getHtml();
 }
