@@ -48,22 +48,22 @@ const router = async () => {
         };
     }
 
-    // let accessibleToAll = match.route.path === '/' || match.route.path === '/login' || match.route.path === '/signup' || match.route.path === '/notfound'
-    // if (accessibleToAll) {
-    //     const view = new match.route.view();
+        let accessibleToAll = match.route.path === '/' || match.route.path === '/login' || match.route.path === '/signup' || match.route.path === '/notfound'
+        if (accessibleToAll) {
+            const view = new match.route.view();
 
-    //     document.querySelector("#app").innerHTML = await view.getHtml();
-    //     Accueil.accessDenied = false;   
-    //     return;
-    // }
+            document.querySelector("#app").innerHTML = await view.getHtml();
+            Accueil.accessDenied = false;   
+            return;
+        }
 
 
-    // let isAuthenticated = await AbstractView.isAuthenticated();
-    // if (!isAuthenticated) {
-    //     Accueil.accessDenied = true;
-    //     return takeMeThere(location.origin + '/')
+        let isAuthenticated = await AbstractView.isAuthenticated();
+        if (!isAuthenticated) {
+            Accueil.accessDenied = true;
+            return takeMeThere(location.origin + '/')
 
-    // } else Accueil.accessDenied = false;
+        } else Accueil.accessDenied = false;
 
     const view = new match.view();
 
