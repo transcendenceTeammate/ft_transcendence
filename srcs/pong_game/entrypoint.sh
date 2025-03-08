@@ -1,11 +1,15 @@
 #!/bin/sh
-set -e
+set +e
 
-echo "Making migrations..."
-python manage.py makemigrations
+echo "Cleaning up migrations..."
+find ./app/migrations -name "0*.py" -delete
+rm -f db.sqlite3
 
-echo "Applying database migrations..."
-python manage.py migrate --noinput
+echo "Creating fresh migrations..."
+python manage.py makemigrations app
 
-# Execute the main container command (e.g., starting Daphne)
+echo "Applying migrations..."
+python manage.py migrate
+
+# Execute the main container command
 exec "$@"

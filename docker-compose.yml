@@ -60,6 +60,8 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+    ports:
+      - "8001:8000"
 
   cli-game:
     build:
