@@ -35,21 +35,6 @@ export default class Accueil extends AbstractView {
 			this.auth42_btn = await super.loadElement('auth42_btn');
 			this.auth42_btn.addEventListener('click', async () => {
 				window.location.href = `${CONFIG.API_URL}/api/oauth/get-authorization-uri/`;
-
-				// const response = await fetch(`${CONFIG.BASE_URL}/api/oauth/get-authorization-uri/`, {
-				// 	method: 'GET',
-				// 	headers: {
-				// 		'Content-Type': 'application/json',
-				// 	}
-				// });
-				// if (response.ok) {
-				// 	const data = await response.json();
-				// 	console.log(data);
-				// 	window.location.href = data.url;
-				// } else {
-				// 	const errorData = await response.json();
-				// 	console.log('Error while fetching auth42:', errorData);
-				// }
 			});
 		} catch (e) {
 			console.log('Error in auth42:', e);

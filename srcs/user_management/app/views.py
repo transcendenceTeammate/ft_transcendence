@@ -117,13 +117,16 @@ def auth42(request):
 		return Response({'error': 'No authorization code provided'}, status=status.HTTP_400_BAD_REQUEST)
 
 	load_dotenv()
+	client_id = os.getenv('CLIENT_ID')
+	client_secret = os.getenv('CLIENT_SECRET')
+	redirect_uri = os.getenv('API_URL') + '/auth42/'
 	token_url = 'https://api.intra.42.fr/oauth/token'
 	token_data = {
 		'grant_type': 'authorization_code',
-		'client_id': os.getenv('CLIENT_ID'),
-		'client_secret': os.getenv('CLIENT_SECRET'),
+		'client_id': client_id,
+		'client_secret': client_secret,
 		'code': code,
-		'redirect_uri': os.getenv('API_URL') + '/auth42/',
+		'redirect_uri': redirect_uri,	
 	}
 
 	token_response = requests.post(token_url, data=token_data)
