@@ -24,7 +24,7 @@ services:
       context: ./srcs/nginx
       dockerfile: Dockerfile
     ports:
-      - "443:443"
+      - "8443:443"
     depends_on:
       - user-management
       - pong-game
