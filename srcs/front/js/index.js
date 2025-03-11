@@ -7,14 +7,7 @@ import Avatar from "./views/Avatar.js";
 import StartGame from "./views/StartGame.js";
 import Profile from "./views/Profile.js";
 import AbstractView from "./views/AbstractView.js";
-import Game from "./views/Game.js"
-
-// const navigateTo = url => {
-//     history.pushState(null, null, url);
-//     console.log(`location pathname: ${location.pathname}`)
-//     console.log(`url: ${url}`)
-//     router();
-// }
+import Game from "./views/Game.js";
 
 window.takeMeThere = function (url) {
 	history.pushState(null, null, url);
@@ -22,7 +15,6 @@ window.takeMeThere = function (url) {
 }
 
 const router = async () => {
-
 	const routes = [
 		{ path: '/', view: Accueil },
 		{ path: '/login', view: Login },
@@ -31,27 +23,49 @@ const router = async () => {
 		{ path: '/notfound', view: NotFound },
 		{ path: '/start_game', view: StartGame },
 		{ path: '/profile', view: Profile },
-		{ path: '/game', view: Game}
+		{ path: '/game', view: Game }
 
 	];
 
-	let match = routes.find(route => location.pathname === route.path )
+	// const potentialMatches = routes.map(route => {
+	//     return {
+	//         route: route,
+	//         isMatch: location.pathname === route.path
+	//     }
+	// })
+
+	// let match = potentialMatches.find(potentialMatch => potentialMatch.isMatch)
+
+	const match = routes.find(route => location.pathname === route.path)
 	console.log('hello from router!! Match is:')
 	console.dir(match)
 
 	if (!match) {
 		console.log('no match!');
-		match = {
-			route: routes[4],
-			isMatch: true
-		};
+		match = routes[4];
 	}
+
 	const view = new match.view();
 
-	document.querySelector("#app").innerHTML = await view.getHtml();
+	const accessibleToAll = match.path === '/' || match.path === '/login' || match.path === '/signup' || match.path === '/notfound'
+	if (accessibleToAll) {
+		document.querySelector("#app").innerHTML = await view.getHtml();
+		Accueil.accessDenied = false;
+		view.onLoaded();
+		return;
+	}
 
+	const isAuthenticated = await AbstractView.isAuthenticated();
+	if (!isAuthenticated) {
+		Accueil.accessDenied = true;
+		return takeMeThere(location.origin + '/')
+
+	} else Accueil.accessDenied = false;
+
+
+
+    document.querySelector("#app").innerHTML = await view.getHtml();
 	view.onLoaded();
-	
 }
 
 window.addEventListener("popstate", () => {
