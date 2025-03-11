@@ -120,6 +120,7 @@ export default class extends AbstractView {
             }
             this.submitButton.disabled = true;
         });
+      
     }
 
     findLabel = (element) => {

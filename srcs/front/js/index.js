@@ -55,7 +55,6 @@ const router = async () => {
 		return;
 	}
 
-
 	const isAuthenticated = await AbstractView.isAuthenticated();
 	if (!isAuthenticated) {
 		Accueil.accessDenied = true;

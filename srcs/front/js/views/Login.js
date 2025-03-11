@@ -87,6 +87,7 @@ export default class extends AbstractView {
     async validateForm(){
         this.form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            console.log('ADDING EVENT LISTNER TO FORM!!!!!!!!!!!!!!!!')
             const name = this.login.value.trim();
             const password = this.pass.value.trim();
             try {

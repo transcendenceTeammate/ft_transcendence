@@ -14,19 +14,15 @@ export default class Accueil extends AbstractView {
 		this.pageDiv.classList.toggle('penguin-cursor')
 	}
 
-	async alertDiv(){ 
-	  
-		if (Accueil.accessDenied){
-			console.log('ACCESS DENIED hello from accueil');
-			this.alertDiv = await super.loadElement('alertDiv');
-			this.alertDiv.classList.remove('d-none')
-		}
-	  
-			
-		   
-		
+    async alertDiv(){ 
+      
+        this.alertDiv = await super.loadElement('alertDiv');
+        if (Accueil.accessDenied){
+            console.log('ACCESS DENIED hello from accueil');
+            this.alertDiv = await super.loadElement('alertDiv');
+            this.alertDiv.classList.remove('d-none')
+        }
 
-		this.alertDiv = await super.loadElement('alertDiv');
 
 	}
 
