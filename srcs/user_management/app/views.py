@@ -100,7 +100,7 @@ def generate_random_password(length=12):
 def oauth_redirect_uri(request):
 	load_dotenv()
 	client_id = os.getenv('CLIENT_ID')
-	redirect_uri = 'http://localhost:8000/auth42/'
+	redirect_uri = os.getenv('API_URL') + '/auth42/'
 	query = urlencode({
 		'client_id': client_id,
 		'redirect_uri': redirect_uri,
@@ -123,7 +123,7 @@ def auth42(request):
 		'client_id': os.getenv('CLIENT_ID'),
 		'client_secret': os.getenv('CLIENT_SECRET'),
 		'code': code,
-		'redirect_uri': 'http://localhost:8000/auth42/',
+		'redirect_uri': os.getenv('API_URL') + '/auth42/',
 	}
 
 	token_response = requests.post(token_url, data=token_data)
@@ -156,7 +156,9 @@ def auth42(request):
 
 	serializer = UserSerializer(instance=user)
 
-	response = Response(serializer.data)
+	# response = Response(serializer.data)
+	response = HttpResponseRedirect(os.getenv('BASE_URL') + '/profile')
+
 	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.localhost')
 
 	return response
