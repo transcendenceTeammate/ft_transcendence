@@ -33,6 +33,7 @@ export default class StartGame extends AbstractView {
 
     async getHtml() {
         this.navbar = await super.getNavbar();
+        this.welcomeUser();
         this.attachAllJs();
 
         return `
