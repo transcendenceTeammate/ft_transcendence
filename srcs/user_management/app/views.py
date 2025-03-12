@@ -186,21 +186,11 @@ def get_access_token(request):
 		response = requests.post(url, data=data)
 		return JsonResponse(response.json(), safe=False)
 
-@api_view(['GET', 'OPTIONS'])
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_info(request):
-	if request.method == "OPTIONS":
-		response = Response()
-		response["Access-Control-Allow-Origin"] = "https://localhost:8443"
-		response["Access-Control-Allow-Methods"] = "GET, OPTIONS"
-		response["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
-		response["Access-Control-Allow-Credentials"] = "true"
-		return response
-
 	user = request.user
 	response = Response({
 		"username": user.username,
 	})
-	response["Access-Control-Allow-Origin"] = "https://localhost:8443"
-	response["Access-Control-Allow-Credentials"] = "true"
 	return response

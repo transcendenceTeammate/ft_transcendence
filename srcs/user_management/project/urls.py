@@ -18,7 +18,7 @@ urlpatterns = [
     path('check_username/', views.check_username, name='check_username'),
 
 	# User info
-	path('api/users/me', views.get_user_info),
+	path('api/users/me/', views.get_user_info),
 
 	# get oauth code
 	path('api/oauth/get-authorization-uri/', views.oauth_redirect_uri),
