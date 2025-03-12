@@ -17,23 +17,22 @@ export default class StartGame extends AbstractView {
         }
     }
 
-    async welcomeUser() {
-        await AbstractView.assignUsername();
-        console.log(`And that username is: ${AbstractView.username}`)
+    async welcomeUserLoadNavbar() {
+       
     }
 
     async attachAllJs() {
+        
         await this.loadElements();
         this.playButton.addEventListener('click', (e) => {
             e.preventDefault();
-            console.log('wut?? not adding the event listener?');
             takeMeThere(location.origin + '/game')
         })
     }
 
     async getHtml() {
-        this.navbar = await super.getNavbar();
-        this.welcomeUser();
+       this.navbar = await super.getNavbar(); 
+       
         this.attachAllJs();
 
         return `

@@ -105,7 +105,7 @@ export default class extends AbstractView {
                     console.log(data.user.username);
                     // AbstractView.username = data.user.username;
                     AbstractView.newUser = false;
-                    takeMeThere(location.origin + '/start_game');
+                    takeMeThere(location.origin + '/start-game');
                     // window.location.href = "/success";
                 } else {
                     const errorData = await response.json();

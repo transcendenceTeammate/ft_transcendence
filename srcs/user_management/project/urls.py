@@ -26,3 +26,9 @@ urlpatterns = [
 	path('', views.index),
 	re_path(r'^.*$', views.index),
 ]
+	# 	response = Response()
+	# 	response["Access-Control-Allow-Origin"] = "https://localhost:8443"
+	# 	response["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+	# 	response["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+	# 	response["Access-Control-Allow-Credentials"] = "true"
+	# 	return response

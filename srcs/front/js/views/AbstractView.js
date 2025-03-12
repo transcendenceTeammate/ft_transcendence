@@ -19,8 +19,6 @@ export default class AbstractView{
 				let elem = document.getElementById(selector);
 				if (elem) { 
 					clearInterval(checkExist);
-					console.log("element loaded!!")
-					console.dir(elem)
 					resolve(elem);
 				}
 			}, 100);
@@ -132,12 +130,13 @@ export default class AbstractView{
 	}
 
 	async getNavbar() {
+		await AbstractView.assignUsername();
 		// console.log('wtf is with the avatar?' + AbstractView.avatar)
 		// console.log(`wtf is with the username? ${AbstractView.username}`)
 		return `
 		<nav class="navbar navbar-expand-lg bg-body-tertiary">
 		<div class="container-fluid">
-			<a class="navbar-brand" href="start_game" data-link><span id="st-peng" data-link>Peng</span><span id="st-pong" data-link>Pong</span></a>
+			<a class="navbar-brand" href="start-game" data-link><span id="st-peng" data-link>Peng</span><span id="st-pong" data-link>Pong</span></a>
 			<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText"
 				aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
 				<span class="navbar-toggler-icon"></span>
