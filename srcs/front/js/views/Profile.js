@@ -143,13 +143,13 @@ export default class extends AbstractView {
                         <div class="d-none" id="usernameForm">
                             <div class="input-group mb-1">
                                 <input type="text" class="form-control" 
-                                    aria-label="change username" value='Tech penguin' id='unameInput' required>
+                                    aria-label="change username" value='${AbstractView.username}' id='unameInput' required>
                                 <button class="btn btn-outline-secondary" type="button"
                                  id="usernameButton">Submit</button>
                             </div>
                         </div>
                         <div id="usernameHeading">
-                            <h5 class="card-title"><span id="uname">Tech Penguin</span>
+                            <h5 class="card-title"><span id="uname">${AbstractView.username}</span>
                                 <a href="#" role="button" class="link-dark" id="editNamePencil">
                                     <span class="px-3">
 
