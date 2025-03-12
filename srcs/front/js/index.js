@@ -27,18 +27,7 @@ const router = async () => {
 
 	];
 
-	// const potentialMatches = routes.map(route => {
-	//     return {
-	//         route: route,
-	//         isMatch: location.pathname === route.path
-	//     }
-	// })
-
-	// let match = potentialMatches.find(potentialMatch => potentialMatch.isMatch)
-
 	const match = routes.find(route => location.pathname === route.path)
-	console.log('hello from router!! Match is:')
-	console.dir(match)
 
 	if (!match) {
 		console.log('no match!');
@@ -82,12 +71,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 			e.preventDefault();
 			console.log(`does e.target match href? ${e.target.matches('[href]')}`)
-			// console.log(`does e.target match datalink? ${e.target.matches('data-link')}`)
 			if (!e.target.matches('[href]')) takeMeThere(e.target.parentElement.href)
 			else takeMeThere(e.target.href)
-			// navigateTo(e.target.href);
+		
 		}
 	})
-	// console.log('hello from DOMcontentloaded just before calling the router!!!!')
 	router();
 });

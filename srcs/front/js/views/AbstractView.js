@@ -1,9 +1,8 @@
 import CONFIG from "../config.js";
 
-export default class AbstractView{
+export default class AbstractView {
 	static username = null;
 	static avatar = null;
-	// static newUser = true;
 	constructor() {
 
 	}
@@ -17,12 +16,14 @@ export default class AbstractView{
 		return new Promise((resolve, reject) => {
 			const checkExist = setInterval(() => {
 				let elem = document.getElementById(selector);
-				if (elem) { 
+				if (elem) {
+					console.log('element loaded!!!')
+					console.dir(elem)
 					clearInterval(checkExist);
 					resolve(elem);
 				}
 			}, 100);
-		   
+
 			setTimeout(() => {
 				clearInterval(checkExist);
 				reject(new Error(`Element not found: ${selector}`));
@@ -41,10 +42,9 @@ export default class AbstractView{
 					console.dir(elems);
 					resolve(elems);
 				}
-					console.log("Didn't load elems yet...")
+				console.log("Didn't load elems yet...")
 			}, 200);
-		   
-			// setTimeout(attachEvent, 500);
+
 			setTimeout(() => {
 				clearInterval(checkExist);
 				reject(new Error(`Elements not found: ${classSelector}`));
@@ -80,9 +80,9 @@ export default class AbstractView{
 		}
 	}
 
-	static async assignUsername() {     
+	static async assignUsername() {
 		const accessToken = this.getCookie('access_token');
-	
+
 		try {
 			const response = await fetch(`${CONFIG.API_URL}/api/users/me/`, {
 				method: "GET",
@@ -92,7 +92,7 @@ export default class AbstractView{
 				},
 				credentials: 'include'
 			});
-	
+
 			if (response.ok) {
 				const data = await response.json();
 				this.username = data.username;
@@ -129,10 +129,25 @@ export default class AbstractView{
 		return "";
 	}
 
+	async logMeOut() {
+		const logout = await this.loadElement('logout-link');
+
+		logout.addEventListener('click', (e) => {
+			e.preventDefault();
+			AbstractView.username = null;
+			document.cookie = "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.app.localhost";
+			takeMeThere(location.origin + '/')
+	  
+
+		})
+	}
+
+
 	async getNavbar() {
-		await AbstractView.assignUsername();
-		// console.log('wtf is with the avatar?' + AbstractView.avatar)
-		// console.log(`wtf is with the username? ${AbstractView.username}`)
+		if (AbstractView.username === null)
+			await AbstractView.assignUsername();
+		this.logMeOut();
+
 		return `
 		<nav class="navbar navbar-expand-lg bg-body-tertiary">
 		<div class="container-fluid">
@@ -159,7 +174,7 @@ export default class AbstractView{
 						<span data-link>${AbstractView.username}</span>
 					</a>
 					<div class="d-flex align-items-center">
-						<a href='#' class='nav-link pt-0 text-danger'>Log out</a>
+						<a href='#' class='nav-link pt-0 text-danger' id="logout-link">Log out</a>
 					</div>
 				</ul>
 
