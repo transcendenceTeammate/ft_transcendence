@@ -21,7 +21,7 @@ const router = async () => {
 		{ path: '/signup', view: Signup },
 		{ path: '/success', view: Success },
 		{ path: '/notfound', view: NotFound },
-		{ path: '/start_game', view: StartGame },
+		{ path: '/start-game', view: StartGame },
 		{ path: '/profile', view: Profile },
 		{ path: '/game', view: Game }
 

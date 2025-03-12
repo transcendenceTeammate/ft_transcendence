@@ -160,7 +160,7 @@ def auth42(request):
 	serializer = UserSerializer(instance=user)
 
 	# response = Response(serializer.data)
-	response = HttpResponseRedirect(os.getenv('BASE_URL') + '/profile')
+	response = HttpResponseRedirect(os.getenv('BASE_URL') + '/start-game')
 
 	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.localhost')
 

@@ -15,10 +15,10 @@ export default class Accueil extends AbstractView {
 	}
 
     async alertDiv(){ 
-      
-        this.alertDiv = await super.loadElement('alertDiv');
+    //   console.log(`hello from accueil. is access denied or not? ${Accueil.accessDenied}`)
+     
         if (Accueil.accessDenied){
-            console.log('ACCESS DENIED hello from accueil');
+            // console.log('ACCESS DENIED hello from accueil');
             this.alertDiv = await super.loadElement('alertDiv');
             this.alertDiv.classList.remove('d-none')
         }
