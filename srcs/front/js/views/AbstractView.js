@@ -1,8 +1,9 @@
+import { Navbar } from "../components/Navbar.js";
 import CONFIG from "../config.js";
-
-export default class AbstractView{
+export default class AbstractView {
 	static username = null;
 	static avatar = null;
+	
 	// static newUser = true;
 	constructor() {
 
@@ -13,18 +14,18 @@ export default class AbstractView{
 	}
 
 	async loadElement(selector) {
-
+		
 		return new Promise((resolve, reject) => {
 			const checkExist = setInterval(() => {
 				let elem = document.getElementById(selector);
-				if (elem) { 
+				if (elem) {
 					clearInterval(checkExist);
 					console.log("element loaded!!")
 					console.dir(elem)
 					resolve(elem);
 				}
 			}, 100);
-		   
+
 			setTimeout(() => {
 				clearInterval(checkExist);
 				reject(new Error(`Element not found: ${selector}`));
@@ -43,9 +44,9 @@ export default class AbstractView{
 					console.dir(elems);
 					resolve(elems);
 				}
-					console.log("Didn't load elems yet...")
+				console.log("Didn't load elems yet...")
 			}, 200);
-		   
+
 			// setTimeout(attachEvent, 500);
 			setTimeout(() => {
 				clearInterval(checkExist);
@@ -82,9 +83,9 @@ export default class AbstractView{
 		}
 	}
 
-	static async assignUsername() {     
+	static async assignUsername() {
 		const accessToken = this.getCookie('access_token');
-	
+
 		try {
 			const response = await fetch(`${CONFIG.API_URL}/api/users/me/`, {
 				method: "GET",
@@ -94,7 +95,7 @@ export default class AbstractView{
 				},
 				credentials: 'include'
 			});
-	
+
 			if (response.ok) {
 				const data = await response.json();
 				this.username = data.username;
@@ -128,45 +129,16 @@ export default class AbstractView{
 	}
 
 	async onLoaded() {
-		return "";
+	}
+
+	async onPageExit() {
+
 	}
 
 	async getNavbar() {
 		// console.log('wtf is with the avatar?' + AbstractView.avatar)
 		// console.log(`wtf is with the username? ${AbstractView.username}`)
-		return `
-		<nav class="navbar navbar-expand-lg bg-body-tertiary">
-		<div class="container-fluid">
-			<a class="navbar-brand" href="start_game" data-link><span id="st-peng" data-link>Peng</span><span id="st-pong" data-link>Pong</span></a>
-			<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText"
-				aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
-				<span class="navbar-toggler-icon"></span>
-			</button>
-			<div class="collapse navbar-collapse" id="navbarText">
-				<ul class="navbar-nav me-auto mb-2 mb-lg-0">
-					<li class="nav-item">
-						<a class="nav-link active" aria-current="page" href="#">My profile</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="#">All players</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="#">Smth else</a>
-					</li>
-				</ul>
-				<ul class="navbar-nav  mb-2 mb-lg-0">
-					<a href="profile" class="nav-link" data-link>
-						<img src="${AbstractView.avatar}" alt="User's avatar" class="rounded-circle border border-black object-fit-cover" height="35" id="nav-avatar" data-link>
-						<span data-link>${AbstractView.username}</span>
-					</a>
-					<div class="d-flex align-items-center">
-						<a href='#' class='nav-link pt-0 text-danger'>Log out</a>
-					</div>
-				</ul>
-
-			</div>
-		</div>
-	</nav>
-		`
+		
+		return Navbar(this.avatar, this.username).render();
 	}
 }

@@ -6,7 +6,7 @@ export default class Accueil extends AbstractView {
 	constructor() {
 		super();
 		this.setTitle("Accueil");
-		
+
 	}
 
 	async pengCursor() {
@@ -14,17 +14,13 @@ export default class Accueil extends AbstractView {
 		this.pageDiv.classList.toggle('penguin-cursor')
 	}
 
-	async alertDiv(){ 
-	  
-		if (Accueil.accessDenied){
+	async alertDiv() {
+
+		if (Accueil.accessDenied) {
 			console.log('ACCESS DENIED hello from accueil');
 			this.alertDiv = await super.loadElement('alertDiv');
 			this.alertDiv.classList.remove('d-none')
 		}
-	  
-			
-		   
-		
 
 		this.alertDiv = await super.loadElement('alertDiv');
 
@@ -41,10 +37,14 @@ export default class Accueil extends AbstractView {
 		}
 	}
 
-	async getHtml() {
+	async onLoaded() {
 		this.auth42();
 		this.pengCursor();
 		this.alertDiv();
+	}
+
+	async getHtml() {
+
 		return `
 		<div id="app-child-accueil">
 		<div class="alert alert-danger alert-dismissible fade show d-none" role="alert" id="alertDiv">
