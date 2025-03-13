@@ -11,3 +11,20 @@ class UserType(models.Model):
 
 	def __str__(self):
 		return f"{self.user.username} - {self.get_user_type_display()}"
+
+
+# class UserProfile(models.Model):
+# 	user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='image_file')
+# 	UserType = models.OneToOneField(UserType, on_delete=models.CASCADE, related_name='user_type')
+# 	image = models.OneToOneField(Images, on_delete=model, related_name
+
+# 	def __str__(self):
+# 		return f"{self.user.username} - {self.image_data}"
+
+
+class ImageFile(models.Model):
+	user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='image_file')
+	image = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
+
+	def __str__(self):
+		return f"{self.user.username} - {self.image_data}"
