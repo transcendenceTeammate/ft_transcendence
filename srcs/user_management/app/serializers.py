@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import UserType
+from .models import ImageFile
 from rest_framework.exceptions import ValidationError
 
 class UserSerializer(serializers.ModelSerializer):
@@ -32,3 +33,8 @@ class UserSerializer(serializers.ModelSerializer):
 		UserType.objects.create(user=user, user_type=user_type)
 
 		return user
+
+class ImageFileSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = ImageFile
+		fields = ['user', 'image']

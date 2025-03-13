@@ -22,9 +22,10 @@ from dotenv import load_dotenv
 from urllib.parse import urlencode
 from rest_framework.exceptions import ValidationError
 from .models import UserType
-
+from .models import ImageFile
 
 from .serializers import UserSerializer
+from .serializers import ImageFileSerializer
 
 from django.http import JsonResponse
 
@@ -194,3 +195,17 @@ def get_user_info(request):
 		"username": user.username,
 	})
 	return response
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def upload_profile_picture(request):
+	user = request.user
+	image_file = request.FILES.get('image')
+	if not image_file:
+		return Response({'error': 'No image file provided'}, status=400)
+
+	image_instance, created = ImageFile.objects.get_or_create(user=user)
+	image_instance.image = image_file
+	image_instance.save()
+
+	return Response({'message': 'Image uploaded successfully'})

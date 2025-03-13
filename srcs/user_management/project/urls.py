@@ -2,6 +2,8 @@ from rest_framework_simplejwt.views import TokenVerifyView
 from django.contrib import admin
 from django.urls import path, re_path
 from app import views
+from django.conf import settings
+from django.conf.urls.static import static
 
 
 urlpatterns = [
@@ -23,6 +25,8 @@ urlpatterns = [
 	# get oauth code
 	path('api/oauth/get-authorization-uri/', views.oauth_redirect_uri),
 
+	path('api/users/upload-profile-picture/', views.upload_profile_picture),
+
 	path('', views.index),
 	re_path(r'^.*$', views.index),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
