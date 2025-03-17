@@ -1,9 +1,12 @@
 import CONFIG from "../config.js";
+import User from "../User.js";
 
 export default class AbstractView {
 	static username = null;
 	static avatar = null;
+	static me = null;
 	constructor() {
+		
 
 	}
 
@@ -12,7 +15,6 @@ export default class AbstractView {
 	}
 
 	async loadElement(selector) {
-
 		return new Promise((resolve, reject) => {
 			const checkExist = setInterval(() => {
 				let elem = document.getElementById(selector);
@@ -32,7 +34,6 @@ export default class AbstractView {
 	}
 
 	async loadAllElements(classSelector) {
-
 		return new Promise((resolve, reject) => {
 			const checkExist = setInterval(() => {
 				let elems = document.querySelectorAll(classSelector);
@@ -68,7 +69,6 @@ export default class AbstractView {
 				},
 				body: JSON.stringify({ token: accessToken })
 			});
-
 			if (response.ok) {
 				return true;
 			} else {
@@ -141,7 +141,6 @@ export default class AbstractView {
 
 		})
 	}
-
 
 	async getNavbar() {
 		if (AbstractView.username === null)

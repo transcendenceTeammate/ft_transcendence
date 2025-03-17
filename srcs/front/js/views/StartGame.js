@@ -1,4 +1,5 @@
 import AbstractView from "./AbstractView.js";
+import User from "../User.js";
 
 export default class StartGame extends AbstractView {
     constructor() {
