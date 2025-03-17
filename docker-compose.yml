@@ -33,6 +33,7 @@ services:
     volumes:
       - ./srcs/front:/etc/frontend
       - ./srcs/nginx/ssl:/etc/nginx/ssl
+      - media_data:/app/media
 
   user-management:
     build:

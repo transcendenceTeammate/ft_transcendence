@@ -193,6 +193,7 @@ def get_user_info(request):
 	user = request.user
 	response = Response({
 		"username": user.username,
+		"image" : user.image.image.url if hasattr(user, 'image') else None
 	})
 	return response
 
