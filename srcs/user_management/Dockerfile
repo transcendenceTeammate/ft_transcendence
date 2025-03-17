@@ -21,6 +21,8 @@ RUN sed -i 's/\r$//g' /app/entrypoint.sh \
 # Copy application code
 COPY . .
 
+RUN mkdir -p /app/media
+
 # Set the entrypoint script
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
