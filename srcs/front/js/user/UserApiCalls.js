@@ -1,4 +1,6 @@
 import CONFIG from "../config.js";
+import AbstractView from "../views/AbstractView.js";
+import User from "./User.js";
 
 export async function isAuthenticated() {
     const accessToken = this.getCookie('access_token');

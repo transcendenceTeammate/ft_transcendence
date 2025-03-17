@@ -1,13 +1,9 @@
 import CONFIG from "../config.js";
-import User from "../User.js";
+import User from "../user/User.js";
 
 export default class AbstractView {
-	static username = null;
-	static avatar = null;
-	static me = null;
+	static User = null;
 	constructor() {
-		
-
 	}
 
 	setTitle(title) {
@@ -95,14 +91,20 @@ export default class AbstractView {
 
 			if (response.ok) {
 				const data = await response.json();
-				this.username = data.username;
+				this.User = new User(data.username, null, null, true)
+				console.log("and the user is:")
+				console.dir(this.User)
+				console.log("and the Abstract view.User is:")
+				console.dir(AbstractView.User)
+				console.log('and the user.name is:');
+				console.dir(AbstractView.User.name)
 			} else {
 				console.error("Failed to fetch username");
-				this.username = 'Unknown'
+				this.User = null
 			}
 		} catch (error) {
 			console.error("Error fetching username:", error);
-			this.username = 'ErrorName'
+			this.User = null;
 		}
 	}
 
@@ -134,7 +136,7 @@ export default class AbstractView {
 
 		logout.addEventListener('click', (e) => {
 			e.preventDefault();
-			AbstractView.username = null;
+			AbstractView.User = null;
 			document.cookie = "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.app.localhost";
 			takeMeThere(location.origin + '/')
 	  
@@ -143,7 +145,7 @@ export default class AbstractView {
 	}
 
 	async getNavbar() {
-		if (AbstractView.username === null)
+		if (AbstractView.User === null)
 			await AbstractView.assignUsername();
 		this.logMeOut();
 
@@ -169,8 +171,8 @@ export default class AbstractView {
 				</ul>
 				<ul class="navbar-nav  mb-2 mb-lg-0">
 					<a href="profile" class="nav-link" data-link>
-						<img src="${AbstractView.avatar}" alt="User's avatar" class="rounded-circle border border-black object-fit-cover" height="35" id="nav-avatar" data-link>
-						<span data-link>${AbstractView.username}</span>
+						<img src="${AbstractView.User.userpic}" alt="User's avatar" class="rounded-circle border border-black object-fit-cover" height="35" id="nav-avatar" data-link>
+						<span data-link>${AbstractView.User.name}</span>
 					</a>
 					<div class="d-flex align-items-center">
 						<a href='#' class='nav-link pt-0 text-danger' id="logout-link">Log out</a>
