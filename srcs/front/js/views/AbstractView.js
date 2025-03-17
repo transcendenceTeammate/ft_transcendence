@@ -2,7 +2,8 @@ import CONFIG from "../config.js";
 import User from "../user/User.js";
 
 export default class AbstractView {
-	static User = null;
+	static user = null;
+	static navbar = null;
 	constructor() {
 	}
 
@@ -91,13 +92,8 @@ export default class AbstractView {
 
 			if (response.ok) {
 				const data = await response.json();
-				this.User = new User(data.username, null, null, true)
-				console.log("and the user is:")
-				console.dir(this.User)
-				console.log("and the Abstract view.User is:")
-				console.dir(AbstractView.User)
-				console.log('and the user.name is:');
-				console.dir(AbstractView.User.name)
+				this.user = new User(data.username, null, null, true)
+				
 			} else {
 				console.error("Failed to fetch username");
 				this.User = null

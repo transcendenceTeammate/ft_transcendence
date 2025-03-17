@@ -30,7 +30,7 @@ export async function isAuthenticated() {
 }
 
 export async function assignUsername() {
-    const accessToken = this.getCookie('access_token');
+    const accessToken = getCookie('access_token');
 
     try {
         const response = await fetch(`${CONFIG.API_URL}/api/users/me/`, {
@@ -44,14 +44,17 @@ export async function assignUsername() {
 
         if (response.ok) {
             const data = await response.json();
-            this.username = data.username;
+            return data.username;
+            // this.username = data.username;
         } else {
             console.error("Failed to fetch username");
-            this.username = 'Unknown'
+            return 'failedFetchingUsername'
+            // this.username = 'Unknown'
         }
     } catch (error) {
         console.error("Error fetching username:", error);
-        this.username = 'ErrorName'
+        return 'errorFetchingUsername'
+        // this.username = 'ErrorName'
     }
 }
 
