@@ -35,7 +35,6 @@ export default class AbstractView {
 				let elems = document.querySelectorAll(classSelector);
 				if (elems.length > 0) {
 					clearInterval(checkExist);
-					// console.log('elements loaded!!!!!');
 					console.dir(elems);
 					resolve(elems);
 				}
@@ -49,74 +48,74 @@ export default class AbstractView {
 		});
 	}
 
-	static async isAuthenticated() {
-		const accessToken = this.getCookie('access_token');
-		if (!accessToken) {
-			console.log("No access token found");
-			return false;
-		}
-		console.log("Access token found:", accessToken);
-		try {
-			const response = await fetch(`${CONFIG.API_URL}/api/token/verify/`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					"Authorization": `Bearer ${accessToken}`
-				},
-				body: JSON.stringify({ token: accessToken })
-			});
-			if (response.ok) {
-				return true;
-			} else {
-				return false;
-			}
-		} catch (error) {
-			console.error("Token verification failed:", error);
-			return false;
-		}
-	}
+	// static async isAuthenticated() {
+	// 	const accessToken = this.getCookie('access_token');
+	// 	if (!accessToken) {
+	// 		console.log("No access token found");
+	// 		return false;
+	// 	}
+	// 	console.log("Access token found:", accessToken);
+	// 	try {
+	// 		const response = await fetch(`${CONFIG.API_URL}/api/token/verify/`, {
+	// 			method: "POST",
+	// 			headers: {
+	// 				"Content-Type": "application/json",
+	// 				"Authorization": `Bearer ${accessToken}`
+	// 			},
+	// 			body: JSON.stringify({ token: accessToken })
+	// 		});
+	// 		if (response.ok) {
+	// 			return true;
+	// 		} else {
+	// 			return false;
+	// 		}
+	// 	} catch (error) {
+	// 		console.error("Token verification failed:", error);
+	// 		return false;
+	// 	}
+	// }
 
-	static async assignUsername() {
-		const accessToken = this.getCookie('access_token');
+	// static async assignUsername() {
+	// 	const accessToken = this.getCookie('access_token');
 
-		try {
-			const response = await fetch(`${CONFIG.API_URL}/api/users/me/`, {
-				method: "GET",
-				headers: {
-					"Authorization": `Bearer ${accessToken}`,
-					"Content-Type": "application/json",
-				},
-				credentials: 'include'
-			});
+	// 	try {
+	// 		const response = await fetch(`${CONFIG.API_URL}/api/users/me/`, {
+	// 			method: "GET",
+	// 			headers: {
+	// 				"Authorization": `Bearer ${accessToken}`,
+	// 				"Content-Type": "application/json",
+	// 			},
+	// 			credentials: 'include'
+	// 		});
 
-			if (response.ok) {
-				const data = await response.json();
-				this.user = new User(data.username, null, null, true)
+	// 		if (response.ok) {
+	// 			const data = await response.json();
+	// 			this.user = new User(data.username, null, null, true)
 				
-			} else {
-				console.error("Failed to fetch username");
-				this.User = null
-			}
-		} catch (error) {
-			console.error("Error fetching username:", error);
-			this.User = null;
-		}
-	}
+	// 		} else {
+	// 			console.error("Failed to fetch username");
+	// 			this.User = null
+	// 		}
+	// 	} catch (error) {
+	// 		console.error("Error fetching username:", error);
+	// 		this.User = null;
+	// 	}
+	// }
 
-	static getCookie(name) {
-		let cookieValue = null;
-		if (document.cookie && document.cookie !== '') {
-			const cookies = document.cookie.split(';');
-			for (let i = 0; i < cookies.length; i++) {
-				const cookie = cookies[i].trim();
-				if (cookie.substring(0, name.length + 1) === (name + '=')) {
-					cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-					break;
-				}
-			}
-		}
-		return cookieValue;
-	}
+	// static getCookie(name) {
+	// 	let cookieValue = null;
+	// 	if (document.cookie && document.cookie !== '') {
+	// 		const cookies = document.cookie.split(';');
+	// 		for (let i = 0; i < cookies.length; i++) {
+	// 			const cookie = cookies[i].trim();
+	// 			if (cookie.substring(0, name.length + 1) === (name + '=')) {
+	// 				cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+	// 				break;
+	// 			}
+	// 		}
+	// 	}
+	// 	return cookieValue;
+	// }
 
 	async getHtml() {
 		return "";
