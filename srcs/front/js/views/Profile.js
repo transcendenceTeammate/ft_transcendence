@@ -18,7 +18,7 @@ export default class extends AbstractView {
             this.upload = await super.loadElement('upload');
             this.userpic = await super.loadElement('userpic')
             this.change_avatar_modal = await super.loadElement('change_avatar_div');
-            // this.backdrops = await super.loadAllElements('modal-backdrop')
+
 
         } catch (e) {
             console.log(e);
@@ -51,9 +51,7 @@ export default class extends AbstractView {
                  
                     this.userpic.src = e.target.result;
                     document.activeElement.blur();
-                    // console.dir(bootstrap.Modal)
                     const modalInstance = bootstrap.Modal.getOrCreateInstance(this.change_avatar_modal);
-                    // console.dir(modalInstance);
                     modalInstance.hide();
                 };
                 reader.readAsDataURL(file);
@@ -64,10 +62,6 @@ export default class extends AbstractView {
     }
 
     async getHtml() {
-        // console.log('printing abstractView.navbar from Profiles getHtml')
-        // console.log(AbstractView.navbar)
-        // this.navbar = await super.getNavbar();
-        // this.navbar = await new Navbar().getHtml();
         this.navbar = await new Navbar().getHtml();
        this.attachAllJs();
 
