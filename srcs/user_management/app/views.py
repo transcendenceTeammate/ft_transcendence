@@ -190,10 +190,15 @@ def get_access_token(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_info(request):
+	load_dotenv()
+	API_URL = os.getenv('API_URL')
 	user = request.user
+	image_url = None
+	if hasattr(user, 'image_file') and user.image_file.image:
+		image_url = API_URL + (user.image_file.image.url)
 	response = Response({
 		"username": user.username,
-		"image" : user.image.image.url if hasattr(user, 'image') else None
+		"image": image_url
 	})
 	return response
 
