@@ -8,8 +8,12 @@ import StartGame from "./views/StartGame.js";
 import Profile from "./views/Profile.js";
 import AbstractView from "./views/AbstractView.js";
 import Game from "./views/Game.js";
+<<<<<<< HEAD
 import Tournament from "./views/Tournament.js";
 import TournamentGame from "./views/TournamentGame.js";
+=======
+import { isAuthenticated } from "./user/UserApiCalls.js";
+>>>>>>> 201568d (removed api calls from Abstract view, theyre in UserApiCalls)
 
 window.takeMeThere = function (url) {
 	history.pushState(null, null, url);
@@ -21,7 +25,6 @@ const router = async () => {
 		{ path: '/', view: Accueil },
 		{ path: '/login', view: Login },
 		{ path: '/signup', view: Signup },
-		// { path: '/success', view: Success },
 		{ path: '/notfound', view: NotFound },
 		{ path: '/start-game', view: StartGame },
 		{ path: '/profile', view: Profile },
@@ -35,7 +38,7 @@ const router = async () => {
 
 	if (!match) {
 		console.log('no match!');
-		match = routes[4];
+		match = routes[3];
 	}
 
 	const view = new match.view();
@@ -48,8 +51,8 @@ const router = async () => {
 		return;
 	}
 
-	const isAuthenticated = await AbstractView.isAuthenticated();
-	if (!isAuthenticated) {
+	const userAuthenticated = await isAuthenticated();
+	if (!userAuthenticated) {
 		Accueil.accessDenied = true;
 		return takeMeThere(location.origin + '/')
 
