@@ -195,7 +195,7 @@ def get_user_info(request):
 	user = request.user
 	image_url = None
 	if hasattr(user, 'image_file') and user.image_file.image:
-		image_url = API_URL + (user.image_file.image.url)
+		image_url = API_URL + user.image_file.image.url
 	response = Response({
 		"username": user.username,
 		"image": image_url
@@ -205,6 +205,7 @@ def get_user_info(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def upload_profile_picture(request):
+	load_dotenv()
 	user = request.user
 	image_file = request.FILES.get('image')
 	if not image_file:
@@ -213,5 +214,8 @@ def upload_profile_picture(request):
 	image_instance, created = ImageFile.objects.get_or_create(user=user)
 	image_instance.image = image_file
 	image_instance.save()
+	API_URL = os.getenv('API_URL')
 
-	return Response({'message': 'Image uploaded successfully'})
+	return Response({
+		"image": API_URL + image_instance.image.url
+	})
