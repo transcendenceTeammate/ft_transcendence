@@ -3,35 +3,43 @@ body {
 	text-align: center;
 	margin: 0;
 	padding: 0;
-	background: linear-gradient(90deg, #1a1a2e, #16213e, #1a1a2e);
+	background-image: url('../public/startGame_bg.jpg');
+	background-size: cover;
+	background-position: center;
 	color: white;
 	position: relative;
-	animation: gradientAnimation 10s ease infinite;
 }
 
 #closeButton {
-	position: absolute;
-	top: 40px;
-	right: 20px;
-	width: 40px;
-	height: 40px;
-	background-color: #e74c3c;
-	border-radius: 50%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-size: 26px;
-	font-weight: bold;
-	color: white;
-	cursor: pointer;
-	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-	user-select: none;
-	transition: all 0.3s ease;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background-color: #e74c3c;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    user-select: none;
+	cursor: url('../public/cursor.cur'), auto;
 }
 
 #closeButton:hover {
-	background-color: #c0392b;
-	transform: scale(1.1);
+    background-color: #c0392b;
+    transform: scale(1.1);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+#closeButton:active {
+    background-color: #e74c3c;
+    transform: scale(0.95);
 }
 
 #gameContainer {
@@ -61,4 +69,75 @@ canvas {
 	border-radius: 15px;
 	box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
 	text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6);
+	user-select: none;
 }
+
+#playersContainer {
+	display: flex;
+	justify-content: space-between;
+	position: absolute;
+	top: 60px;
+	width: 100%;
+	padding: 0 20px;
+	font-size: 24px;
+	font-weight: bold;
+}
+
+#player1Label, #player2Label {
+	color: #f39c12;
+	position: relative;
+	width: 200px;
+	padding: 15px;
+	font-size: 28px;
+	font-weight: 700;
+	text-align: center;
+	background: rgba(0, 0, 0, 0.8);
+	border-radius: 15px;
+	box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+	text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6);
+	user-select: none;
+}
+
+#player1Label {
+	margin-left: 90px;
+}
+
+#player2Label {
+	margin-right: 90px;
+}
+
+#gameOverPopup {
+	display: none;
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	background-color: rgba(94, 92, 92, 0.9);
+	color: white;
+	padding: 30px;
+	border-radius: 15px;
+	box-shadow: 0 6px 12px rgba(0, 0, 0, 0.7);
+	text-align: center;
+}
+
+#gameOverPopup h2 {
+	font-size: 36px;
+	margin-bottom: 20px;
+}
+
+#gameOverPopup button {
+	background-color: #3498db;
+	color: white;
+	border: none;
+	padding: 10px 20px;
+	font-size: 18px;
+	border-radius: 5px;
+	cursor: pointer;
+	margin: 10px;
+	transition: background-color 0.3s ease;
+}
+
+#gameOverPopup button:hover {
+	background-color: #2980b9;
+}
+

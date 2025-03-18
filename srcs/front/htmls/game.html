@@ -7,9 +7,11 @@
 	<link rel="stylesheet" href="../css/game.css">
 </head>
 <body>
-
 	<div id="closeButton">&times;</div>
-
+	<div id="playersContainer">
+		<div id="player1Label">Joueur 1</div>
+		<div id="player2Label">Joueur 2</div>
+	</div>
 	<div id="gameContainer">
 		<div id="scoreContainer">
 			<span id="player1Score">0</span> - <span id="player2Score">0</span>
@@ -17,7 +19,11 @@
 		<canvas id="gameCanvas" width="800" height="600"></canvas>
 	</div>
 
-	<script src="/js/game_logic.js"></script>
+	<div id="gameOverPopup">
+		<h2></h2>
+		<button id="restartButton">Rejouer</button>
+		<button id="quitButton">Quitter</button>
+	</div>
 
 </body>
 </html>

@@ -8,6 +8,7 @@ import StartGame from "./views/StartGame.js";
 import Profile from "./views/Profile.js";
 import AbstractView from "./views/AbstractView.js";
 import Game from "./views/Game.js";
+import Tournament from "./views/Tournament.js";
 
 window.takeMeThere = function (url) {
 	history.pushState(null, null, url);
@@ -23,7 +24,8 @@ const router = async () => {
 		{ path: '/notfound', view: NotFound },
 		{ path: '/start-game', view: StartGame },
 		{ path: '/profile', view: Profile },
-		{ path: '/game', view: Game }
+		{ path: '/game', view: Game },
+		{ path: '/tournament', view: Tournament }
 
 	];
 
@@ -51,8 +53,6 @@ const router = async () => {
 
 	} else Accueil.accessDenied = false;
 
-
-
     document.querySelector("#app").innerHTML = await view.getHtml();
 	view.onLoaded();
 }
@@ -67,7 +67,6 @@ document.addEventListener("DOMContentLoaded", () => {
 	document.body.addEventListener("click", e => {
 
 		if (e.target.matches("[data-link]")) {
-
 
 			e.preventDefault();
 			console.log(`does e.target match href? ${e.target.matches('[href]')}`)

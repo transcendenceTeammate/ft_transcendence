@@ -1,0 +1,158 @@
+body {
+	height: 100vh;
+	background-image: url('../public/startGame_bg.jpg');
+	background-size: cover;
+	background-position: center;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin: 0;
+	user-select: none;
+}
+
+#main-container {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	width: 90%;
+	max-width: 1200px;
+	user-select: none;
+}
+
+#container-signup {
+	background-color: rgba(240, 248, 255, 0.95);
+	border-radius: 12px;
+	padding: 40px;
+	width: 50%;
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	user-select: none;
+}
+
+h1 {
+	color: #051923;
+	text-align: center;
+	font-weight: 800;
+	font-size: 2.8rem;
+	margin-bottom: 25px;
+}
+
+label {
+	color: #051923;
+	font-weight: 600;
+	margin-top: 1rem;
+}
+
+select, input[type="text"] {
+	width: 100%;
+	padding: 12px;
+	margin: 12px 0;
+	border-radius: 10px;
+	border: 2px solid #ccc;
+	transition: border-color 0.3s;
+}
+
+select:focus, input[type="text"]:focus {
+	border-color: #007bff;
+	outline: none;
+}
+
+button {
+	width: 100%;
+	padding: 12px;
+	background-color: #03045e;
+	color: white;
+	border: none;
+	font-size: 18px;
+	border-radius: 10px;
+	cursor: pointer;
+	text-transform: uppercase;
+	margin-top: 20px;
+	transition: background-color 0.3s;
+	user-select: none;
+}
+
+button:hover {
+	background-color: #0056b3;
+}
+
+.table-container {
+	width: 45%;
+	background-color: rgba(255, 255, 255, 0.95);
+	border-radius: 12px;
+	padding: 25px;
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	user-select: none;
+}
+
+table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+table, th, td {
+	border: 2px solid #444;
+	user-select: none;
+}
+
+th, td {
+	padding: 14px;
+	text-align: center;
+	font-size: 18px;
+	user-select: none;
+}
+
+th {
+	background-color: #007bff;
+	color: white;
+	font-weight: bold;
+	user-select: none;
+}
+
+tbody tr:nth-child(even) {
+	background-color: #f8f9fa;
+	user-select: none;
+}
+
+tbody tr:hover {
+	background-color: #d0e2ff;
+	transition: 0.3s ease-in-out;
+	user-select: none;
+}
+
+#playTournament {
+	display: none;
+	width: 80%;
+	padding: 15px;
+	background-color: #ff4500;
+	color: white;
+	font-size: 20px;
+	font-weight: bold;
+	border-radius: 10px;
+	margin-top: 20px;
+	text-align: center;
+	cursor: pointer;
+	transition: background-color 0.3s;
+}
+
+#playTournament:hover {
+	background-color: #e63c00;
+}
+
+@media (max-width: 900px) {
+	#main-container {
+		flex-direction: column;
+		align-items: center;
+		width: 100%;
+	}
+
+	#container-signup, .table-container {
+		width: 95%;
+		margin-bottom: 25px;
+	}
+}

@@ -3,7 +3,7 @@ import AbstractView from "./AbstractView.js";
 export default class Game extends AbstractView {
 	constructor() {
 		super();
-		this.setTitle("Avatar");
+		this.setTitle("Game");
 	}
 
 	async getHtml() {
@@ -17,7 +17,12 @@ export default class Game extends AbstractView {
 	onLoaded() {
 		this.initGame();
 		this.gameLoop();
+	
+		document.getElementById("closeButton").addEventListener("click", () => {
+			window.location.href = '/';
+		});
 	}
+	
 
 	initGame() {
 		this.canvas = document.getElementById("gameCanvas");
@@ -25,13 +30,13 @@ export default class Game extends AbstractView {
 		this.score1 = document.getElementById("player1Score");
 		this.score2 = document.getElementById("player2Score");
 
-		this.paddleWidth = 10;
-		this.paddleHeight = 100;
+		this.paddleWidth = 12;
+		this.paddleHeight = 120;
 		this.player1Y = (this.canvas.height - this.paddleHeight) / 2;
 		this.player2Y = (this.canvas.height - this.paddleHeight) / 2;
-		this.paddleSpeed = 10;
+		this.paddleSpeed = 12;
 
-		this.ballSize = 15;
+		this.ballSize = 20;
 		this.ballX = this.canvas.width / 2;
 		this.ballY = this.canvas.height / 2;
 		this.ballSpeedX = 0;
@@ -59,6 +64,13 @@ export default class Game extends AbstractView {
 			if (e.key === "ArrowDown") this.downPressed = false;
 			if (e.key === "w") this.wPressed = false;
 			if (e.key === "s") this.sPressed = false;
+		});
+
+		document.getElementById("restartButton").addEventListener("click", () => {
+			this.resetGame();
+		});
+		document.getElementById("quitButton").addEventListener("click", () => {
+			window.location.href = '/';
 		});
 	}
 
@@ -93,16 +105,25 @@ export default class Game extends AbstractView {
 		if (this.ballX <= 0) {
 			this.player2Score++;
 			this.lastLoser = 1;
+			this.checkForWinner();
 			this.resetBall();
 		} else if (this.ballX >= this.canvas.width) {
 			this.player1Score++;
 			this.lastLoser = 2;
+			this.checkForWinner();
 			this.resetBall();
 		}
 		this.score1.textContent = this.player1Score;
 		this.score2.textContent = this.player2Score;
 	}
-	
+
+	checkForWinner() {
+		if (this.player1Score >= 10) {
+			this.showGameOverPopup("Joueur 1");
+		} else if (this.player2Score >= 10) {
+			this.showGameOverPopup("Joueur 2");
+		}
+	}
 
 	resetBall() {
 		this.ballX = this.canvas.width / 2;
@@ -126,11 +147,27 @@ export default class Game extends AbstractView {
 		this.ctx.fillRect(this.canvas.width / 2 - 2, 0, 4, this.canvas.height);
 		this.ctx.fillRect(0, this.player1Y, this.paddleWidth, this.paddleHeight);
 		this.ctx.fillRect(this.canvas.width - this.paddleWidth, this.player2Y, this.paddleWidth, this.paddleHeight);
-
 		this.ctx.beginPath();
 		this.ctx.arc(this.ballX, this.ballY, this.ballSize / 2, 0, Math.PI * 2);
+		this.ctx.fillStyle = "#f39c12";
 		this.ctx.fill();
 		this.ctx.closePath();
+	}
+
+	showGameOverPopup(winner) {
+		const popup = document.getElementById("gameOverPopup");
+		const message = popup.querySelector("h2");
+		message.textContent = `Le gagnant est ${winner}!`;
+		popup.style.display = "block";
+	}
+
+	resetGame() {
+		this.player1Score = 0;
+		this.player2Score = 0;
+		this.score1.textContent = this.player1Score;
+		this.score2.textContent = this.player2Score;
+		this.resetBall();
+		document.getElementById("gameOverPopup").style.display = "none";
 	}
 
 	gameLoop() {
