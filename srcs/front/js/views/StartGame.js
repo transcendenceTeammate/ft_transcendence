@@ -1,7 +1,7 @@
 import AbstractView from "./AbstractView.js";
 import User from "../user/User.js";
 import Navbar from "./Navbar.js";
-import { assignUsername } from "../user/UserApiCalls.js";
+import { assignAvatar, assignUsername } from "../user/UserApiCalls.js";
 
 export default class StartGame extends AbstractView {
     constructor() {
@@ -24,10 +24,15 @@ export default class StartGame extends AbstractView {
         if (AbstractView.user === null)
         {
             const username = await assignUsername();
-            AbstractView.user = new User(username, null, null, true)
+            const avatar = assignAvatar();
+            AbstractView.user = new User(username, avatar, null, true)
         }
-        if (AbstractView.navbar === null)
-            AbstractView.navbar = new Navbar();
+        // if (AbstractView.navbar === null)
+            this.navbar = await new Navbar().getHtml();
+        // this.navbar = await AbstractView.navbar.getHtml()
+        // console.log(`navbar in abstract view: ${AbstractView.navbar}`)
+        // console.dir(AbstractView.navbar)
+        // console.log(`the navbar is: ${this.navbar}`)
     }
 
     async attachAllJs() {
@@ -40,12 +45,14 @@ export default class StartGame extends AbstractView {
     }
 
     async getHtml() {
-       this.navbar = await super.getNavbar(); 
+    //    this.navbar = await super.getNavbar(); 
+       await this.createNavbar();
        
         this.attachAllJs();
 
-        return `
+        return   `
         <div id="app-child-start">` +
+       
             `<div class="modal" tabindex="-1" id="waiting_modal">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border border-black border-5 rounded-0" >
@@ -174,7 +181,7 @@ export default class StartGame extends AbstractView {
     </div>
         ` +
 
-            this.navbar +
+        this.navbar +
 
 
             `<main class="container mt-5" id="start-main">

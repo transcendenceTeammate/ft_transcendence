@@ -3,7 +3,7 @@ import Login from "./views/Login.js";
 import Signup from "./views/Signup.js";
 import Success from "./views/Success.js";
 import NotFound from "./views/NotFound.js";
-import Avatar from "./views/Avatar.js";
+// import Avatar from "./views/Avatar.js";
 import StartGame from "./views/StartGame.js";
 import Profile from "./views/Profile.js";
 import AbstractView from "./views/AbstractView.js";
@@ -19,7 +19,7 @@ const router = async () => {
 		{ path: '/', view: Accueil },
 		{ path: '/login', view: Login },
 		{ path: '/signup', view: Signup },
-		{ path: '/success', view: Success },
+		// { path: '/success', view: Success },
 		{ path: '/notfound', view: NotFound },
 		{ path: '/start-game', view: StartGame },
 		{ path: '/profile', view: Profile },
