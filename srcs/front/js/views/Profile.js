@@ -1,4 +1,5 @@
 import AbstractView from "./AbstractView.js";
+import Navbar from "./Navbar.js";
 export default class extends AbstractView {
     constructor() {
         super();
@@ -7,6 +8,7 @@ export default class extends AbstractView {
 
     async loadElements() {
         try {
+           
             this.pencil = await super.loadElement('editNamePencil');
             this.usernameForm = await super.loadElement('usernameForm');
             this.usernameHeading = await super.loadElement('usernameHeading');
@@ -40,10 +42,6 @@ export default class extends AbstractView {
             usernameHeading.classList.remove('d-none');
         })
 
-        // this.change_avatar_modal.addEventListener('shown.bs.modal', () => {
-        //     // myInput.focus()
-        //   })
-
         this.upload.addEventListener('change', (event) => {
             event.preventDefault();
             const file = event.target.files[0];
@@ -53,39 +51,10 @@ export default class extends AbstractView {
                  
                     this.userpic.src = e.target.result;
                     document.activeElement.blur();
-
-                    // const modalElement = document.querySelector(".modal.show");
-                    // if (modalElement) {
-                    //     modalElement.classList.remove("show");
-                    //     modalElement.style.display = "none";
-                    //     document.body.classList.remove("modal-open");
-                    
-                    //     // Remove any existing modal backdrop
-                    //     const backdrop = document.querySelector(".modal-backdrop");
-                    //     if (backdrop) {
-                    //         backdrop.remove();
-                    //     }
-                    // }
-
-                    // bootstrap.Modal.remove()
-                    // setTimeout(() => {
-                    // }, 50);
-                    console.dir(bootstrap.Modal)
+                    // console.dir(bootstrap.Modal)
                     const modalInstance = bootstrap.Modal.getOrCreateInstance(this.change_avatar_modal);
-                    console.dir(modalInstance);
+                    // console.dir(modalInstance);
                     modalInstance.hide();
-
-                    // bootstrap.Modal.prototype._hideModal()
-                    // const modalInstance = new bootstrap.Modal(this.change_avatar_modal);
-                    // if (modalInstance) {
-                    //     // document.body.classList.remove('modal-open');
-                    //     console.log('modal instance there!!!')
-                    //     modalInstance.hide();
-                    //     modalInstance.dispose();
-                      
-                    // } else {
-                    //     console.warn("Modal instance not found!");
-                    // }   
                 };
                 reader.readAsDataURL(file);
 
@@ -95,7 +64,11 @@ export default class extends AbstractView {
     }
 
     async getHtml() {
-        this.navbar = await super.getNavbar();
+        // console.log('printing abstractView.navbar from Profiles getHtml')
+        // console.log(AbstractView.navbar)
+        // this.navbar = await super.getNavbar();
+        // this.navbar = await new Navbar().getHtml();
+        this.navbar = await new Navbar().getHtml();
        this.attachAllJs();
 
         return `<div id="app-child-profile">` 
@@ -136,20 +109,20 @@ export default class extends AbstractView {
                                 </svg>
                             </a>
                         </span>
-                        <img src="../public/avatars/Heine/Heine_playing.webp" class="card-img-top" alt="..."
+                        <img src=".${AbstractView.user.userpic}" class="card-img-top" alt="..."
                             id="userpic">
                     </div>
                     <div class="card-body">
                         <div class="d-none" id="usernameForm">
                             <div class="input-group mb-1">
                                 <input type="text" class="form-control" 
-                                    aria-label="change username" value='${AbstractView.username}' id='unameInput' required>
+                                    aria-label="change username" value='${AbstractView.user.name}' id='unameInput' required>
                                 <button class="btn btn-outline-secondary" type="button"
                                  id="usernameButton">Submit</button>
                             </div>
                         </div>
                         <div id="usernameHeading">
-                            <h5 class="card-title"><span id="uname">${AbstractView.username}</span>
+                            <h5 class="card-title"><span id="uname">${AbstractView.user.name}</span>
                                 <a href="#" role="button" class="link-dark" id="editNamePencil">
                                     <span class="px-3">
 

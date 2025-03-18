@@ -1,6 +1,7 @@
 import CONFIG from "../config.js";
-import AbstractView from "../views/AbstractView.js";
-import User from "./User.js";
+// import AbstractView from "../views/AbstractView.js";
+// import User from "./User.js";
+import { getRandomAvatar } from "./user_utils.js";
 
 export async function isAuthenticated() {
     const accessToken = this.getCookie('access_token');
@@ -58,6 +59,12 @@ export async function assignUsername() {
     }
 }
 
+export function assignAvatar() {
+    const randomAvatar = getRandomAvatar();
+    //let's put it into the database... oh I think the function is not on my branch yet
+    return randomAvatar;
+}
+
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -72,3 +79,4 @@ function getCookie(name) {
     }
     return cookieValue;
 }
+

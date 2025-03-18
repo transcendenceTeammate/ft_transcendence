@@ -1,21 +1,29 @@
-import AbstractView from "./AbstractView";
-import User from "../user/User";
-import { assignUsername } from "../user/UserApiCalls";
+import AbstractView from "./AbstractView.js";
+// import User from "../user/User";
+
 
 export default class Navbar extends AbstractView {
     constructor(){
         super();
-        // this.username = username;
         
     }
 
-    // async assignMyUsername(){
-    //     AbstractView.user.name = await assignUsername();
-    // }
+	async logMeOut() {
+		const logout = await super.loadElement('logout-link');
+
+		logout.addEventListener('click', (e) => {
+			e.preventDefault();
+			console.log('log me out function from Navbar class. is the event listener getting added?')
+			AbstractView.user = null;
+			document.cookie = "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.app.localhost";
+			takeMeThere(location.origin + '/')
+	  
+
+		})
+	}
 
     async getHtml(){
-        // if (AbstractView.user === null)
-        //     this.assignMyUsername();
+		this.logMeOut();
         return `
             <nav class="navbar navbar-expand-lg bg-body-tertiary">
 		<div class="container-fluid">
@@ -38,7 +46,7 @@ export default class Navbar extends AbstractView {
 				</ul>
 				<ul class="navbar-nav  mb-2 mb-lg-0">
 					<a href="profile" class="nav-link" data-link>
-						<img src="${AbstractView.User.userpic}" alt="User's avatar" class="rounded-circle border border-black object-fit-cover" height="35" id="nav-avatar" data-link>
+						<img src="${AbstractView.user.userpic}" alt="User's avatar" class="rounded-circle border border-black object-fit-cover" height="35" id="nav-avatar" data-link>
 						<span data-link>${AbstractView.user.name}</span>
 					</a>
 					<div class="d-flex align-items-center">
