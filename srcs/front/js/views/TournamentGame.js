@@ -1,15 +1,22 @@
 import AbstractView from "./AbstractView.js";
 
-export default class Game extends AbstractView {
+export default class TournamentGame extends AbstractView {
 	constructor() {
 		super();
-		this.setTitle("Game");
+		this.setTitle("TournamentGame");
+		this.players = JSON.parse(localStorage.getItem('players')) || [];
+		this.currentMatch = 0;
+		this.results = [];
+		this.matchWinners = [];
+		this.isTournament8Players = this.players.length === 8;
+		this.totalMatches = this.isTournament8Players ? 7 : 3;
+		this.gameOver = false;
 	}
 
 	async getHtml() {
-		const response = await fetch('/htmls/game.html');
+		const response = await fetch('/htmls/tournament-game.html');
 		if (!response.ok) {
-			return '<h1>Failed to load the game HTML</h1>';
+			return '<h1>Failed to load the TournamentGame HTML</h1>';
 		}
 		return await response.text();
 	}
@@ -17,10 +24,52 @@ export default class Game extends AbstractView {
 	onLoaded() {
 		this.initGame();
 		this.gameLoop();
-	
+		console.log("Players in the game: ", this.players);
+		this.displayPlayers();
+
 		document.getElementById("closeButton").addEventListener("click", () => {
 			window.location.href = '/start-game';
 		});
+
+		document.getElementById("nextButton").addEventListener("click", () => {
+			this.nextMatch();
+		});
+
+		document.getElementById("quitButton").addEventListener("click", () => {
+			window.location.href = '/start-game';
+		});
+	}
+
+	displayPlayers() {
+		const player1Display = document.getElementById("player1Label");
+		const player2Display = document.getElementById("player2Label");
+	
+		if (this.isTournament8Players) {
+			if (this.currentMatch < 4) {
+				player1Display.textContent = `${this.players[2 * this.currentMatch]}`;
+				player2Display.textContent = `${this.players[2 * this.currentMatch + 1]}`;
+			} else if (this.currentMatch === 4) {
+				player1Display.textContent = `${this.matchWinners[0]}`;
+				player2Display.textContent = `${this.matchWinners[1]}`;
+			} else if (this.currentMatch === 5) {
+				player1Display.textContent = `${this.matchWinners[2]}`;
+				player2Display.textContent = `${this.matchWinners[3]}`;
+			} else if (this.currentMatch === 6) {
+				player1Display.textContent = `${this.matchWinners[4]}`; 
+				player2Display.textContent = `${this.matchWinners[5]}`;
+			}
+		} else {
+			if (this.currentMatch === 0) {
+				player1Display.textContent = `${this.players[0]}`;
+				player2Display.textContent = `${this.players[1]}`;
+			} else if (this.currentMatch === 1) {
+				player1Display.textContent = `${this.players[2]}`;
+				player2Display.textContent = `${this.players[3]}`;
+			} else if (this.currentMatch === 2) {
+				player1Display.textContent = `${this.matchWinners[0]}`;
+				player2Display.textContent = `${this.matchWinners[1]}`;
+			}
+		}
 	}
 	
 
@@ -50,7 +99,6 @@ export default class Game extends AbstractView {
 		this.sPressed = false;
 		this.paused = true;
 		this.lastLoser = null;
-		this.gameOver = false;
 
 		window.addEventListener("keydown", (e) => {
 			if (this.gameOver) return;
@@ -67,13 +115,6 @@ export default class Game extends AbstractView {
 			if (e.key === "w") this.wPressed = false;
 			if (e.key === "s") this.sPressed = false;
 		});
-
-		document.getElementById("restartButton").addEventListener("click", () => {
-			this.resetGame();
-		});
-		document.getElementById("quitButton").addEventListener("click", () => {
-			window.location.href = '/start-game';
-		});
 	}
 
 	movePaddles() {
@@ -85,7 +126,7 @@ export default class Game extends AbstractView {
 
 	moveBall() {
 		if (this.paused) return;
-	
+
 		this.ballX += this.ballSpeedX;
 		this.ballY += this.ballSpeedY;
 		if (this.ballY <= 0 || this.ballY >= this.canvas.height) {
@@ -96,7 +137,6 @@ export default class Game extends AbstractView {
 			(this.ballX >= this.canvas.width - this.paddleWidth && this.ballY >= this.player2Y && this.ballY <= this.player2Y + this.paddleHeight)
 		) {
 			this.ballSpeedX *= -1;
-
 			if (this.ballY < this.player1Y || this.ballY < this.player2Y) {
 				this.ballSpeedY = Math.abs(this.ballSpeedY);
 			}
@@ -120,15 +160,58 @@ export default class Game extends AbstractView {
 	}
 
 	checkForWinner() {
+		let winner;
+	
 		if (this.player1Score >= 10) {
-			this.showGameOverPopup("Joueur 1");
 			this.gameOver = true;
+			if (this.isTournament8Players) {
+				if (this.currentMatch < 4) {
+					winner = this.players[2 * this.currentMatch];
+				} else if (this.currentMatch === 4) {
+					winner = this.matchWinners[0];
+				} else if (this.currentMatch === 5) {
+					winner = this.matchWinners[2];
+				} else if (this.currentMatch === 6) {
+					winner = this.matchWinners[4];
+				}
+			} else {
+				winner = this.currentMatch === 0
+					? this.players[0]
+					: (this.currentMatch === 1
+						? this.players[2]
+						: this.matchWinners[0]);
+			}
+			this.matchWinners.push(winner);
 		} else if (this.player2Score >= 10) {
-			this.showGameOverPopup("Joueur 2");
 			this.gameOver = true;
+			if (this.isTournament8Players) {
+
+				if (this.currentMatch < 4) {
+					winner = this.players[2 * this.currentMatch + 1];
+				} else if (this.currentMatch === 4) {
+					winner = this.matchWinners[1];
+				} else if (this.currentMatch === 5) {
+					winner = this.matchWinners[3];
+				} else if (this.currentMatch === 6) {
+					winner = this.matchWinners[5];
+				}
+			} else {
+				winner = this.currentMatch === 0
+					? this.players[1]
+					: (this.currentMatch === 1
+						? this.players[3]
+						: this.matchWinners[1]);
+			}
+			this.matchWinners.push(winner);
+		}
+	
+		if (winner) {
+			this.gameOver = true;
+			this.showGameOverPopup(winner);
 		}
 	}
-
+	
+	
 	resetBall() {
 		this.ballX = this.canvas.width / 2;
 		this.ballY = this.canvas.height / 2;
@@ -161,17 +244,52 @@ export default class Game extends AbstractView {
 	showGameOverPopup(winner) {
 		const popup = document.getElementById("gameOverPopup");
 		const message = popup.querySelector("h2");
-		message.textContent = `Le gagnant est ${winner}!`;
+		message.textContent = `The winner is ${winner} !`;
 		popup.style.display = "block";
 	}
+
+	nextMatch() {
+		if (this.isTournament8Players) {
+			if (this.currentMatch < 6) {
+				this.currentMatch++;
+				this.displayPlayers();
+				this.resetGame();
+			} else {
+				this.showTournamentEndPopup();
+			}
+		} else {
+			if (this.currentMatch === 0) {
+				this.currentMatch++;
+				this.displayPlayers();
+				this.resetGame();
+			} else if (this.currentMatch === 1) {
+				this.currentMatch++;
+				this.displayPlayers();
+				this.resetGame();
+			} else if (this.currentMatch === 2) {
+				this.showTournamentEndPopup();
+			}
+		}
+	}
+	
+	showTournamentEndPopup() {
+		const popup = document.getElementById("gameOverPopup");
+		const message = popup.querySelector("h2");
+		const grandWinner = this.matchWinners[this.matchWinners.length - 1];
+		message.textContent = `THE TOURNAMENT IS OVER The big winner is : ${grandWinner} !`;
+		popup.style.display = "block";
+
+		const nextButton = document.getElementById("nextButton");
+		nextButton.style.display = "none";
+	}	
 
 	resetGame() {
 		this.player1Score = 0;
 		this.player2Score = 0;
 		this.score1.textContent = this.player1Score;
 		this.score2.textContent = this.player2Score;
-		this.resetBall();
 		this.gameOver = false;
+		this.resetBall();
 		document.getElementById("gameOverPopup").style.display = "none";
 	}
 

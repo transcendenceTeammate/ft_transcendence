@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Tournament Setup</title>
+	<link rel="stylesheet" href="../css/tournament.css">
+</head>
+<body>
+	<div id="main-container">
+		<!-- Tournament Setup -->
+		<div class="container" id="container-signup">
+			<h1>Tournament Setup</h1>
+			
+			<label for="numPlayers">Number of Players:</label>
+			<select id="numPlayers">
+				<option value="4">4</option>
+				<option value="8">8</option>
+			</select>
+
+			<form id="playerForm">
+				<div id="playerContainer"></div>
+				<button type="submit">Validate Players</button>
+			</form>
+
+			<div id="errorMessage" style="color: red; display: none;"></div>
+		</div>
+
+		<!-- Player Table -->
+		<div class="table-container">
+			<table>
+				<thead>
+					<tr>
+						<th>#</th>
+						<th>Player Name</th>
+					</tr>
+				</thead>
+				<tbody id="playersTable"></tbody>
+			</table>
+
+			<!-- Bouton Play -->
+			<button id="startTournament" disabled>Start Tournament</button>
+		</div>
+	</div>
+
+	<script src="../js/views/Tournament.js"></script>
+
+</body>
+</html>
+

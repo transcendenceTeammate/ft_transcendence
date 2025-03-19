@@ -8,7 +8,7 @@ let player1Y = (canvas.height - paddleHeight) / 2;
 let player2Y = (canvas.height - paddleHeight) / 2;
 const paddleSpeed = 10;
 
-const ballSize = 15;
+const ballSize = 200;
 let ballX = canvas.width / 2;
 let ballY = canvas.height / 2;
 let ballSpeedX = 0;

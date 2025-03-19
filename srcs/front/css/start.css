@@ -1,97 +1,88 @@
 #body-start {
-    background-image: url('../public/startGame_bg.jpg');
-    background-size: cover;
-   height: 100vh;
-
-   
-   
+	background-image: url('../public/startGame_bg.jpg');
+	background-size: cover;
+    height: 100vh;
+	user-select: none;
 }
 
 #app-child-start {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url('../public/startGame_bg.jpg');
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-image: url('../public/startGame_bg.jpg');
 	background-size: cover;
+	user-select: none;
 }
 
 .start-nav {
-    color: #333 ;
-    font-weight: bold;
+	color: #333 ;
+	font-weight: bold;
 }
 
 .startpage-btn {
-    width: 100%;
-    font-weight: bold;
-    cursor: url('../public/cursor.cur'), auto;
-
-
+	width: 100%;
+	font-weight: bold;
+	cursor: url('../public/cursor.cur'), auto;
 }
 
-
-
 #start-main {
-    height: 70%;
+	height: 70%;
 }
 
 #startPageButtonDiv {
-    height: 100%;
+	height: 100%;
 }
 
-/* overriding Bottstrap's bs */
 .startpage-btn:not(:disabled):not(.disabled) {
-    cursor: url('../public/cursor.cur'), auto;
+	cursor: url('../public/cursor.cur'), auto;
 
 }
 
 #st-peng {
-    animation: pong 1s steps(1, end) .5s infinite;
+	animation: pong 1s steps(1, end) .5s infinite;
 }
 
 #st-pong {
-    animation: pong 1s steps(1, end) 1s infinite;
+	animation: pong 1s steps(1, end) 1s infinite;
 }
 
 
 @keyframes pong {
-    50% {
-        color: #ffbe0b;
-    }
+	50% {
+		color: #ffbe0b;
+	}
 }
 
 #nav-avatar {
-    aspect-ratio: 1/1;
+	aspect-ratio: 1/1;
 }
 
 .blackie {
-    background-color: black;
-    color: #fca311
+	background-color: black;
+	color: #fca311
 }
 
 .orangie {
-    background-color: #fca311;
-    
+	background-color: #fca311;
 }
 
 .blackie:hover, .orangie:hover {
-    background-color: #14213d;
+	background-color: #14213d;
 }
 .blackie:hover {
-    color: #ffc300;
+	color: #ffc300;
 }
 
 .orangie:hover {
-    color: #001d3d;
-    
-    background-color: #fca311;
-    border-color: #001d3d;
+	color: #001d3d;
+	
+	background-color: #fca311;
+	border-color: #001d3d;
 }
 
 .player-card {
-    color: #fca311
+	color: #fca311
 }
-
-
 
