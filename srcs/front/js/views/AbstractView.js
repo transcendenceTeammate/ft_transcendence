@@ -139,6 +139,7 @@ export default class AbstractView {
 		// console.log('wtf is with the avatar?' + AbstractView.avatar)
 		// console.log(`wtf is with the username? ${AbstractView.username}`)
 		
-		return Navbar(this.avatar, this.username).render();
+		return (await Navbar.create()).render();
+		
 	}
 }

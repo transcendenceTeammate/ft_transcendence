@@ -1,11 +1,37 @@
-export class Navbar
+import { Component } from "../core/Component.js";
+import { UserRepository } from "../data/repositories/UserRepository.js";
+
+export class Navbar extends Component
 {
-    constructor(avatarUrl, username) {
-        this.avatarUrl = avatarUrl;
-        this.username = username;
-    }
+	constructor() {
+		super();
+		this.avatarUrl = null;
+		this.username = null;		
+	}
+
+	static async create()
+	{
+		let navbar = new Navbar();
+		await navbar.init();
+		return navbar;
+	}
+
+	async init() {
+		let userRepository = UserRepository.getInstance();
+		
+		userRepository.getUserData().then(
+			(userData) => {
+				console.log(userData);
+		
+				this.avatarUrl = userData.avatarUrl;
+				this.username = userData.username;
+				this.updateComponent();
+			}
+		);
+	}
     
-	render() {
+
+	_getComponentHtml() {
 		return `
 		<nav class="navbar navbar-expand-lg bg-body-tertiary">
 		<div class="container-fluid">
@@ -28,7 +54,7 @@ export class Navbar
 				</ul>
 				<ul class="navbar-nav  mb-2 mb-lg-0">
 					<a href="profile" class="nav-link" data-link>
-						<img src="${this.avatar}" alt="User's avatar" class="rounded-circle border border-black object-fit-cover" height="35" id="nav-avatar" data-link>
+						<img src="${this.avatarUrl}" alt="User's avatar" class="rounded-circle border border-black object-fit-cover" height="35" id="nav-avatar" data-link>
 						<span data-link>${this.username}</span>
 					</a>
 					<div class="d-flex align-items-center">
