@@ -121,6 +121,7 @@ canvas {
     width: 70%;
     max-width: 600px;
     animation: fadeIn 0.5s ease-out;
+    user-select: none;
 }
 
 #gameOverPopup h2 {
@@ -133,6 +134,7 @@ canvas {
     letter-spacing: 2px;
     line-height: 1.4;
     padding: 0 10px;
+    user-select: none;
 }
 
 #gameOverPopup h3 {
@@ -140,6 +142,7 @@ canvas {
     font-weight: 500;
     margin-bottom: 30px;
     color: #f39c12;
+    user-select: none;
 }
 
 #gameOverPopup button {
@@ -162,6 +165,7 @@ canvas {
 
 #gameOverPopup button:active {
     transform: scale(0.95);
+    user-select: none;
 }
 
 @keyframes fadeIn {

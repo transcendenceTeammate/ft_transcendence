@@ -72,11 +72,6 @@
     background-color: white;
 }
 
-#dropzone_col {
-    /* display: grid; */
-    /* align-self: flex-start; */
-}
-
 .drop-zone img {
     width: 100%;
     height: 100%;

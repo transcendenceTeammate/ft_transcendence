@@ -107,37 +107,62 @@ canvas {
 }
 
 #gameOverPopup {
-	display: none;
-	position: fixed;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	background-color: rgba(94, 92, 92, 0.9);
-	color: white;
-	padding: 30px;
-	border-radius: 15px;
-	box-shadow: 0 6px 12px rgba(0, 0, 0, 0.7);
-	text-align: center;
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(80, 80, 80, 0.8);
+    color: white;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.8);
+    text-align: center;
+    width: 70%;
+    max-width: 600px;
+    animation: fadeIn 0.5s ease-out;
+	user-select: none;
 }
 
 #gameOverPopup h2 {
-	font-size: 36px;
-	margin-bottom: 20px;
+    font-size: 32px;
+    margin-bottom: 20px;
+    letter-spacing: 2px;
+    color: #ffffff;
+    font-weight: 700;
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+    letter-spacing: 2px;
+    line-height: 1.4;
+    padding: 0 10px;
+	user-select: none;
+}
+
+#gameOverPopup h3 {
+    font-size: 24px;
+    font-weight: 500;
+    margin-bottom: 30px;
+    color: #f39c12;
+	user-select: none;
 }
 
 #gameOverPopup button {
-	background-color: #3498db;
-	color: white;
-	border: none;
-	padding: 10px 20px;
-	font-size: 18px;
-	border-radius: 5px;
-	cursor: pointer;
-	margin: 10px;
-	transition: background-color 0.3s ease;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    font-size: 20px;
+    border-radius: 50px;
+    cursor: pointer;
+    margin: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
 #gameOverPopup button:hover {
-	background-color: #2980b9;
+    background-color: #c0392b;
+    transform: scale(1.05);
 }
 
+#gameOverPopup button:active {
+    transform: scale(0.95);
+}

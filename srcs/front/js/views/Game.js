@@ -50,8 +50,10 @@ export default class Game extends AbstractView {
 		this.sPressed = false;
 		this.paused = true;
 		this.lastLoser = null;
+		this.gameOver = false;
 
 		window.addEventListener("keydown", (e) => {
+			if (this.gameOver) return;
 			if (e.key === "ArrowUp") this.upPressed = true;
 			if (e.key === "ArrowDown") this.downPressed = true;
 			if (e.key === "w") this.wPressed = true;
@@ -120,8 +122,10 @@ export default class Game extends AbstractView {
 	checkForWinner() {
 		if (this.player1Score >= 10) {
 			this.showGameOverPopup("Joueur 1");
+			this.gameOver = true;
 		} else if (this.player2Score >= 10) {
 			this.showGameOverPopup("Joueur 2");
+			this.gameOver = true;
 		}
 	}
 
@@ -167,6 +171,7 @@ export default class Game extends AbstractView {
 		this.score1.textContent = this.player1Score;
 		this.score2.textContent = this.player2Score;
 		this.resetBall();
+		this.gameOver = false;
 		document.getElementById("gameOverPopup").style.display = "none";
 	}
 
