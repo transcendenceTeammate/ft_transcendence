@@ -1,3 +1,4 @@
+import { Navbar } from "../components/Navbar.js";
 import AbstractView from "./AbstractView.js";
 
 export default class StartGame extends AbstractView {
@@ -35,11 +36,16 @@ export default class StartGame extends AbstractView {
            })
     }
 
+    async onLoaded()
+    {
+        
+    }
+    
     async getHtml() {
-        this.navbar = await super.getNavbar();
+        this.navbar = await Navbar.create();
         // await this.welcomeUser();
-   
-    this.attachAllJs(); 
+       
+        this.attachAllJs(); 
        
         // console.log(`wtf is with the avatar in Abstract View? ${AbstractView.avatar}`)
        
@@ -173,8 +179,8 @@ export default class StartGame extends AbstractView {
     </div>
         ` +
         
-        this.navbar +
-        
+        this.navbar.render() +
+  
        
     `<main class="container mt-5" id="start-main">
         <div class="col-10 offset-1 d-flex flex-column  justify-content-center" id="startPageButtonDiv">

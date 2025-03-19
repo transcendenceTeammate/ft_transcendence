@@ -48,9 +48,11 @@ const router = async () => {
 	}
 	const view = new match.view();
 
-	document.querySelector("#app").innerHTML = await view.getHtml();
+	let viewHtml = await view.getHtml();
+	// await new Promise(resolve => setTimeout(resolve, 10000));
+	document.querySelector("#app").innerHTML = viewHtml;
 
-	view.onLoaded();
+	await view.onLoaded();
 	
 }
 
