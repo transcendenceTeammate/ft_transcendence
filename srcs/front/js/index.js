@@ -48,12 +48,12 @@ const router = async () => {
 		return;
 	}
 
-	// // const isAuthenticated = await AbstractView.isAuthenticated();
-	// // if (!isAuthenticated) {
-	// // 	Accueil.accessDenied = true;
-	// // 	return takeMeThere(location.origin + '/')
+	const isAuthenticated = await AbstractView.isAuthenticated();
+	if (!isAuthenticated) {
+		Accueil.accessDenied = true;
+		return takeMeThere(location.origin + '/')
 
-	// } else Accueil.accessDenied = false;
+	} else Accueil.accessDenied = false;
 
     document.querySelector("#app").innerHTML = await view.getHtml();
 	view.onLoaded();
