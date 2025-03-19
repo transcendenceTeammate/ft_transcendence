@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Tournament Game</title>
+	<link rel="stylesheet" href="../css/tournament-game.css">
+</head>
+<body>
+	<div id="closeButton">&times;</div>
+	<div id="playersContainer">
+        <p id="player1Label"></p>
+        <p id="player2Label"></p>
+	</div>
+	<div id="gameContainer">
+		<div id="scoreContainer">
+			<span id="player1Score">0</span> - <span id="player2Score">0</span>
+		</div>
+		<canvas id="gameCanvas" width="800" height="600"></canvas>
+	</div>
+
+	<div id="gameOverPopup">
+		<h2></h2>
+		<button id="nextButton">Next Round</button>
+		<button id="quitButton">Quitter</button>
+	</div>
+
+</body>
+</html>

@@ -9,6 +9,7 @@ import Profile from "./views/Profile.js";
 import AbstractView from "./views/AbstractView.js";
 import Game from "./views/Game.js";
 import Tournament from "./views/Tournament.js";
+import TournamentGame from "./views/TournamentGame.js";
 
 window.takeMeThere = function (url) {
 	history.pushState(null, null, url);
@@ -25,7 +26,8 @@ const router = async () => {
 		{ path: '/start-game', view: StartGame },
 		{ path: '/profile', view: Profile },
 		{ path: '/game', view: Game },
-		{ path: '/tournament', view: Tournament }
+		{ path: '/tournament', view: Tournament },
+		{ path: '/tournament-game', view: TournamentGame }
 
 	];
 
@@ -46,12 +48,12 @@ const router = async () => {
 		return;
 	}
 
-	const isAuthenticated = await AbstractView.isAuthenticated();
-	if (!isAuthenticated) {
-		Accueil.accessDenied = true;
-		return takeMeThere(location.origin + '/')
+	// // const isAuthenticated = await AbstractView.isAuthenticated();
+	// // if (!isAuthenticated) {
+	// // 	Accueil.accessDenied = true;
+	// // 	return takeMeThere(location.origin + '/')
 
-	} else Accueil.accessDenied = false;
+	// } else Accueil.accessDenied = false;
 
     document.querySelector("#app").innerHTML = await view.getHtml();
 	view.onLoaded();
