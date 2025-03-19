@@ -1,10 +1,9 @@
-export class MockedBackendApi
-{
-    static getUserData()
-    {
+export class MockedBackendApi {
+    static async getUserData() {
+        await new Promise(resolve => setTimeout(resolve, 1000));
         return {
             username: "GuyTariste",
-            profile_picture_url: "https://placehold.co/400"
+            avatar_url: "https://picsum.photos/200"
         };
     }
 }

@@ -1,33 +1,36 @@
-import { BackendApi } from "../api/backendApi";
-import { MockedBackendApi } from "../api/mockedBackendApi";
-
-
-class UserModel
-{
-    constructor (username, avatarUrl)
-    {
-        
-    }
-
-
-}
+import { MockedBackendApi } from "../api/mockedBackendApi.js";
 
 
 export class UserRepository {
-    static _backend = BackendApi();
+    static _instance = null;
+    static _backend = MockedBackendApi;
 
-    constructor ()
-    {
+    constructor() {
         this.user = null;
     }
 
     async getUserData() {
-        userData = _backend.getUserData();
+        if (this.user != null)
+            return this.user;
+        let rawUserData = await UserRepository._backend.getUserData();
 
-        return {
-            username: userData.username,
-            profile_picture_url: userData.profile_picture_url
+        let userData = {
+            username: rawUserData.USerName,
+            avatarUrl: rawUserData.avatar_url
         };
+        this.user = userData;
+
+        return userData;
     }
 
+    async setAvatar() {
+        this.user = null;
+    }
+
+    static getInstance() {
+        if (UserRepository._instance == null) {
+            UserRepository._instance = new UserRepository();
+        }
+        return UserRepository._instance;
+    }
 }
