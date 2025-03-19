@@ -19,7 +19,7 @@ export default class Game extends AbstractView {
 		this.gameLoop();
 	
 		document.getElementById("closeButton").addEventListener("click", () => {
-			window.location.href = '/';
+			window.location.href = '/start-game';
 		});
 	}
 	
@@ -72,7 +72,7 @@ export default class Game extends AbstractView {
 			this.resetGame();
 		});
 		document.getElementById("quitButton").addEventListener("click", () => {
-			window.location.href = '/';
+			window.location.href = '/start-game';
 		});
 	}
 

@@ -28,7 +28,7 @@ export default class TournamentGame extends AbstractView {
 		this.displayPlayers();
 
 		document.getElementById("closeButton").addEventListener("click", () => {
-			window.location.href = '/';
+			window.location.href = '/start-game';
 		});
 
 		document.getElementById("nextButton").addEventListener("click", () => {
@@ -36,7 +36,7 @@ export default class TournamentGame extends AbstractView {
 		});
 
 		document.getElementById("quitButton").addEventListener("click", () => {
-			window.location.href = '/';
+			window.location.href = '/start-game';
 		});
 	}
 
