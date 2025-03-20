@@ -1,12 +1,10 @@
 import Accueil from "./views/Accueil.js";
 import Login from "./views/Login.js";
 import Signup from "./views/Signup.js";
-import Success from "./views/Success.js";
 import NotFound from "./views/NotFound.js";
-// import Avatar from "./views/Avatar.js";
 import StartGame from "./views/StartGame.js";
 import Profile from "./views/Profile.js";
-import AbstractView from "./views/AbstractView.js";
+
 import Game from "./views/Game.js";
 import { isAuthenticated } from "./user/UserApiCalls.js";
 
