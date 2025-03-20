@@ -14,8 +14,6 @@ export default class AbstractView {
 			const checkExist = setInterval(() => {
 				let elem = document.getElementById(selector);
 				if (elem) {
-					console.log('element loaded!!!')
-					console.dir(elem)
 					clearInterval(checkExist);
 					resolve(elem);
 				}
@@ -34,7 +32,7 @@ export default class AbstractView {
 				let elems = document.querySelectorAll(classSelector);
 				if (elems.length > 0) {
 					clearInterval(checkExist);
-					console.dir(elems);
+					// console.dir(elems);
 					resolve(elems);
 				}
 				console.log("Didn't load elems yet...")

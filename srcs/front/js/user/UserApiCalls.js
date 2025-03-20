@@ -1,6 +1,4 @@
 import CONFIG from "../config.js";
-// import AbstractView from "../views/AbstractView.js";
-// import User from "./User.js";
 import { getRandomAvatar } from "./user_utils.js";
 
 function getCookie(name) {
@@ -68,13 +66,11 @@ export async function assignUsername() {
     } catch (error) {
         console.error("Error fetching username:", error);
         return 'errorFetchingUsername'
-        // this.username = 'ErrorName'
     }
 }
 
 export function assignAvatar() {
     const randomAvatar = getRandomAvatar();
-    //let's put it into the database... oh I think the function is not on my branch yet
     return randomAvatar;
 }
 
