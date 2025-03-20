@@ -6,12 +6,9 @@ import StartGame from "./views/StartGame.js";
 import Profile from "./views/Profile.js";
 
 import Game from "./views/Game.js";
-<<<<<<< HEAD
 import Tournament from "./views/Tournament.js";
 import TournamentGame from "./views/TournamentGame.js";
-=======
 import { isAuthenticated } from "./user/UserApiCalls.js";
->>>>>>> 201568d (removed api calls from Abstract view, theyre in UserApiCalls)
 
 window.takeMeThere = function (url) {
 	history.pushState(null, null, url);
