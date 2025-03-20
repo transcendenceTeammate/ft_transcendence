@@ -102,11 +102,7 @@ export default class extends AbstractView {
         
                 if (response.ok) {
                     const data = await response.json();
-                    console.log(data.user.username);
-                    // AbstractView.username = data.user.username;
-                    AbstractView.newUser = false;
                     takeMeThere(location.origin + '/start-game');
-                    // window.location.href = "/success";
                 } else {
                     const errorData = await response.json();
                     this.errorMessageElement.textContent = errorData.error || "An error occurred";

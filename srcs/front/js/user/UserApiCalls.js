@@ -61,11 +61,9 @@ export async function assignUsername() {
         if (response.ok) {
             const data = await response.json();
             return data.username;
-            // this.username = data.username;
         } else {
             console.error("Failed to fetch username");
             return 'failedFetchingUsername'
-            // this.username = 'Unknown'
         }
     } catch (error) {
         console.error("Error fetching username:", error);

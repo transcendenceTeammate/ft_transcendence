@@ -19,7 +19,6 @@ export default class extends AbstractView {
             this.userpic = await super.loadElement('userpic')
             this.change_avatar_modal = await super.loadElement('change_avatar_div');
 
-
         } catch (e) {
             console.log(e);
         }
@@ -103,20 +102,20 @@ export default class extends AbstractView {
                                 </svg>
                             </a>
                         </span>
-                        <img src=".${AbstractView.user.userpic}" class="card-img-top" alt="..."
+                        <img src=".${AbstractView.me.userpic}" class="card-img-top" alt="..."
                             id="userpic">
                     </div>
                     <div class="card-body">
                         <div class="d-none" id="usernameForm">
                             <div class="input-group mb-1">
                                 <input type="text" class="form-control" 
-                                    aria-label="change username" value='${AbstractView.user.name}' id='unameInput' required>
+                                    aria-label="change username" value='${AbstractView.me.name}' id='unameInput' required>
                                 <button class="btn btn-outline-secondary" type="button"
                                  id="usernameButton">Submit</button>
                             </div>
                         </div>
                         <div id="usernameHeading">
-                            <h5 class="card-title"><span id="uname">${AbstractView.user.name}</span>
+                            <h5 class="card-title"><span id="uname">${AbstractView.me.name}</span>
                                 <a href="#" role="button" class="link-dark" id="editNamePencil">
                                     <span class="px-3">
 
