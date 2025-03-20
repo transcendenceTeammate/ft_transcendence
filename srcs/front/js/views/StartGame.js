@@ -2,6 +2,9 @@ import AbstractView from "./AbstractView.js";
 import User from "../user/User.js";
 import Navbar from "./Navbar.js";
 import { assignAvatar, assignUsername } from "../user/UserApiCalls.js";
+import User from "../user/User.js";
+import Navbar from "./Navbar.js";
+import { assignAvatar, assignUsername } from "../user/UserApiCalls.js";
 
 export default class StartGame extends AbstractView {
 	constructor() {
@@ -47,11 +50,13 @@ export default class StartGame extends AbstractView {
 
     async getHtml() {
        await this.createNavbar();
+       await this.createNavbar();
        
         this.attachAllJs();
 
         return   `
         <div id="app-child-start">` +
+       
        
             `<div class="modal" tabindex="-1" id="waiting_modal">
         <div class="modal-dialog modal-dialog-centered">
