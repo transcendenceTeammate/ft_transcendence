@@ -21,18 +21,13 @@ export default class StartGame extends AbstractView {
     }
 
     async createNavbar() {
-        if (AbstractView.user === null)
+        if (AbstractView.me === null)
         {
             const username = await assignUsername();
             const avatar = assignAvatar();
-            AbstractView.user = new User(username, avatar, null, true)
+            AbstractView.me = new User(username, avatar, null, true)
         }
-        // if (AbstractView.navbar === null)
             this.navbar = await new Navbar().getHtml();
-        // this.navbar = await AbstractView.navbar.getHtml()
-        // console.log(`navbar in abstract view: ${AbstractView.navbar}`)
-        // console.dir(AbstractView.navbar)
-        // console.log(`the navbar is: ${this.navbar}`)
     }
 
     async attachAllJs() {
@@ -45,7 +40,6 @@ export default class StartGame extends AbstractView {
     }
 
     async getHtml() {
-    //    this.navbar = await super.getNavbar(); 
        await this.createNavbar();
        
         this.attachAllJs();

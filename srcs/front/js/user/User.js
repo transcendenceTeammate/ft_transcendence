@@ -9,11 +9,11 @@ export default class User {
         this.friends = [];
     }
 
-    updateUserInfo(newName, newUserpic, newType) {
-        if (newName) this.name = newName;
-        if (newUserpic) this.userpic = newUserpic;
-        if (newType) this.type = newType;
-    }
+
+
+    updateName(name){ if (!me) return; this.name = name;}
+
+    updateAvatar(avatar) {if (!me) return; this.avatar = avatar;}
 
     getUserInfo() {
         return {
