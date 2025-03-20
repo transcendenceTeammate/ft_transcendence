@@ -5,6 +5,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from .serializers import UserSerializer
 from django.contrib.auth.models import User
+from .models import Profile
 from rest_framework.authtoken.models import Token
 from rest_framework import status
 from django.shortcuts import get_object_or_404
@@ -21,11 +22,8 @@ import os
 from dotenv import load_dotenv
 from urllib.parse import urlencode
 from rest_framework.exceptions import ValidationError
-from .models import UserType
-from .models import ImageFile
 
 from .serializers import UserSerializer
-from .serializers import ImageFileSerializer
 
 from django.http import JsonResponse
 
@@ -44,14 +42,11 @@ def login(request):
 		user = User.objects.get(username=request.data['username'])
 	except User.DoesNotExist:
 		return Response({"error": "User does not exist"}, status=status.HTTP_404_NOT_FOUND)
-	
+
 	if not user.check_password(request.data['password']):
 		return Response({"error": "Invalid password"}, status=status.HTTP_401_UNAUTHORIZED)
-	
-	try:
-		user_type = user.user_type.user_type
-	except UserType.DoesNotExist:
-		return Response({"error": "User type not found"}, status=status.HTTP_404_NOT_FOUND)
+
+	user_type = user.profile.type
 
 	if user_type != 'PENG':
 		return Response({"error": "User is not a peng"}, status=status.HTTP_403_FORBIDDEN)
@@ -62,7 +57,7 @@ def login(request):
 	response = Response({
 		"user": serializer.data
 	})
-	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.localhost') # httponly=True, secure=True
+	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.localhost')
 	return response
 
 @api_view(['POST'])
@@ -71,18 +66,16 @@ def signup(request):
 	if User.objects.filter(username=request.data['username']).exists():
 		return Response({"error": "Username already exists"}, status=status.HTTP_400_BAD_REQUEST)
 
-	request.data['user_type'] = "PENG"
+	request.data['type'] = "PENG"
 	serializer = UserSerializer(data=request.data)
 	if serializer.is_valid():
 		user = serializer.save()
-
-		user_type_instance = UserType.objects.get(user=user)
-
 		access_token = AccessToken.for_user(user)
 
 		response = Response({
-			"user": serializer.data.get('username'),
-			"user_type": user_type_instance.user_type
+			"username": user.profile.nickname,
+			"type": user.profile.type,
+			"picture": user.profile.picture.url if user.profile.picture else None
 		})
 		response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.localhost')
 		return response
@@ -127,7 +120,7 @@ def auth42(request):
 		'client_id': client_id,
 		'client_secret': client_secret,
 		'code': code,
-		'redirect_uri': redirect_uri,	
+		'redirect_uri': redirect_uri,    
 	}
 
 	token_response = requests.post(token_url, data=token_data)
@@ -144,25 +137,17 @@ def auth42(request):
 
 	user_data = user_response.json()
 	username = user_data.get('login')
-	user_type = '42'
-	user = User.objects.filter(username=username).first()
-	
-	if user:
-		user_type_instance = UserType.objects.filter(user=user).first()
-		if not user_type_instance or user_type_instance.user_type != "42":
-			return Response({'error': 'User already exists with a different userType'}, status=status.HTTP_403_FORBIDDEN)
-	else:
-		random_password = User.objects.make_random_password()
-		user = User.objects.create_user(username=username, password=random_password)
-		UserType.objects.create(user=user, user_type="42")
+
+	user, created = User.objects.get_or_create(username=username)
+
+	profile, profile_created = Profile.objects.get_or_create(user=user, defaults={'type': "42", 'nickname': username})
+
+	if not profile_created and profile.type != "42":
+		return Response({'error': 'User already exists with a different type'}, status=status.HTTP_403_FORBIDDEN)
 
 	access_token = AccessToken.for_user(user)
 
-	serializer = UserSerializer(instance=user)
-
-	# response = Response(serializer.data)
 	response = HttpResponseRedirect(os.getenv('BASE_URL') + '/start-game')
-
 	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.localhost')
 
 	return response
@@ -208,14 +193,42 @@ def upload_profile_picture(request):
 	load_dotenv()
 	user = request.user
 	image_file = request.FILES.get('image')
+
 	if not image_file:
 		return Response({'error': 'No image file provided'}, status=400)
 
-	image_instance, created = ImageFile.objects.get_or_create(user=user)
-	image_instance.image = image_file
-	image_instance.save()
+	if user.profile.picture:
+		user.profile.picture.delete(save=False)
+
+	user.profile.picture = image_file
+	user.profile.save()
+
 	API_URL = os.getenv('API_URL')
+	return Response({
+		"image": API_URL + user.profile.picture.url
+	})
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def update_username(request):
+	user = request.user
+
+	if user.profile.type != 'PENG':
+		return Response({"error": "Only users of type 'PENG' can update their username."}, status=status.HTTP_403_FORBIDDEN)
+
+	new_username = request.data.get('username')
+
+	if not new_username:
+		return Response({"error": "New username is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+	if User.objects.filter(username=new_username).exists():
+		return Response({"error": "Username already exists."}, status=status.HTTP_400_BAD_REQUEST)
+
+	user.username = new_username
+	user.profile.nickname = new_username
+	user.save()
+	user.profile.save()
 
 	return Response({
-		"image": API_URL + image_instance.image.url
-	})
+		"nickname": user.profile.nickname
+	}, status=status.HTTP_200_OK)
