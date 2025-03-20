@@ -51,9 +51,9 @@ export default class Accueil extends AbstractView {
 					<img src="../public/logo_42-_svg.svg" alt="oops no logo" id="logo">
 				</button>
 			</div>
-			<div style="margin-top: 0.3em">
-				<a href="login" class="nav__link" data-link>Log in</a> |
-				<a href="signup" class="nav__link" data-link>Sign up</a>
+			<div class="mt-2">
+				<a href="login" class="nav__link text-decoration-none me-2" data-link>Log in</a> |
+				<a href="signup" class="nav__link text-decoration-none ms-2" data-link>Sign up</a>
 			</div>
 		</div>
 

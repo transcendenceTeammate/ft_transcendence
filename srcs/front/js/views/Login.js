@@ -102,11 +102,7 @@ export default class extends AbstractView {
         
                 if (response.ok) {
                     const data = await response.json();
-                    console.log(data.user.username);
-                    // AbstractView.username = data.user.username;
-                    AbstractView.newUser = false;
                     takeMeThere(location.origin + '/start-game');
-                    // window.location.href = "/success";
                 } else {
                     const errorData = await response.json();
                     this.errorMessageElement.textContent = errorData.error || "An error occurred";
@@ -117,22 +113,6 @@ export default class extends AbstractView {
             }
         })
     }
-
-
-    // getCookie(name) {
-    //     let cookieValue = null;
-    //     if (document.cookie && document.cookie !== '') {
-    //         const cookies = document.cookie.split(';');
-    //         for (let i = 0; i < cookies.length; i++) {
-    //             const cookie = cookies[i].trim();
-    //             if (cookie.substring(0, name.length + 1) === (name + '=')) {
-    //                 cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-    //                 break;
-    //             }
-    //         }
-    //     }
-    //     return cookieValue;
-    // }
     
     async attachAllJs() {
         await this.loadElements();

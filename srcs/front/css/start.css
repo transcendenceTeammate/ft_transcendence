@@ -50,9 +50,10 @@
 
 
 @keyframes pong {
-	50% {
-		color: #ffbe0b;
-	}
+    50% {
+        /* color: #ffbe0b; */
+        color: #fca311
+    }
 }
 
 #nav-avatar {
