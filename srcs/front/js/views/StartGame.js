@@ -2,9 +2,6 @@ import AbstractView from "./AbstractView.js";
 import User from "../user/User.js";
 import Navbar from "./Navbar.js";
 import { assignAvatar, assignUsername } from "../user/UserApiCalls.js";
-import User from "../user/User.js";
-import Navbar from "./Navbar.js";
-import { assignAvatar, assignUsername } from "../user/UserApiCalls.js";
 
 export default class StartGame extends AbstractView {
 	constructor() {
