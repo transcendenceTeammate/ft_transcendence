@@ -1,15 +1,10 @@
 #app {
 
     height: 100vh;
-    /* width: 100vw; */
     position: relative;
-    /* background-image: url('../assets/antarctis.jpg'); */
     background-size: cover;
     background-position-x: center;
     background-position-y: center;
-    /* display: flex;
-	align-items: center;
-	justify-content: center; */
 }
 
 #app-child-accueil {
@@ -47,14 +42,10 @@
     background-color: #780000;
     height: clamp(10px, 2.8vw, 3.5rem);
     width: clamp(10px, 2.8vw, 3.5rem);
-    /* height: 2.8vw;
-    width: 2.8vw; */
     border: 0.8px solid #124559;
     position: relative;
-    /* bottom: 20vw; */
     bottom: clamp(15px, 20vw, 147%);
     left: -51%;
-    /* animation: none; */
     animation: flyBallFly 3s linear 1.5s infinite;
 }
 
@@ -70,15 +61,11 @@
 
 .penguin {
     height: 11vw;
-   /* height: 12vw;*/
-    /* height: 80%; */
-    /* width: 6%; */
 }
 
 #penguinleft {
     position: absolute;
     left: 4%;
-    /* bottom: 12vw; */
     bottom: clamp(15px, 12vw, 82%);
     animation: rotation-left 3s ease-in infinite;
 }
@@ -139,7 +126,7 @@
 }
 
 #auth42_btn:active {
-    background-color: #c1121f;
+    background-color: #adb6c4;
 }
 
 button span {
@@ -159,10 +146,21 @@ button span {
     animation: peng 3s steps(1, end) 3s infinite;
 }
 
+#login a {
+    animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+    50% {
+        color: bisque;
+    }
+}
+
 @keyframes peng {
 
     25% {
-        color: #ffbe0b;
+        /* color: #ffbe0b; */
+        color: #fca311
     }
  75% {
         color: #23022e;
@@ -173,7 +171,6 @@ button span {
 @keyframes flyBallFly {
     0% {
         bottom: clamp(15px, 20vw, 147%);
-        /* bottom: 20vw; */
     left: -51%;
     }
 
@@ -195,7 +192,6 @@ button span {
 
     100% {
         bottom: clamp(15px, 20vw, 147%);
-        /* bottom: 20vw; */
         left: -51%;
     }
 }
@@ -232,7 +228,6 @@ button span {
 
     75% {
         bottom: 15vw;
-        /* bottom: 74%; */
         left: 46%
     }
 

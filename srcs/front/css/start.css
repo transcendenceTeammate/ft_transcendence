@@ -57,7 +57,8 @@
 
 @keyframes pong {
     50% {
-        color: #ffbe0b;
+        /* color: #ffbe0b; */
+        color: #fca311
     }
 }
 
