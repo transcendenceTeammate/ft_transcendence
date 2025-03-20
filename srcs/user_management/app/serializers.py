@@ -1,40 +1,31 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import UserType
-from .models import ImageFile
-from rest_framework.exceptions import ValidationError
+from .models import Profile
 
 class UserSerializer(serializers.ModelSerializer):
-	user_type = serializers.ChoiceField(choices=UserType.USER_TYPE_CHOICES, write_only=True, required=True)
+	type = serializers.ChoiceField(choices=Profile.USER_TYPE_CHOICES, write_only=True, required=True)
+	picture = serializers.ImageField(required=False)
 
 	class Meta:
 		model = User
-		fields = ['id', 'username', 'password', 'user_type']
-		extra_kwargs = {
-			'password': {'write_only': True},
-		}
+		fields = ['id', 'username', 'password', 'type', 'picture']
+		extra_kwargs = {'password': {'write_only': True}}
 
 	def create(self, validated_data):
-		user_type = validated_data.pop('user_type')
-
-		user = User.objects.filter(username=validated_data['username']).first()
-
-		if user:
-			user_type_instance = UserType.objects.filter(user=user).first()
-			if user_type_instance and user_type_instance.user_type != user_type:
-				raise serializers.ValidationError("User already exists with a different userType")
-			return user
+		user_type = validated_data.pop('type')
+		picture = validated_data.pop('picture', None)
 
 		user = User.objects.create_user(
 			username=validated_data['username'],
 			password=validated_data['password']
 		)
 
-		UserType.objects.create(user=user, user_type=user_type)
+		Profile.objects.create(user=user, nickname=user.username, type=user_type)
 
 		return user
 
-class ImageFileSerializer(serializers.ModelSerializer):
-	class Meta:
-		model = ImageFile
-		fields = ['user', 'image']
+	def to_representation(self, instance):
+		representation = super().to_representation(instance)
+		representation['type'] = instance.profile.type
+		representation['picture'] = instance.profile.picture.url if instance.profile.picture else None
+		return representation

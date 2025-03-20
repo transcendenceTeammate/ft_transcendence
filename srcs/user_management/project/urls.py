@@ -14,10 +14,13 @@ urlpatterns = [
 	path('api/auth/signup/', views.signup),
 	path('api/auth/login/', views.login),
 
+	#update user info
+	path('api/users/update-username/', views.update_username),
+
 	# Token
 	path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
 
-    path('check_username/', views.check_username, name='check_username'),
+	path('check_username/', views.check_username, name='check_username'),
 
 	# User info
 	path('api/users/me/', views.get_user_info),
