@@ -1,3 +1,4 @@
+
 from rest_framework_simplejwt.views import TokenVerifyView
 from django.contrib import admin
 from django.urls import path, re_path
@@ -29,6 +30,11 @@ urlpatterns = [
 	path('api/oauth/get-authorization-uri/', views.oauth_redirect_uri),
 
 	path('api/users/upload-profile-picture/', views.upload_profile_picture),
+
+	# Friendship
+	path('api/friend/add/', views.add_friend),
+	path('api/friend/remove/', views.remove_friend),
+	path('api/friend/list/', views.list_friends),
 
 	path('', views.index),
 	re_path(r'^.*$', views.index),

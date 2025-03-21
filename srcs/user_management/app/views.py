@@ -5,7 +5,8 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from .serializers import UserSerializer
 from django.contrib.auth.models import User
-from .models import Profile
+from . import models
+from .models import Profile, Friendship
 from rest_framework.authtoken.models import Token
 from rest_framework import status
 from django.shortcuts import get_object_or_404
@@ -63,10 +64,9 @@ def login(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def signup(request):
-	if User.objects.filter(username=request.data['username']).exists():
+	if User.objects.filter(username=request.data.get('username')).exists():
 		return Response({"error": "Username already exists"}, status=status.HTTP_400_BAD_REQUEST)
 
-	request.data['type'] = "PENG"
 	serializer = UserSerializer(data=request.data)
 	if serializer.is_valid():
 		user = serializer.save()
@@ -231,4 +231,66 @@ def update_username(request):
 
 	return Response({
 		"nickname": user.profile.nickname
-	}, status=status.HTTP_200_OK)
+	})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def add_friend(request):
+	user_profile = request.user.profile
+	friend_nickname = request.data.get('friend_nickname')
+
+	if not friend_nickname:
+		return Response({"error": "Friend nickname is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+	try:
+		friend_profile = Profile.objects.get(nickname=friend_nickname)
+	except Profile.DoesNotExist:
+		return Response({"error": "Profile not found."}, status=status.HTTP_404_NOT_FOUND)
+
+	if user_profile == friend_profile:
+		return Response({"error": "You cannot add yourself as a friend."}, status=status.HTTP_400_BAD_REQUEST)
+
+	if Friendship.objects.filter(user=user_profile, friend=friend_profile).exists():
+		return Response({"error": "Friendship already exists."}, status=status.HTTP_400_BAD_REQUEST)
+
+	Friendship.objects.create(user=user_profile, friend=friend_profile)
+
+	return Response({"message": f"{friend_profile.nickname} added as a friend."}, status=status.HTTP_201_CREATED)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def remove_friend(request):
+	friend_nickname = request.data.get('friend_nickname')
+
+	if not friend_nickname:
+		return Response({"error": "friend_nickname is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+	user_profile = request.user.profile
+
+	try:
+		friend_profile = Profile.objects.get(nickname=friend_nickname)
+	except Profile.DoesNotExist:
+		return Response({"error": "Profile not found."}, status=status.HTTP_404_NOT_FOUND)
+
+	deleted, _ = Friendship.objects.filter(user=user_profile, friend=friend_profile).delete()
+
+	if deleted:
+		return Response({"message": f"Friendship with {friend_profile.nickname} removed."})
+
+	return Response({"error": "Friendship does not exist."}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_friends(request):
+	user_profile = request.user.profile
+
+	friendships = Friendship.objects.filter(user=user_profile).select_related("friend")
+
+	friends_data = [
+		{"nickname": friendship.friend.nickname, "picture": friendship.friend.picture.url if friendship.friend.picture else None}
+		for friendship in friendships
+	]
+
+	return Response({
+		"friends": friends_data
+	})
