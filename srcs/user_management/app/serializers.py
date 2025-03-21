@@ -1,9 +1,10 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import Profile
+from .models import Friendship
 
 class UserSerializer(serializers.ModelSerializer):
-	type = serializers.ChoiceField(choices=Profile.USER_TYPE_CHOICES, write_only=True, required=True)
+	type = serializers.ChoiceField(choices=Profile.USER_TYPE_CHOICES, write_only=True, required=False, default="PENG")
 	picture = serializers.ImageField(required=False)
 
 	class Meta:
