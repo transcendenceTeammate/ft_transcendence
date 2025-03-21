@@ -32,3 +32,14 @@ class Profile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.get_type_display()}"
+
+
+class Friendship(models.Model):
+    user = models.ForeignKey('Profile', on_delete=models.CASCADE, related_name="friendships")
+    friend = models.ForeignKey('Profile', on_delete=models.CASCADE, related_name="friends")
+
+    class Meta:
+        unique_together = ('user', 'friend')
+
+    def __str__(self):
+        return f"{self.user.nickname} follows {self.friend.nickname}"
