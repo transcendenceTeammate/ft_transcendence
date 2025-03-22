@@ -82,7 +82,7 @@ def signup(request):
 
 	return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-def index(request):
+def index(request): 
 	return render(request, 'index.html')
 
 def generate_random_password(length=12):

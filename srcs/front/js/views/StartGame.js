@@ -1,7 +1,8 @@
 import AbstractView from "./AbstractView.js";
 import User from "../user/User.js";
 import Navbar from "./Navbar.js";
-import { assignAvatar, assignUsername } from "../user/UserApiCalls.js";
+import { uploadProfilePictureFromPath, getUserInfo } from "../user/UserApiCalls.js";
+import { getRandomAvatar } from "../user/user_utils.js";
 
 export default class StartGame extends AbstractView {
 	constructor() {
@@ -24,9 +25,16 @@ export default class StartGame extends AbstractView {
     async createNavbar() {
         if (AbstractView.me === null)
         {
-            const username = await assignUsername();
-            const avatar = assignAvatar();
-            AbstractView.me = new User(username, avatar, null, true)
+            const userInfo = await getUserInfo();
+			console.log('userInfo is:');
+			console.dir(userInfo)
+			let avatar = null;
+			if (userInfo.image === null)
+			{
+				avatar = getRandomAvatar();
+            	uploadProfilePictureFromPath(avatar);
+			} else avatar = userInfo.image;
+            AbstractView.me = new User(userInfo.username, avatar, null, true)
         }
             this.navbar = await new Navbar().getHtml();
     }
@@ -47,7 +55,7 @@ export default class StartGame extends AbstractView {
 
     async getHtml() {
        await this.createNavbar();
-       await this.createNavbar();
+    //    await this.createNavbar();
        
         this.attachAllJs();
 

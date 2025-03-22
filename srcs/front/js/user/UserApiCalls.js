@@ -43,7 +43,7 @@ export async function isAuthenticated() {
     }
 }
 
-export async function assignUsername() {
+export async function getUserInfo() {
     const accessToken = getCookie('access_token');
 
     try {
@@ -58,7 +58,9 @@ export async function assignUsername() {
 
         if (response.ok) {
             const data = await response.json();
-            return data.username;
+            console.log("user's data from getUserInfo:")
+            console.dir(data)
+            return data;
         } else {
             console.error("Failed to fetch username");
             return 'failedFetchingUsername'
@@ -68,6 +70,40 @@ export async function assignUsername() {
         return 'errorFetchingUsername'
     }
 }
+
+export async function uploadProfilePictureFromPath(imagePath) {
+    const accessToken = getCookie('access_token');
+    try {
+        const response = await fetch(imagePath); // Load the image
+        const blob = await response.blob(); // Convert to Blob
+        const filename = imagePath.split('/').pop();
+        const file = new File([blob], filename, { type: blob.type }); // Create File
+        console.log('and the file is:')
+        console.dir(file)
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const uploadResponse = await fetch(`${CONFIG.API_URL}/api/users/upload-profile-picture/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            },
+            credentials: 'include'
+        });
+
+        const data = await uploadResponse.json();
+        if (!uploadResponse.ok) {
+            throw new Error(data.error || 'Failed to upload image');
+        }
+
+        console.log('Uploaded image URL:', data.image);
+        return data.image;
+    } catch (error) {
+        console.error('Error uploading image:', error);
+    }
+}
+
 
 export function assignAvatar() {
     const randomAvatar = getRandomAvatar();

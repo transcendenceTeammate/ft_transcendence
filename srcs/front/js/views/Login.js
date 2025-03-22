@@ -87,7 +87,7 @@ export default class extends AbstractView {
     async validateForm(){
         this.form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            console.log('ADDING EVENT LISTNER TO FORM!!!!!!!!!!!!!!!!')
+            // console.log('ADDING EVENT LISTNER TO FORM!!!!!!!!!!!!!!!!')
             const name = this.login.value.trim();
             const password = this.pass.value.trim();
             try {
@@ -101,7 +101,7 @@ export default class extends AbstractView {
                 });
         
                 if (response.ok) {
-                    const data = await response.json();
+                    // const data = await response.json();
                     takeMeThere(location.origin + '/start-game');
                 } else {
                     const errorData = await response.json();

@@ -112,6 +112,7 @@ export default class extends AbstractView {
                     takeMeThere(location.origin + '/start-game');
                 } else {
                     const errorData = await response.json();
+                    console.dir(errorData)
                     this.errorMessageElement.textContent = errorData.error || "An error occurred";
                     this.errorMessageElement.style.display = "block";
                 }
