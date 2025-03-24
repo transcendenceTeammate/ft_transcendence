@@ -178,12 +178,10 @@ def get_user_info(request):
 	load_dotenv()
 	API_URL = os.getenv('API_URL')
 	user = request.user
-	image_url = None
-	if hasattr(user, 'image_file') and user.image_file.image:
-		image_url = API_URL + user.image_file.image.url
+	image_url = API_URL + user.profile.picture.url if user.profile.picture and user.profile.picture.url else None
 	response = Response({
 		"username": user.username,
-		"image": API_URL + user.profile.picture.url
+		"image": image_url
 	})
 	return response
 
