@@ -24,6 +24,7 @@ export default class Navbar extends AbstractView {
 
     async getHtml(){
 		this.logMeOut();
+		//  console.log(`hello from gethtml in navbar. What's the userpic in AbstractView? ${AbstractView.me.userpic}`)
         return `
             <nav class="navbar navbar-expand-lg bg-body-tertiary">
 		<div class="container-fluid">

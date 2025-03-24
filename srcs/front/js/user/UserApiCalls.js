@@ -106,27 +106,41 @@ export async function uploadProfilePictureFromPath(imagePath) {
 
 export async function updateUsername(newUsername) {
     const accessToken = getCookie('access_token');
-    fetch(`${CONFIG.API_URL}` + '/api/users/update-username/', {  // Adjust the endpoint URL if necessary
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + accessToken  // Assuming the JWT is stored in cookies
-        },
-        body: JSON.stringify({ username: newUsername })
-    })
-    .then(response => response.json())
-    .then(data => {
+    try {
+        const response = await fetch(`${CONFIG.API_URL}` + '/api/users/update-username/', {  // Adjust the endpoint URL if necessary
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + accessToken  // Assuming the JWT is stored in cookies
+            },
+            body: JSON.stringify({ username: newUsername })
+        })
+
+        const data = await response.json();
+
         if (data.error) {
-            alert("Error: " + data.error);
+            throw new Error(`Error: ${data.error}`);
         } else {
-            alert("Username updated successfully to: " + data.nickname);
+            console.log("Username updated successfully to: " + data.nickname);
         }
-    })
-    .catch(error => {
+    } catch (error) {
         console.error('Error:', error);
         alert("An error occurred while updating the username.");
-    });
-    
+        throw error;  // Rethrow the error to be handled by the caller
+    }
+    // .then(response => response.json())
+    // .then(data => {
+    //     if (data.error) {
+    //         alert("Error: " + data.error);
+    //     } else {
+    //         console.log("Username updated successfully to: " + data.nickname);
+    //     }
+    // })
+    // .catch(error => {
+    //     console.error('Error:', error);
+    //     alert("An error occurred while updating the username.");
+    // });
+
 }
 
 export async function uploadProfilePicture(file) {

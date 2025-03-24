@@ -9,7 +9,7 @@ export default class extends AbstractView {
 
     async loadElements() {
         try {
-           
+
             this.pencil = await super.loadElement('editNamePencil');
             this.usernameForm = await super.loadElement('usernameForm');
             this.usernameHeading = await super.loadElement('usernameHeading');
@@ -24,6 +24,37 @@ export default class extends AbstractView {
             console.log(e);
         }
     }
+    
+    async updateProfilePicture(file) {
+        try {
+            await uploadProfilePicture(file);
+            
+            const userInfo = await getUserInfo();
+            AbstractView.me.userpic = userInfo.image;
+            
+            this.userpic.src = AbstractView.me.userpic;
+            document.activeElement.blur();
+            
+            const modalInstance = bootstrap.Modal.getOrCreateInstance(this.change_avatar_modal);
+            modalInstance.hide();
+    
+        } catch (error) {
+            // Handle any errors that occur during the async process
+            console.error("Error updating profile picture:", error);
+        }
+    }
+
+    async updateUname(username){
+        await updateUsername(username);
+        console.log('Username update completed. Fetching user info...');
+        const userInfo = await getUserInfo()
+        console.log(   `from updateUsername in Profile. what's the uname after updating? ${userInfo.username}`)
+        AbstractView.me.name = userInfo.username;
+        this.uname.textContent = AbstractView.me.name;
+        this.unameInput.textContent = AbstractView.me.name;
+        this.usernameForm.classList.add('d-none');
+        this.usernameHeading.classList.remove('d-none');
+    }
 
     async attachAllJs() {
         await this.loadElements();
@@ -36,36 +67,16 @@ export default class extends AbstractView {
 
         this.usernameButton.addEventListener('click', (e) => {
             const newUsername = this.unameInput.value
-            updateUsername(newUsername).then(() => {
-                console.log('now user info after updating (?) username:')
-                console.dir(getUserInfo())
-            })
-            this.uname.textContent = this.unameInput.value;
-
-            this.usernameForm.classList.add('d-none');
-            this.usernameHeading.classList.remove('d-none');
+            this.updateUname(newUsername)
+        //     this.usernameForm.classList.add('d-none');
+        //     this.usernameHeading.classList.remove('d-none');
         })
 
         this.upload.addEventListener('change', (event) => {
             event.preventDefault();
             const file = event.target.files[0];
             if (file) {
-                uploadProfilePicture(file).then(()=>{
-                
-                console.log('now user info is:')
-                console.dir(getUserInfo())
-            })
-                //will need to update AbstractView.me too
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                 
-                    this.userpic.src = e.target.result;
-                    document.activeElement.blur();
-                    const modalInstance = bootstrap.Modal.getOrCreateInstance(this.change_avatar_modal);
-                    modalInstance.hide();
-                };
-                reader.readAsDataURL(file);
-
+                this.updateProfilePicture(file);
             }
 
         })
@@ -73,10 +84,11 @@ export default class extends AbstractView {
 
     async getHtml() {
         this.navbar = await new Navbar().getHtml();
-       this.attachAllJs();
+        this.attachAllJs();
+        // console.log(`hello from gethtml in profile. What's the userpic in AbstractView? ${AbstractView.me.userpic}`)
 
-        return `<div id="app-child-profile">` 
-        + `
+        return `<div id="app-child-profile">`
+            + `
         <div class="modal" tabindex="-1" id="change_avatar_div">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -92,8 +104,8 @@ export default class extends AbstractView {
             </div>
         </div>
     </div>
-        ` 
-        + this.navbar +
+        `
+            + this.navbar +
             `
                 <main class="container mt-5">
         <div class="row">
@@ -113,7 +125,7 @@ export default class extends AbstractView {
                                 </svg>
                             </a>
                         </span>
-                        <img src=".${AbstractView.me.userpic}" class="card-img-top" alt="..."
+                        <img src="${AbstractView.me.userpic}" class="card-img-top" alt="..."
                             id="userpic">
                     </div>
                     <div class="card-body">

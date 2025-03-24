@@ -26,8 +26,8 @@ export default class StartGame extends AbstractView {
         if (AbstractView.me === null)
         {
             const userInfo = await getUserInfo();
-			console.log('userInfo is:');
-			console.dir(userInfo)
+			// console.log('userInfo is:');
+			// console.dir(userInfo)
 			let avatar = null;
 			if (userInfo.image === null)
 			{
