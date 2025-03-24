@@ -183,7 +183,7 @@ def get_user_info(request):
 		image_url = API_URL + user.image_file.image.url
 	response = Response({
 		"username": user.username,
-		"image": image_url
+		"image": API_URL + user.profile.picture.url
 	})
 	return response
 
