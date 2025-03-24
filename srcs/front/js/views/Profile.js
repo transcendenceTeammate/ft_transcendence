@@ -1,5 +1,6 @@
 import AbstractView from "./AbstractView.js";
 import Navbar from "./Navbar.js";
+import { getUserInfo, uploadProfilePicture, updateUsername } from "../user/UserApiCalls.js";
 export default class extends AbstractView {
     constructor() {
         super();
@@ -34,17 +35,27 @@ export default class extends AbstractView {
         })
 
         this.usernameButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            uname.textContent = unameInput.value;
+            const newUsername = this.unameInput.value
+            updateUsername(newUsername).then(() => {
+                console.log('now user info after updating (?) username:')
+                console.dir(getUserInfo())
+            })
+            this.uname.textContent = this.unameInput.value;
 
-            usernameForm.classList.add('d-none');
-            usernameHeading.classList.remove('d-none');
+            this.usernameForm.classList.add('d-none');
+            this.usernameHeading.classList.remove('d-none');
         })
 
         this.upload.addEventListener('change', (event) => {
             event.preventDefault();
             const file = event.target.files[0];
             if (file) {
+                uploadProfilePicture(file).then(()=>{
+                
+                console.log('now user info is:')
+                console.dir(getUserInfo())
+            })
+                //will need to update AbstractView.me too
                 const reader = new FileReader();
                 reader.onload = (e) => {
                  

@@ -104,6 +104,82 @@ export async function uploadProfilePictureFromPath(imagePath) {
     }
 }
 
+export async function updateUsername(newUsername) {
+    const accessToken = getCookie('access_token');
+    fetch(`${CONFIG.API_URL}` + '/api/users/update-username/', {  // Adjust the endpoint URL if necessary
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + accessToken  // Assuming the JWT is stored in cookies
+        },
+        body: JSON.stringify({ username: newUsername })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert("Error: " + data.error);
+        } else {
+            alert("Username updated successfully to: " + data.nickname);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert("An error occurred while updating the username.");
+    });
+    
+}
+
+export async function uploadProfilePicture(file) {
+    const accessToken = getCookie('access_token');
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+        const response = await fetch(`${CONFIG.API_URL}/api/users/upload-profile-picture/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Authorization': `Bearer ${accessToken}` // Function to retrieve JWT token from cookies
+            },
+            credentials: 'include' // Ensures cookies are sent with the request
+        });
+
+        const data = await response.json();
+        console.log("printing from uploadProfilePicture!!!")
+        console.dir(data)
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to upload image');
+        }
+
+        console.log('Uploaded image URL:', data.image);
+        return data.image;
+    } catch (error) {
+        console.error('Error uploading image:', error);
+    }
+}
+
+// Function to extract JWT token from cookies
+// function getJwtToken() {
+//     const cookies = document.cookie.split('; ');
+//     for (let cookie of cookies) {
+//         const [name, value] = cookie.split('=');
+//         if (name === 'jwt_token') { // Adjust according to your cookie name
+//             return value;
+//         }
+//     }
+//     return null;
+// }
+
+// Example usage: Assume there’s an <input type="file" id="fileInput">
+// document.getElementById('fileInput').addEventListener('change', function (event) {
+//     const file = event.target.files[0];
+//     if (file) {
+//         uploadProfilePicture(file);
+//     }
+// });
+
+
 
 export function assignAvatar() {
     const randomAvatar = getRandomAvatar();
