@@ -29,12 +29,7 @@ const router = async () => {
 
 	];
 
-	const match = routes.find(route => location.pathname === route.path)
-
-	if (!match) {
-		console.log('no match!');
-		match = routes[3];
-	}
+	const match = routes.find(route => location.pathname === route.path) || routes[3];
 
 	const view = new match.view();
 
