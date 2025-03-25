@@ -1,3 +1,4 @@
+import { FriendsList } from "../components/FriendList.js";
 import AbstractView from "./AbstractView.js";
 import Navbar from "./Navbar.js";
 export default class extends AbstractView {
@@ -62,7 +63,10 @@ export default class extends AbstractView {
 
     async getHtml() {
         this.navbar = await new Navbar().getHtml();
-       this.attachAllJs();
+        
+        this.friendsComponent = await FriendsList.create();
+        this.attachAllJs();
+
 
         return `<div id="app-child-profile">` 
         + `
@@ -136,56 +140,7 @@ export default class extends AbstractView {
                     </ul>
                 </div>
             </div>
-            <div class="col-3 offset-1 mt-3 text-center rounded-2" id="myfriends">
-                <h3 class="m-4 display-5 fw-bold">My friends</h3>
-                <div class="avatar-gallery py-4">
-                 <a href="#" class="text-decoration-none d-flex flex-column align-items-center link-dark">
-
-                        <div class="avatar-item">
-                            <img src="../public/avatars/steampunk/steampunk_peng.jpg" alt="Avatar 1">
-                        </div>
-                        Steamie
-                    </a>
-                    <a href="#" class="text-decoration-none d-flex flex-column align-items-center link-dark">
-                        <div class="avatar-item">
-                            <img src="../public/avatars/gentleman/gentleman.webp" alt="Avatar 2">
-                        </div>
-                        Gentie
-                    </a>
-                    <a href="#" class="text-decoration-none d-flex flex-column align-items-center link-dark">
-                        <div class="avatar-item border border-success border-4">
-                            <img src="../public/avatars/girlie_queen/Cutie.webp" alt="Avatar 3">
-                        </div>
-                        Princess
-                    </a>
-                    <a href="#"
-                        class="text-decoration-none d-flex flex-column align-items-center link-dark position-relative">
-                        <div class="avatar-item position-relative">
-                            <img src="../public/avatars/steampunk/steampunk_noframe.jpg" alt="Avatar 4">
-                        </div>
-                        Gogglie
-                    </a>
-                    <a href="#" class="text-decoration-none d-flex flex-column align-items-center link-dark">
-                        <div class="avatar-item">
-                            <img src="../public/avatars/punk/punk.webp" alt="Avatar 5">
-                        </div>
-                        Bad Mfucker
-                    </a>
-                    <a href="#" class="text-decoration-none d-flex flex-column align-items-center link-dark">
-                        <div class="avatar-item">
-                            <img src="../public/avatars/bro/bro.webp" alt="Avatar 6">
-                        </div>
-                        Tech Bro
-                    </a>
-                    <a href="#" class="text-decoration-none d-flex flex-column align-items-center link-dark">
-                        <div class="avatar-item">
-                            <img src="../public/avatars/sk8er/sk8er_skate.webp" alt="Avatar 7">
-                        </div>
-                        Sk8er
-                    </a>
-                    </div>
-                </div>
-            </div>
+                ${this.friendsComponent.render()}
             </main>
             </div>
         `;
