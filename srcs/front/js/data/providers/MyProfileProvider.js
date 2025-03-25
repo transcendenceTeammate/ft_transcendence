@@ -73,7 +73,13 @@ export class MyProfileProvider {
 		this._userProfile.value = createProfile({
 			username: userData.username,
 			avatarUrl: userData.avatarUrl,
-			friendList: userData.friendList
+			friendList: userData.friendList.map((friend) => {
+				return {
+					username: friend.username,
+					avatarUrl: friend.avatar_url,
+					isConnected: friend.is_online
+				}
+			})
 		});
 
 		return this._userProfile;
