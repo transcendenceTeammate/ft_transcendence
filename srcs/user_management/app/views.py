@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from .serializers import UserSerializer
 from django.contrib.auth.models import User
 from . import models
-from .models import Profile, Friendship
+from .models import Profile, Friendship, GameHistory, GameUserData
 from rest_framework.authtoken.models import Token
 from rest_framework import status
 from django.shortcuts import get_object_or_404
