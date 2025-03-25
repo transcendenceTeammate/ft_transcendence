@@ -5,6 +5,7 @@ export default class extends AbstractView {
     constructor() {
         super();
         this.setTitle("Profile");
+        this.navbar = new Navbar();
     }
 
     async loadElements() {
@@ -33,6 +34,7 @@ export default class extends AbstractView {
             AbstractView.me.userpic = userInfo.image;
             
             this.userpic.src = AbstractView.me.userpic;
+            await this.navbar.updateAvatar();
             document.activeElement.blur();
             
             const modalInstance = bootstrap.Modal.getOrCreateInstance(this.change_avatar_modal);
@@ -52,6 +54,7 @@ export default class extends AbstractView {
         AbstractView.me.name = userInfo.username;
         this.uname.textContent = AbstractView.me.name;
         this.unameInput.textContent = AbstractView.me.name;
+        await this.navbar.updateUname()
         this.usernameForm.classList.add('d-none');
         this.usernameHeading.classList.remove('d-none');
     }
@@ -83,7 +86,7 @@ export default class extends AbstractView {
     }
 
     async getHtml() {
-        this.navbar = await new Navbar().getHtml();
+        this.navbarHtml = await this.navbar.getHtml();
         this.attachAllJs();
         // console.log(`hello from gethtml in profile. What's the userpic in AbstractView? ${AbstractView.me.userpic}`)
 
@@ -105,7 +108,7 @@ export default class extends AbstractView {
         </div>
     </div>
         `
-            + this.navbar +
+            + this.navbarHtml +
             `
                 <main class="container mt-5">
         <div class="row">

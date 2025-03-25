@@ -8,10 +8,20 @@ export default class Navbar extends AbstractView {
         
     }
 
-	async logMeOut() {
-		const logout = await super.loadElement('logout-link');
+	async loadElements() {
+		try {
+			this.username = await super.loadElement('username')
+			this.logout = await super.loadElement('logout-link');
+			this.avatar = await super.loadElement('nav-avatar');
+		}catch (e){
+			console.log(e)
+		}
+	}
 
-		logout.addEventListener('click', (e) => {
+	async logMeOut() {
+		await this.loadElements();
+
+		this.logout.addEventListener('click', (e) => {
 			e.preventDefault();
 			console.log('log me out function from Navbar class. is the event listener getting added?')
 			AbstractView.me = null;
@@ -20,6 +30,14 @@ export default class Navbar extends AbstractView {
 	  
 
 		})
+	}
+
+	async updateUname() {
+		this.username.textContent = AbstractView.me.name;
+	}
+
+	async updateAvatar() {
+		this.avatar.src = AbstractView.me.userpic;
 	}
 
     async getHtml(){
@@ -38,7 +56,7 @@ export default class Navbar extends AbstractView {
 				<ul class="navbar-nav  mb-2 mb-lg-0 me-4">
 					<a href="profile" class="nav-link" data-link>
 						<img src="${AbstractView.me.userpic}" alt="User's avatar" class="rounded-circle border border-black object-fit-cover" height="35" id="nav-avatar" data-link>
-						<span data-link>${AbstractView.me.name}</span>
+						<span id="username" data-link>${AbstractView.me.name}</span>
 					</a>
 					<div class="d-flex align-items-center">
 						<a href='#' class='nav-link pt-0 text-danger' id="logout-link">Log out</a>
