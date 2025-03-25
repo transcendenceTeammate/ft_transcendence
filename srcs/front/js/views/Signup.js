@@ -65,25 +65,48 @@ export default class extends AbstractView {
     }
 
     validatePass() {
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/;
         this.pass.addEventListener('input', () => {
             const passLabel = this.findLabel(this.pass);
-            passLabel.innerText = "8 characters, uppercase, lowercase, digit, special character"
+            passLabel.innerText = "8 min, uppercase, lowercase, digit, special character"
             if (passwordRegex.test(this.pass.value)) {
-        
+                this.validPass = true;
                 this.repPass.disabled = false;
             }
+            if (!this.repPass.disabled && !passwordRegex.test(this.pass.value)){ //if the user got back to the field and started changing password, remove the green check
+                this.hideCheck(this.pass)
+                this.hideCheck(this.repPass)
+                this.validPass = false;
+                this.validRep = false;
+            }
+
         })
         this.repPass.addEventListener('click', () => {
-            this.signalInvalid(true, this.pass, "blabla", "Password");
-            this.passEye.style.top = '5%'
-        })
-        this.repPass.addEventListener('input', () => {
-
-            if (this.repPass.value.trim() === this.pass.value.trim()) {
+             this.passEye.style.top = '5%'
+             if (!this.validPasss) { //
+                this.validRep =false;
+                this.signalInvalid(false, this.pass, "8 min, uppercase, lowercase, digit, special character", "Password")
+                this.submitButton.disabled  =true;
+            }
+               
+            //what if like had already typed the reppass before and now it's actually the same as the password
+           else if(this.validLog && this.validPass && this.validRep)
+            {
+                this.validRep = true;
                 this.signalInvalid(true, this.repPass, "blabla", "Repeat password");
                 this.repEye.style.top = '5%'
                 this.submitButton.disabled = false;
+            }
+            else if(this.validPass) this.signalInvalid(true, this.pass, "blabla", "Password");
+        })
+        this.repPass.addEventListener('input', () => {
+
+            if (this.validPass && this.repPass.value.trim() === this.pass.value.trim()) {
+                this.validRep = true;
+                this.signalInvalid(true, this.repPass, "blabla", "Repeat password");
+                this.repEye.style.top = '5%'
+                
+                if (this.validLog) this.submitButton.disabled = false;
             }
         })
     }
@@ -141,6 +164,11 @@ export default class extends AbstractView {
         while (sibl && !sibl.classList.contains('eye')) sibl = sibl.nextElementSibling;
         return sibl;
     } 
+
+    hideCheck = (element) => {
+        const check = this.findCheck(element);
+        check.style.visibility = 'hidden'
+    }
 
     signalInvalid = (validity, element, warning, orig) => {
         const lab = this.findLabel(element);
