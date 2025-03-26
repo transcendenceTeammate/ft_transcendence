@@ -79,12 +79,14 @@
                     </div>
                     <div class="card-body">
                         <div class="d-none" id="usernameForm">
-                            <div class="input-group mb-1">
-                                <input type="text" class="form-control" aria-label="change username"
-                                    value='Steampunk penguin' id='unameInput' required>
-                                <button class="btn btn-outline-secondary" type="button"
-                                    id="usernameButton">Submit</button>
-                            </div>
+                            <form>
+                                <div class="input-group mb-1">
+                                    <input type="text" class="form-control" aria-label="change username"
+                                        value='Steampunk penguin' id='unameInput' required>
+                                    <button class="btn btn-outline-secondary" type="button"
+                                        id="usernameButton">Submit</button>
+                                </div>
+                            </form>
                         </div>
                         <div id="usernameHeading">
                             <h5 class="card-title"><span id="uname">Steampunk penguin</span>
@@ -143,18 +145,6 @@
                         </div>
                         Bad Mfucker
                     </a>
-                    <a href="#" class="text-decoration-none d-flex flex-column align-items-center link-dark">
-                        <div class="avatar-item">
-                            <img src="../public/avatars/bro/bro.webp" alt="Avatar 6">
-                        </div>
-                        Tech Bro
-                    </a>
-                    <a href="#" class="text-decoration-none d-flex flex-column align-items-center link-dark">
-                        <div class="avatar-item">
-                            <img src="../public/avatars/sk8er/sk8er_skate.webp" alt="Avatar 7">
-                        </div>
-                        Sk8er
-                    </a>
                 </div>
             </div>
         </div>
@@ -185,8 +175,8 @@
         const change_avatar_modal = document.getElementById('change_avatar_div')
 
         document.addEventListener("DOMContentLoaded", function () {
-    window.changeAvatarModalInstance = new bootstrap.Modal(document.getElementById('change_avatar_div'));
-});
+            window.changeAvatarModalInstance = new bootstrap.Modal(document.getElementById('change_avatar_div'));
+        });
 
         pencil.addEventListener('click', (e) => {
             e.preventDefault();
@@ -224,3 +214,16 @@
 </body>
 
 </html>
+
+   <!-- <a href="#" class="text-decoration-none d-flex flex-column align-items-center link-dark">
+                        <div class="avatar-item">
+                            <img src="../public/avatars/bro/bro.webp" alt="Avatar 6">
+                        </div>
+                        Tech Bro
+                    </a>
+                    <a href="#" class="text-decoration-none d-flex flex-column align-items-center link-dark">
+                        <div class="avatar-item">
+                            <img src="../public/avatars/sk8er/sk8er_skate.webp" alt="Avatar 7">
+                        </div>
+                        Sk8er
+                    </a> -->
