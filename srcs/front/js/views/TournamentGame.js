@@ -129,9 +129,16 @@ export default class TournamentGame extends AbstractView {
 	
 		this.ballX += this.ballSpeedX;
 		this.ballY += this.ballSpeedY;
-		if (this.ballY <= 0 || this.ballY >= this.canvas.height) {
+		if (this.ballY - this.ballSize / 2 <= 0) {
+			this.ballY = this.ballSize / 2;
 			this.ballSpeedY *= -1;
 		}
+		
+		if (this.ballY + this.ballSize / 2 >= this.canvas.height) {
+			this.ballY = this.canvas.height - this.ballSize / 2;
+			this.ballSpeedY *= -1;
+		}
+		
 		if (
 			(this.ballX <= this.paddleWidth && this.ballY >= this.player1Y && this.ballY <= this.player1Y + this.paddleHeight) ||
 			(this.ballX >= this.canvas.width - this.paddleWidth && this.ballY >= this.player2Y && this.ballY <= this.player2Y + this.paddleHeight)
