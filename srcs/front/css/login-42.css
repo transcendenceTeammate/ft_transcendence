@@ -247,3 +247,8 @@ button span {
 .penguin-cursor{
     cursor: url('../public/cursor.cur'), auto;
 }
+
+.penguin-cursor:not(:disabled):not(.disabled) {
+	cursor: url('../public/cursor.cur'), auto;
+
+}

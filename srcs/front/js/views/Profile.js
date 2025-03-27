@@ -141,6 +141,11 @@ export default class extends AbstractView {
                 </div>
             </div>
                 ${this.friendsComponent.render()}
+                <div class="input-group input-group-sm mt-5">
+                    <input type="text" class="form-control" placeholder="username"
+                        aria-label="friend's username" aria-describedby="button-addfriend">
+                    <button class="btn p-2  blackie penguin-cursor" type="button" id="button-addfriend">ADD FRIEND</button>
+                </div>
             </main>
             </div>
         `;
