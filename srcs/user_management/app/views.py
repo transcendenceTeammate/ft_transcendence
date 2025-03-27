@@ -313,8 +313,8 @@ def create_game(request):
 	if player_1 == player_2:
 		return Response({"error": "A user cannot play against themselves."}, status=status.HTTP_400_BAD_REQUEST)
 
-	player_1_wins = score_1 > score_2
-	player_2_wins = score_2 > score_1
+	player_1_wins = int(score_1) > int(score_2)
+	player_2_wins = int(score_2) > int(score_1)
 
 	game_history = GameHistory.objects.create()
 
@@ -329,7 +329,7 @@ def create_game(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_game_history(request):
-	user = request.user.Profile
+	user = request.user.profile
 
 	games = GameUserData.objects.filter(user=user).select_related('game', 'user')
 

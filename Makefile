@@ -20,7 +20,7 @@ clean:
 	docker compose down -v --rmi all
 
 # Rebuild from scratch
-rebuild: clean build run
+re: clean build run
 
 # Show all logs
 logs:
