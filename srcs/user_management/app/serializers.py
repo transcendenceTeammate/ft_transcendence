@@ -2,6 +2,8 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import Profile
 from .models import Friendship
+from .models import GameHistory
+from .models import GameUserData
 
 class UserSerializer(serializers.ModelSerializer):
 	type = serializers.ChoiceField(choices=Profile.USER_TYPE_CHOICES, write_only=True, required=False, default="PENG")
@@ -30,3 +32,14 @@ class UserSerializer(serializers.ModelSerializer):
 		representation['type'] = instance.profile.type
 		representation['picture'] = instance.profile.picture.url if instance.profile.picture else None
 		return representation
+
+class GameHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GameHistory
+        fields = '__all__'
+
+
+class GameUserDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GameUserData
+        fields = '__all__'

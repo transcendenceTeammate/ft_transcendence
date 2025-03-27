@@ -3,10 +3,10 @@ from rest_framework.response import Response
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.http import JsonResponse
-from .serializers import UserSerializer
+from .serializers import UserSerializer, GameHistorySerializer
 from django.contrib.auth.models import User
 from . import models
-from .models import Profile, Friendship
+from .models import Profile, Friendship, GameHistory, GameUserData
 from rest_framework.authtoken.models import Token
 from rest_framework import status
 from django.shortcuts import get_object_or_404
@@ -292,3 +292,60 @@ def list_friends(request):
 	return Response({
 		"friends": friends_data
 	})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_game(request):
+	player_1_id = request.data.get('player_1')
+	player_2_id = request.data.get('player_2')
+	score_1 = request.data.get('score_1')
+	score_2 = request.data.get('score_2')
+
+	if not all([player_1_id, player_2_id, score_1, score_2]):
+		return Response({"error": "All fields (player_1, player_2, score_1, score_2) are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+	try:
+		player_1 = Profile.objects.get(id=player_1_id)
+		player_2 = Profile.objects.get(id=player_2_id)
+	except Profile.DoesNotExist:
+		return Response({"error": "One or both users not found."}, status=status.HTTP_404_NOT_FOUND)
+
+	if player_1 == player_2:
+		return Response({"error": "A user cannot play against themselves."}, status=status.HTTP_400_BAD_REQUEST)
+
+	player_1_wins = int(score_1) > int(score_2)
+	player_2_wins = int(score_2) > int(score_1)
+
+	game_history = GameHistory.objects.create()
+
+	GameUserData.objects.create(game=game_history, user=player_1, score=score_1, is_winner=player_1_wins)
+	GameUserData.objects.create(game=game_history, user=player_2, score=score_2, is_winner=player_2_wins)
+
+	return Response({
+		"message": "Game recorded successfully.",
+		"game": GameHistorySerializer(game_history).data
+	}, status=status.HTTP_201_CREATED)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_game_history(request):
+	user = request.user.profile
+
+	games = GameUserData.objects.filter(user=user).select_related('game', 'user')
+
+	game_history = []
+
+	for game_data in games:
+
+		opponent_game_data = GameUserData.objects.filter(game=game_data.game).exclude(user=user).first()
+
+		if opponent_game_data:
+			game_history.append({
+				"PlayerA_nickname": game_data.user.nickname,
+				"PlayerA_score": game_data.score,
+				"PlayerA_isWinner": game_data.is_winner,
+				"PlayerB_nickname": opponent_game_data.user.nickname,
+				"PlayerB_score": opponent_game_data.score,
+			})
+
+	return Response({"games": game_history})
