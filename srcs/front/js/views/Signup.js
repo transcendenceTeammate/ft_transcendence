@@ -92,7 +92,6 @@ export default class extends AbstractView {
         this.form.addEventListener('submit', async (e) => {
             e.preventDefault();
             try {
-
                 const response = await fetch(`${CONFIG.API_URL}/api/auth/signup/`, {
                     method: "POST",
                     headers: {
@@ -105,23 +104,46 @@ export default class extends AbstractView {
                     }),
                     credentials: "include"
                 });
-
+    
+                const errorMessageElement = this.errorMessageElement;
+                errorMessageElement.innerHTML = "";
+                errorMessageElement.style.display = "none";
+    
                 if (response.ok) {
                     const data = await response.json();
                     console.dir(data);
                     takeMeThere(location.origin + '/start-game');
                 } else {
                     const errorData = await response.json();
-                    this.errorMessageElement.textContent = errorData.error || "An error occurred";
-                    this.errorMessageElement.style.display = "block";
+    
+                    if (typeof errorData === 'object' && errorData !== null) {
+                        Object.entries(errorData).forEach(([field, messages]) => {
+                            if (Array.isArray(messages)) {
+                                messages.forEach(message => {
+                                    const errorItem = document.createElement("div");
+                                    errorItem.textContent = `${field}: ${message}`;
+                                    errorMessageElement.appendChild(errorItem);
+                                });
+                            } else {
+                                const errorItem = document.createElement("div");
+                                errorItem.textContent = `${field}: ${messages}`;
+                                errorMessageElement.appendChild(errorItem);
+                            }
+                        });
+                    } else {
+                        errorMessageElement.textContent = "An unexpected error occurred.";
+                    }
+                    
+                    errorMessageElement.style.display = "block";
                 }
             } catch (error) {
                 console.log(error);
-                this.errorMessageElement.textContent = "An error occurred : " + error.message;
+                this.errorMessageElement.textContent = "An error occurred: " + error.message;
+                this.errorMessageElement.style.display = "block";
             }
-            this.submitButton.disabled = true;
+    
+            this.submitButton.disabled = false;
         });
-      
     }
 
     findLabel = (element) => {
