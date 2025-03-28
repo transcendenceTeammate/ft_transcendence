@@ -106,7 +106,7 @@ export default class extends AbstractView {
                 });
     
                 const errorMessageElement = this.errorMessageElement;
-                errorMessageElement.innerHTML = ""; // Efface les erreurs précédentes
+                errorMessageElement.innerHTML = "";
                 errorMessageElement.style.display = "none";
     
                 if (response.ok) {
