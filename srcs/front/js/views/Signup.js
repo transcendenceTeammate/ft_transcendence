@@ -25,7 +25,7 @@ export default class extends AbstractView {
             label: await super.loadElement('log-label'),
             valid: false,
             firstInput: true,
-            regex: /^[a-zA-Z0-9@.+_-]{1, 150}$/,
+            regex: /^[a-zA-Z0-9@.+_-]{1,150}$/,
             baseLabel: "Login:",
             guidance: "only alphanumeric or @.+_-",
         };
@@ -97,15 +97,19 @@ export default class extends AbstractView {
 
     async checkLogin(){
         const login = this.logStruct;
-        console.log('wtf is with this.logStruct?')
-        console.dir(login)
+        
         login.field.addEventListener('input', async () => {
             this.clearField(login);
+            console.log(`wtf is goin on with check after clearing field? ${login.check.style.visibility}`)
             login.label.innerText = login.guidance;
+            console.log(`did the login value test as invalid???? ${login.field.value}`)
             if (!login.regex.test(login.field.value)){
+                
+                console.log(`wtf is it with the login regex? ${login.regex}`);
+                console.log(`how can it be possibly testing false? ${login.regex.test(login.field.value)}`)
                 login.valid = false;
                 this.signalInvalid(login, login.guidance);
-                login.firstInput = false;
+                // login.firstInput = false;
                 this.checkAllValid();
                 return;
             }
@@ -160,7 +164,7 @@ export default class extends AbstractView {
                 if(repPass.field.value.length > 0 && repPass.field.value === pass.field.value){
                     repPass.valid = true;
                     this.signalInvalid(repPass, "Repeat password:")
-                }
+                } else if (repPass.field.value.length > 0) repPass.firstInput = false;
             }
             if (!pass.firstInput && !pass.regex.test(pass.field.value)){
                 pass.valid = false;
@@ -177,6 +181,7 @@ export default class extends AbstractView {
             this.clearField(repPass);
             if(repPass.regex.test(repPass.field.value) && repPass.field.value === pass.field.value){
                 repPass.valid = true;
+                repPass.firstInput = false;
                 this.signalInvalid(repPass, "Repeat password:")
             } else if (!repPass.firstInput && (!pass.valid || repPass.field.value !== pass.field.value)){
                 repPass.valid = false;
