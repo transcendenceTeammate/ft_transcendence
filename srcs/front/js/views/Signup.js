@@ -7,12 +7,6 @@ export default class extends AbstractView {
     constructor() {
         super();
         this.setTitle("Signup");
-        // this.logFirstInput = true;
-        // this.passFirstInput = true;
-        // this.repPassFirstInput = true;
-        // this.validPass = false;
-        // this.validRep = false;
-        // this.validLog = false;
         this.gottaHideRepEye = false;
         
     }
@@ -21,7 +15,7 @@ export default class extends AbstractView {
         this.logStruct = {
             field: await super.loadElement('login-signup'),
             eye: null,
-            check: await super.loadElement('log-check'), //what if I also await and load it all
+            check: await super.loadElement('log-check'),
             label: await super.loadElement('log-label'),
             valid: false,
             firstInput: true,
@@ -90,16 +84,11 @@ export default class extends AbstractView {
     }
 
     async clicking(struct){
-        // console.log('hey wtf! Is the array of structs not lookin good?')
-        // console.dir(this.structs)
-        // console.log('which struct are we tryna click? does it really have no field???')
-        // console.dir(struct)
         struct.field.addEventListener('click', async() => {
+            if(struct.eye && struct.field.value.length > 0 && !struct.valid) struct.eye.style.top = '5%'
             for (let i = 0; i < 3; i++){
                 if(this.structs[i] !== struct && this.structs[i].field.value.length > 0 && this.structs[i].firstInput){
                     this.structs[i].valid = await this.fdUpFirstInput(this.structs[i]);
-                    console.dir(this.structs[i])
-                    console.log(`checking how well the validity check worked upon clicking! ${this.structs[i].valid}`)
                     this.structs[i].firstInput = false;
                     this.signalInvalid(this.structs[i], this.structs[i].valid ? this.structs[i].baseLabel : this.structs[i].fdUpFirstInputStr)
                 }
@@ -124,20 +113,14 @@ export default class extends AbstractView {
         
         login.field.addEventListener('input', async () => {
             this.clearField(login);
-            // console.log(`wtf is goin on with check after clearing field? ${login.check.style.visibility}`)
             login.label.innerText = login.guidance;
-            // console.log(`did the login value test as invalid???? ${login.field.value}`)
             if (!login.regex.test(login.field.value)){
-                
-                // console.log(`wtf is it with the login regex? ${login.regex}`);
-                // console.log(`how can it be possibly testing false? ${login.regex.test(login.field.value)}`)
                 login.valid = false;
                 this.signalInvalid(login, login.guidance);
-                // login.firstInput = false;
                 this.checkAllValid();
                 return;
             }
-            if(!login.firstInput && !checkUniqueUsername(login.field.value)){
+            if(!login.firstInput && !(await checkUniqueUsername(login.field.value))){
                 login.valid = false;
                 this.signalInvalid(login, "Login already exists");
                 this.checkAllValid();
@@ -148,40 +131,6 @@ export default class extends AbstractView {
                 this.signalInvalid(login, "Login:");
                 this.checkAllValid();
             }
-        })
-    }
-
-    async clickingFields(struct){
-        const log = this.logStruct;
-       
-        struct.field.addEventListener('click', async () => { //for the moment, it's not meant for the login
-            struct.eye.style.top = '5%';
-            if(log.firstInput){
-                if (log.regex.test(log.field.value)){
-                    const uniqueLog =  await checkUniqueUsername(log.field.value);
-                    log.valid = uniqueLog;
-                    uniqueLog ? this.signalInvalid(log, "Login:") : this.signalInvalid(log, "Login already exists");
-                }
-                log.firstInput = false;
-            }
-
-            if (struct === this.repPassStruct && this.passStruct.firstInput 
-                && !this.passStruct.regex.test(this.passStruct.field.value)){
-                    this.passStruct.firstInput = false;
-                    this.passStruct.valid = false;
-                    this.signalInvalid(this.passStruct, this.passStruct.guidance);
-                    
-            }
-            if (struct === this.passStruct && this.repPassStruct.firstInput 
-                && !this.repPassStruct.regex.test(this.passStruct.field.value)){
-                    this.repPassStruct.firstInput = false;
-                    this.passStruct.valid = false;
-                    this.signalInvalid(this.passStruct, this.passStruct.guidance);
-                    
-            }///I mean I want the wrong repeated password to become red if it's been filled but wrongly and then I click on the password field
-            //Now I want a function that could look at a field being clicked and check if the other two have stuff inside them and feedback it
-            //if it was the first ti;e the field had been filled it hadn't been feedbacked yet for the repeated login or non-compliant reppass
-            this.checkAllValid();
         })
     }
 
@@ -225,59 +174,6 @@ export default class extends AbstractView {
         
     }
 
-    // validatePass() {
-        
-    //     this.pass.addEventListener('input', () => {
-    //         console.log('checking how often the input event listener gets called')
-    //         if (this.passwordRegex.test(this.pass.value)) {
-    //             this.signalInvalid(true, this.pass, "blabla", "Password:");
-    //             this.validPass = true;
-    //             if(this.repPass.value.length > 0 && this.repPass.value === this.pass.value){
-    //                 this.repPass = true; 
-    //                 this.signalInvalid(true, this.repPass, "blabla", "Repeat password:")
-    //             }
-    //             this.checkAllValid();
-    //         }
-    //         else if (!this.passFirstInput && !this.passwordRegex.test(this.pass.value)) {
-    //             this.signalInvalid(false, this.pass, "8 min, uppercase, lowercase, digit, special character", "blabla");
-    //             this.validPass = false;
-    //             this.checkAllValid();
-    //         }
-            //now what if it's not the first input and it didn't match the rep before and now it matches it
-    //         this.passFirstInput = false;
-    //     })
-    // }
-
-    repPassClickAndInput() {
-        this.repPass.addEventListener('click', () => {
-            if (this.pass.value.length > 0) this.passFirstInput = false;
-            this.passEye.style.top = '5%'
-            if (!this.validPasss) {
-                this.validRep = false;
-                this.signalInvalid(false, this.pass, "8 min, uppercase, lowercase, digit, special character", "Password")
-                this.checkAllValid();
-            }
-        })
-
-        this.repPass.addEventListener('input', () => {
-            //if not first input, signal regex incompliance and the fact it doesnt match password
-            if (!this.repPassFirstInput && this.repPass.value !== this.pass.value) {
-                this.signalInvalid(false, this.repPass, "Doesn't match password", 'blabla');
-                this.validRep = false;
-                this.checkAllValid()
-            }
-            //if first input, check if same as pass and regex compliand and check if all valid
-            else if (this.validPass && this.repPass.value === this.pass.value) {
-                this.signalInvalid(true, this.repPass, "blabla", "Repeat password:");
-                this.repEye.style.top = '5%'
-                this.validRep = true;
-                this.checkAllValid();
-            }
-            this.repPassFirstInput = false;
-
-        })
-    }
-
     async validateForm() {
         this.form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -290,8 +186,8 @@ export default class extends AbstractView {
                         "Accept": "application/json"
                     },
                     body: JSON.stringify({
-                        username: this.login.value,
-                        password: this.pass.value,
+                        username: this.logStruct.field.value,
+                        password: this.passStruct.field.value,
                     }),
                     credentials: "include"
                 });
@@ -314,29 +210,6 @@ export default class extends AbstractView {
 
     }
 
-    findLabel = (element) => {
-        let sibl = element.nextElementSibling;
-        while (sibl && sibl.tagName.toLowerCase() !== 'label') sibl = sibl.nextElementSibling;
-        return sibl;
-    }
-
-    findCheck = (element) => {
-        let sibl = element.nextElementSibling;
-        while (sibl && !sibl.classList.contains('check')) sibl = sibl.nextElementSibling;
-        return sibl;
-    }
-
-    findEye = (element) => {
-        let sibl = element.nextElementSibling;
-        while (sibl && !sibl.classList.contains('eye')) sibl = sibl.nextElementSibling;
-        return sibl;
-    }
-
-    hideCheck = (element) => {
-        const check = this.findCheck(element);
-        check.style.visibility = 'hidden'
-    }
-
     signalInvalid = (struct, message) => {
         const lab = struct.label;
         const check = struct.check;
@@ -345,14 +218,11 @@ export default class extends AbstractView {
         const validity = struct.valid;
         if (!validity) {
             field.style.border = '';
-            field.classList.add('is-invalid');
-            // if (field.value.length === 0) lab.innerText = "Shouldn't be empty";
-            
+            field.classList.add('is-invalid');            
             lab.style.color = 'rgb(128, 0, 0, 0.6)';
             check.style.visibility = 'hidden'
         } else {
             field.classList.remove('is-invalid');
-            // lab.innerText = message;
             lab.style.color = '';
             check.style.visibility = 'visible'
             if (eye) eye.style.top = '5%'
@@ -431,8 +301,7 @@ export default class extends AbstractView {
         // this.loginLabel();
         // this.validateLogin();
         // this.validatePass();
-        // this.validateForm();
-        // this.eyes();
+        this.validateForm();
     }
 
 
