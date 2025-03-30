@@ -41,7 +41,7 @@ export default class extends AbstractView {
             // value: this.field.value,
             firstInput: true,
             valid: false,
-            regex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,150}$/,
+            regex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,128}$/,
             baseLabel: "Password:",
             guidance: "8 min, uppercase, lowercase, digit, special symb"
         };
@@ -57,7 +57,7 @@ export default class extends AbstractView {
             // value: this.field.value,
             firstInput: true,
             valid: false,
-            regex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/,
+            regex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,128}$/,
             baseLabel: "Repeat password",
             guidance: "Doesn't match password"
         }
@@ -87,6 +87,7 @@ export default class extends AbstractView {
         struct.field.classList.remove('is-invalid');
         struct.label.innerText = struct.guidance;
         struct.label.style.color = '';
+        struct.check.style.visibility = 'hidden';
     }
 
     checkAllValid() {
@@ -124,17 +125,66 @@ export default class extends AbstractView {
 
     async clickingFields(struct){
         const log = this.logStruct;
-        struct.field.addEventListener('click', async () => {
+       
+        struct.field.addEventListener('click', async () => { //for the moment, it's not meant for the login
+            struct.eye.style.top = '5%';
             if(log.firstInput){
                 if (log.regex.test(log.field.value)){
                     const uniqueLog =  await checkUniqueUsername(log.field.value);
                     log.valid = uniqueLog;
                     uniqueLog ? this.signalInvalid(log, "Login:") : this.signalInvalid(log, "Login already exists");
-                    this.checkAllValid();
                 }
                 log.firstInput = false;
             }
+
+            if (struct === this.repPassStruct && this.passStruct.firstInput 
+                && !this.passStruct.regex.test(this.passStruct.field.value)){
+                    this.passStruct.firstInput = false;
+                    this.passStruct.valid = false;
+                    this.signalInvalid(this.passStruct, this.passStruct.guidance);
+                    
+            }
+            this.checkAllValid();
         })
+    }
+
+    passInput(){
+        const pass = this.passStruct;
+        const repPass = this.repPassStruct;
+        pass.field.addEventListener('input', () => {
+            this.clearField(pass);
+            if (pass.regex.test(pass.field.value)){
+                pass.valid = true;
+                pass.firstInput = false;
+                this.signalInvalid(pass, "Password:");
+                if(repPass.field.value.length > 0 && repPass.field.value === pass.field.value){
+                    repPass.valid = true;
+                    this.signalInvalid(repPass, "Repeat password:")
+                }
+            }
+            if (!pass.firstInput && !pass.regex.test(pass.field.value)){
+                pass.valid = false;
+                this.signalInvalid(pass, pass.guidance)
+            }
+            this.checkAllValid();
+        })
+    }
+
+    repPassInput(){
+        const pass = this.passStruct;
+        const repPass = this.repPassStruct;
+        repPass.field.addEventListener('input', () => {
+            this.clearField(repPass);
+            if(repPass.regex.test(repPass.field.value) && repPass.field.value === pass.field.value){
+                repPass.valid = true;
+                this.signalInvalid(repPass, "Repeat password:")
+            } else if (!repPass.firstInput && (!pass.valid || repPass.field.value !== pass.field.value)){
+                repPass.valid = false;
+                this.signalInvalid(repPass, "Invalid")
+            }
+            this.checkAllValid();
+        })
+        
     }
 
 
@@ -363,14 +413,14 @@ export default class extends AbstractView {
                             eye.src = '../public/eye_open.png';
                             field.type = 'password';
                         });
-                        eye.addEventListener('touchstart', () => {
-                            eye.src = '../public/eye_closed.png';
-                            field.type = 'text';
-                        });
-                        eye.addEventListener('touchend', () => {
-                            eye.src = '../public/eye_open.png';
-                            field.type = 'password';
-                        });
+                        // eye.addEventListener('touchstart', () => {  //because we don't give a fk about touchable devices
+                        //     eye.src = '../public/eye_closed.png';
+                        //     field.type = 'text';
+                        // });
+                        // eye.addEventListener('touchend', () => {
+                        //     eye.src = '../public/eye_open.png';
+                        //     field.type = 'password';
+                        // });
                     } else {
                         eye.style.visibility = 'hidden';
                     }
@@ -378,8 +428,8 @@ export default class extends AbstractView {
             };
 
             const showHideEyes = async (div, element, eye) => {
-                document.addEventListener('mousedown', (event) => {
-                    if (!(div.contains(event.target))) {
+                document.addEventListener('mousedown', (event) => {//am I completely sure abt the 'document' part?
+                    if (!(div.contains(event.target))) { //maybe I'll better add it to this page's div
                         eye.style.visibility = 'hidden';
                     }
                 });
@@ -387,21 +437,19 @@ export default class extends AbstractView {
                     if (!(div.contains(event.target))) {
                         eye.style.visibility = 'hidden';
                     }
-
-
                 });
-                document.addEventListener('touchstart', (event) => {
-                    if (!(div.contains(event.target))) {
-                        eye.style.visibility = 'hidden';
-                    }
-                });
+                // document.addEventListener('touchstart', (event) => {
+                //     if (!(div.contains(event.target))) {
+                //         eye.style.visibility = 'hidden';
+                //     }
+                // });
 
                 listen(element, 'focus', eye);
                 listen(element, 'input', eye);
             };
 
-            showHideEyes(this.passdiv, this.pass, this.passEye);
-            showHideEyes(this.repPassDiv, this.repPass, this.repEye);
+            showHideEyes(this.passStruct.parentDiv, this.passStruct.field, this.passStruct.eye);
+            showHideEyes(this.repPassStruct.parentDiv, this.repPassStruct.field, this.repPassStruct.eye);
 
 
         } catch (error) {
@@ -412,7 +460,12 @@ export default class extends AbstractView {
 
     async attachAllJs() {
         await this.loadElementsCreateStructs();
-        await this.checkLogin()
+        await this.checkLogin();
+        await this.clickingFields(this.passStruct);
+        await this.clickingFields(this.repPassStruct);
+        this.passInput();
+        this.repPassInput();
+        this.eyes();
         // this.loginLabel();
         // this.validateLogin();
         // this.validatePass();
