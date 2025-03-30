@@ -1,14 +1,10 @@
 import CONFIG from "../config.js";
 import { checkUniqueUsername } from "../user/UserApiCalls.js";
-
-
 import AbstractView from "./AbstractView.js";
 export default class extends AbstractView {
     constructor() {
         super();
         this.setTitle("Signup");
-        this.gottaHideRepEye = false;
-        
     }
 
     async createStructs(){
@@ -24,8 +20,6 @@ export default class extends AbstractView {
             guidance: "only alphanumeric or @.+_-",
             fdUpFirstInputStr: "Login already exists"
         };
-        console.log('lets check if logStruct was created correctly')
-        console.dir(this.logStruct)
 
         this.passStruct = {
             parentDiv: await super.loadElement('passdiv'),
@@ -41,9 +35,6 @@ export default class extends AbstractView {
             fdUpFirstInputStr: "8 min, uppercase, lowercase, digit, special symb"
         };
 
-        console.log('lets check if passStruct was created correctly')
-        console.dir(this.passStruct)
-
         this.repPassStruct = {
             parentDiv: await super.loadElement('reppassdiv'),
             field: await super.loadElement('reppass'),
@@ -57,8 +48,6 @@ export default class extends AbstractView {
             guidance: "Doesn't match password",
             fdUpFirstInputStr: "Invalid"
         }
-        console.log('lets check if reppassStruct was created correctly')
-        console.dir(this.repPassStruct)
     }
 
     async loadElementsCreateStructs() {
@@ -85,7 +74,6 @@ export default class extends AbstractView {
 
     async clicking(struct){
         struct.field.addEventListener('click', async() => {
-            if(struct.eye && struct.field.value.length > 0 && !struct.valid) struct.eye.style.top = '5%'
             for (let i = 0; i < 3; i++){
                 if(this.structs[i] !== struct && this.structs[i].field.value.length > 0 && this.structs[i].firstInput){
                     this.structs[i].valid = await this.fdUpFirstInput(this.structs[i]);
@@ -171,14 +159,12 @@ export default class extends AbstractView {
             }
             this.checkAllValid();
         })
-        
     }
 
     async validateForm() {
         this.form.addEventListener('submit', async (e) => {
             e.preventDefault();
             try {
-
                 const response = await fetch(`${CONFIG.API_URL}/api/auth/signup/`, {
                     method: "POST",
                     headers: {
@@ -224,9 +210,9 @@ export default class extends AbstractView {
         } else {
             field.classList.remove('is-invalid');
             lab.style.color = '';
-            check.style.visibility = 'visible'
-            if (eye) eye.style.top = '5%'
+            check.style.visibility = 'visible' 
         }
+        if (eye) eye.style.top = '5%'
         lab.innerText = message;
     }
 
@@ -260,7 +246,7 @@ export default class extends AbstractView {
 
             const showHideEyes = async (div, element, eye) => {
                 document.addEventListener('mousedown', (event) => {//am I completely sure abt the 'document' part?
-                    if (!(div.contains(event.target))) { //maybe I'll better add it to this page's div
+                    if (!(div.contains(event.target))) { 
                         eye.style.visibility = 'hidden';
                     }
                 });
@@ -278,32 +264,22 @@ export default class extends AbstractView {
                 listen(element, 'focus', eye);
                 listen(element, 'input', eye);
             };
-
             showHideEyes(this.passStruct.parentDiv, this.passStruct.field, this.passStruct.eye);
             showHideEyes(this.repPassStruct.parentDiv, this.repPassStruct.field, this.repPassStruct.eye);
-
-
         } catch (error) {
             console.log(error);
         }
-
     }
 
     async attachAllJs() {
         await this.loadElementsCreateStructs();
         await this.checkLogin();
-        for (let i = 0; i < 3; i++) this.clicking(this.structs[i])
-        // await this.clickingFields(this.passStruct);
-        // await this.clickingFields(this.repPassStruct);
+        for (let i = 0; i < 3; i++) this.clicking(this.structs[i]);
         this.passInput();
         this.repPassInput();
         this.eyes();
-        // this.loginLabel();
-        // this.validateLogin();
-        // this.validatePass();
         this.validateForm();
     }
-
 
     async getHtml() {
         this.attachAllJs();
