@@ -29,7 +29,7 @@ export default class extends AbstractView {
             label: await super.loadElement('passlabel'),
             firstInput: true,
             valid: false,
-            regex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,128}$/,
+            regex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[a-zA-Z0-9@$!%*?\&~#^()\-\_=+\[\]{};:,./\?])[A-Za-z\da-zA-Z0-9@$!%*?\&~#^()\-\_=+\[\]{};:,./\?]{8,128}$/,
             baseLabel: "Password:",
             guidance: "8 min, uppercase, lowercase, digit, special symb",
             fdUpFirstInputStr: "8 min, uppercase, lowercase, digit, special symb"
@@ -43,7 +43,7 @@ export default class extends AbstractView {
             label: await super.loadElement('reppasslabel'),
             firstInput: true,
             valid: false,
-            regex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,128}$/,
+            regex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[a-zA-Z0-9@$!%*?\&~#^()\-\_=+\[\]{};:,./\?])[A-Za-z\da-zA-Z0-9@$!%*?\&~#^()\-\_=+\[\]{};:,./\?]{8,128}$/,
             baseLabel: "Repeat password",
             guidance: "Doesn't match password",
             fdUpFirstInputStr: "Invalid"
@@ -132,9 +132,14 @@ export default class extends AbstractView {
                 pass.firstInput = false;
                 this.signalInvalid(pass, "Password:");
                 if(repPass.field.value.length > 0 && repPass.field.value === pass.field.value){
+                    repPass.firstInput = false;
                     repPass.valid = true;
                     this.signalInvalid(repPass, "Repeat password:")
-                } else if (repPass.field.value.length > 0) repPass.firstInput = false;
+                } else if (repPass.field.value.length > 0) {
+                    repPass.firstInput = false;
+                    repPass.valid = false;
+                    this.signalInvalid(repPass, "Invalid");
+                }
             }
             if (!pass.firstInput && !pass.regex.test(pass.field.value)){
                 pass.valid = false;
