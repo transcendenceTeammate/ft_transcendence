@@ -10,166 +10,62 @@ export default class extends AbstractView {
         this.validRep = true;
         this.validLog = true;
         this.gottaHideRepEye = false;
-        
     }
 
-    async createStructs(){
-        this.logStruct = {
-            field: await super.loadElement('login-signup'),
-            eye: null,
-            check: await super.loadElement('log-check'), //what if I also await and load it all
-            label: await super.loadElement('log-label'),
-            valid: false,
-            firstInput: true,
-            regex: /^[a-zA-Z0-9@.+_-]{1, 150}$/,
-            baseLabel: "Login:",
-            guidance: "only alphanumeric or @.+_-",
-        };
-        console.log('lets check if logStruct was created correctly')
-        console.dir(this.logStruct)
-
-        this.passStruct = {
-            parentDiv: await super.loadElement('passdiv'),
-            field: await super.loadElement('pass'),
-            eye: await super.loadElement('passEye'),
-            check: await super.loadElement('passCheck'),
-            label: await super.loadElement('passlabel'),
-            // value: this.field.value,
-            firstInput: true,
-            valid: false,
-            regex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,150}$/,
-            baseLabel: "Password:",
-            guidance: "8 min, uppercase, lowercase, digit, special symb"
-        };
-        console.log('lets check if passStruct was created correctly')
-        console.dir(this.passStruct)
-
-        this.repPassStruct = {
-            parentDiv: await super.loadElement('reppassdiv'),
-            field: await super.loadElement('reppass'),
-            eye: await super.loadElement('repPassEye'),
-            check: await super.loadElement('repPassCheck'),
-            label: await super.loadElement('reppasslabel'),
-            // value: this.field.value,
-            firstInput: true,
-            valid: false,
-            regex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/,
-            baseLabel: "Repeat password",
-            guidance: "Doesn't match password"
-        }
-        console.log('lets check if reppassStruct was created correctly')
-        console.dir(this.repPassStruct) //ok guess now we can update the validate stuff right?
-    }
-
-    async loadElementsCreateStructs() {
+    async loadElements() {
         try {
-            // this.login = ;
+            this.login = await super.loadElement('login-signup');
             this.form = await super.loadElement('form');
-            // this.pass = ;
-            // this.repPass = await super.loadElement('reppass');
-            // this.passEye = ;
-            // this.repEye = await super.loadElement('repPassEye');
-            // this.passdiv = await super.loadElement('passdiv');
-            // this.repPassDiv = await super.loadElement('reppassdiv');
+            this.pass = await super.loadElement('pass');
+            this.repPass = await super.loadElement('reppass');
+            this.passEye = await super.loadElement('passEye');
+            this.repEye = await super.loadElement('repPassEye');
+            this.passdiv = await super.loadElement('passdiv');
+            this.repPassDiv = await super.loadElement('reppassdiv');
             this.submitButton = await super.loadElement('subm');
             this.errorMessageElement = await super.loadElement('error-message');
-            await this.createStructs()
+
         } catch (e) {
             console.log(e);
         }
     }
 
-    clearField(struct){
-        struct.field.classList.remove('is-invalid');
-        struct.label.innerText = struct.guidance;
-        struct.label.style.color = '';
-    }
-
-    checkAllValid() {
-        const allValid = this.logStruct.valid && this.passStruct.valid && this.repPassStruct.valid;
-        this.submitButton.disabled = !allValid;
-    }
-
-    async checkLogin(){
-        const login = this.logStruct;
-        console.log('wtf is with this.logStruct?')
-        console.dir(login)
-        login.field.addEventListener('input', async () => {
-            this.clearField(login);
-            login.label.innerText = login.guidance;
-            if (!login.regex.test(login.field.value)){
-                login.valid = false;
-                this.signalInvalid(login, login.guidance);
-                login.firstInput = false;
-                this.checkAllValid();
-                return;
-            }
-            if(!login.firstInput && !checkUniqueUsername(login.field.value)){
-                login.valid = false;
-                this.signalInvalid(login, "Login already exists");
-                this.checkAllValid();
-                return;
-            }
-            if (!login.firstInput && login.regex.test(login.field.value)){
-                login.valid = true;
-                this.signalInvalid(login, "Login:");
-                this.checkAllValid();
-            }
+    async loginLabel() {
+        this.login.addEventListener('input', () => {
+            const lab = this.findLabel(this.login);
+            this.login.classList.remove('is-invalid');
+            lab.innerText = "Login: ";
+            lab.style.color = '';
+            if (this.login.value.length > 0) this.pass.disabled = false;
         })
     }
 
-    async clickingFields(struct){
-        const log = this.logStruct;
-        struct.field.addEventListener('click', async () => {
-            if(log.firstInput){
-                if (log.regex.test(log.field.value)){
-                    const uniqueLog =  await checkUniqueUsername(log.field.value);
-                    log.valid = uniqueLog;
-                    uniqueLog ? this.signalInvalid(log, "Login:") : this.signalInvalid(log, "Login already exists");
-                    this.checkAllValid();
+    async validateLogin() {
+
+        this.pass.addEventListener('click', async () => {
+            let logValue = this.login.value.trim();
+            if (logValue.length > 0) {
+                try {
+                    const checkResponse = await fetch(`${CONFIG.API_URL}/check_username/?username=${encodeURIComponent(logValue)}`);
+                    if (!checkResponse.ok) {
+                        const errorText = await checkResponse.text();
+                        console.error('Error:', errorText);
+                        this.signalInvalid(false, this.login, "Login already exists", "Login:");
+                        this.validatedLogin = false;
+                        if(this.pass.value.length === 0) this.pass.disabled = true;
+                    }
+                    else {  
+                        this.signalInvalid(true, this.login, "Login already exists", "Login:");
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
                 }
-                log.firstInput = false;
-            }
+            } else this.pass.disabled = true;
         })
     }
-
-
-    // async loginLabel() {
-    //     this.login.addEventListener('input', () => {
-    //         const lab = this.findLabel(this.login);
-    //         this.login.classList.remove('is-invalid');
-    //         lab.innerText = "Login: ";
-    //         lab.style.color = '';
-    //         if (this.login.value.length > 0) this.pass.disabled = false;
-    //     })
-    // }
-
-    // async validateLogin() {
-
-    //     this.pass.addEventListener('click', async () => {
-    //         let logValue = this.login.value.trim();
-    //         if (logValue.length > 0) {
-    //             try {
-    //                 const checkResponse = await fetch(`${CONFIG.API_URL}/check_username/?username=${encodeURIComponent(logValue)}`);
-    //                 if (!checkResponse.ok) {
-    //                     const errorText = await checkResponse.text();
-    //                     console.error('Error:', errorText);
-    //                     this.signalInvalid(false, this.login, "Login already exists", "Login:");
-    //                     this.validatedLogin = false;
-    //                     if(this.pass.value.length === 0) this.pass.disabled = true;
-    //                 }
-    //                 else {  
-    //                     this.signalInvalid(true, this.login, "Login already exists", "Login:");
-    //                 }
-    //             } catch (error) {
-    //                 console.error('Error:', error);
-    //             }
-    //         } else this.pass.disabled = true;
-    //     })
-    // }
 
     validatePass() {
-        
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/;
         this.pass.addEventListener('input', () => {
             const passLabel = this.findLabel(this.pass);
             passLabel.innerText = "8 min, uppercase, lowercase, digit, special character"
@@ -274,27 +170,24 @@ export default class extends AbstractView {
         check.style.visibility = 'hidden'
     }
 
-    signalInvalid = (struct, message) => {
-        const lab = struct.label;
-        const check = struct.check;
-        const eye = struct.eye;
-        const field = struct.field;
-        const validity = struct.valid;
+    signalInvalid = (validity, element, warning, orig) => {
+        const lab = this.findLabel(element);
+        const check = this.findCheck(element);
+        const eye = this.findEye(element);
         if (!validity) {
-            field.style.border = '';
-            field.classList.add('is-invalid');
-            // if (field.value.length === 0) lab.innerText = "Shouldn't be empty";
-            
+            element.style.border = '';
+            element.classList.add('is-invalid');
+            if (element.value.length === 0) lab.innerText = "Shouldn't be empty";
+            else lab.innerText = warning;
             lab.style.color = 'rgb(128, 0, 0, 0.6)';
             check.style.visibility = 'hidden'
         } else {
-            field.classList.remove('is-invalid');
-            // lab.innerText = message;
+            element.classList.remove('is-invalid');
+            lab.innerText = orig;
             lab.style.color = '';
             check.style.visibility = 'visible'
             if(eye) eye.style.top = '5%'
         }
-        lab.innerText = message;
     }
 
     async eyes() {
@@ -359,13 +252,12 @@ export default class extends AbstractView {
     }
 
     async attachAllJs() {
-        await this.loadElementsCreateStructs();
-        await this.checkLogin()
-        // this.loginLabel();
-        // this.validateLogin();
-        // this.validatePass();
-        // this.validateForm();
-        // this.eyes();
+        await this.loadElements();
+        this.loginLabel();
+        this.validateLogin();
+        this.validatePass();
+        this.validateForm();
+        this.eyes();
     }
 
 
@@ -380,8 +272,8 @@ export default class extends AbstractView {
 
                 <div class="form-floating mb-4">
                     <input type="text" class="form-control" name="login" placeholder="think of a nice login" id="login-signup" required>
-                    <embed src="../public/green_check.svg" alt="no check" class="check" id="log-check">
-                    <label for="login-signup" id="log-label">Login:</label>
+                    <embed src="../public/green_check.svg" alt="no check" class="check" id="passCheck">
+                    <label for="login-signup">Login:</label>
                 </div>
                 <div id="passdiv" style="position:relative" class="form-floating mb-4">
                     <input type="password" class="form-control" name="password" id="pass" class="pass"
