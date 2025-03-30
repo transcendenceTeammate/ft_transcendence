@@ -75,4 +75,22 @@ export function assignAvatar() {
 }
 
 
+export async function checkUniqueUsername(logValue) {
+    try {
+        const checkResponse = await fetch(`${CONFIG.API_URL}/check_username/?username=${encodeURIComponent(logValue)}`);
+        if (!checkResponse.ok) {
+            const errorText = await checkResponse.text();
+            console.error('Error:', errorText);
+            return false;
+            // this.signalInvalid(false, this.login, "Login already exists", "Login:");
+
+        }
+        return true;
+        // else {
+        //     this.signalInvalid(true, this.login, "Login already exists", "Login:");
+        // }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
 
