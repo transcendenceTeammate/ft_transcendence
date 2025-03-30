@@ -7,12 +7,12 @@ export default class extends AbstractView {
     constructor() {
         super();
         this.setTitle("Signup");
-        this.logFirstInput = true;
-        this.passFirstInput = true;
-        this.repPassFirstInput = true;
-        this.validPass = false;
-        this.validRep = false;
-        this.validLog = false;
+        // this.logFirstInput = true;
+        // this.passFirstInput = true;
+        // this.repPassFirstInput = true;
+        // this.validPass = false;
+        // this.validRep = false;
+        // this.validLog = false;
         this.gottaHideRepEye = false;
         
     }
@@ -28,6 +28,7 @@ export default class extends AbstractView {
             regex: /^[a-zA-Z0-9@.+_-]{1,150}$/,
             baseLabel: "Login:",
             guidance: "only alphanumeric or @.+_-",
+            fdUpFirstInputStr: "Login already exists"
         };
         console.log('lets check if logStruct was created correctly')
         console.dir(this.logStruct)
@@ -38,13 +39,14 @@ export default class extends AbstractView {
             eye: await super.loadElement('passEye'),
             check: await super.loadElement('passCheck'),
             label: await super.loadElement('passlabel'),
-            // value: this.field.value,
             firstInput: true,
             valid: false,
             regex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,128}$/,
             baseLabel: "Password:",
-            guidance: "8 min, uppercase, lowercase, digit, special symb"
+            guidance: "8 min, uppercase, lowercase, digit, special symb",
+            fdUpFirstInputStr: "8 min, uppercase, lowercase, digit, special symb"
         };
+
         console.log('lets check if passStruct was created correctly')
         console.dir(this.passStruct)
 
@@ -54,33 +56,55 @@ export default class extends AbstractView {
             eye: await super.loadElement('repPassEye'),
             check: await super.loadElement('repPassCheck'),
             label: await super.loadElement('reppasslabel'),
-            // value: this.field.value,
             firstInput: true,
             valid: false,
             regex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,128}$/,
             baseLabel: "Repeat password",
-            guidance: "Doesn't match password"
+            guidance: "Doesn't match password",
+            fdUpFirstInputStr: "Invalid"
         }
         console.log('lets check if reppassStruct was created correctly')
-        console.dir(this.repPassStruct) //ok guess now we can update the validate stuff right?
+        console.dir(this.repPassStruct)
     }
 
     async loadElementsCreateStructs() {
         try {
-            // this.login = ;
             this.form = await super.loadElement('form');
-            // this.pass = ;
-            // this.repPass = await super.loadElement('reppass');
-            // this.passEye = ;
-            // this.repEye = await super.loadElement('repPassEye');
-            // this.passdiv = await super.loadElement('passdiv');
-            // this.repPassDiv = await super.loadElement('reppassdiv');
             this.submitButton = await super.loadElement('subm');
             this.errorMessageElement = await super.loadElement('error-message');
             await this.createStructs()
+            this.structs = [this.logStruct, this.passStruct, this.repPassStruct]
         } catch (e) {
             console.log(e);
         }
+    }
+
+    async fdUpFirstInput(struct){
+        for(let i = 0; i < 3; i++){
+            if (this.structs[i] === struct){
+               return i === 0 ? await checkUniqueUsername(struct.field.value) 
+                : i === 1 ? struct.regex.test(struct.field.value) 
+                    : (struct.regex.test(struct.field.value) && struct.field.value === this.passStruct.field.value)
+            }
+        }
+    }
+
+    async clicking(struct){
+        // console.log('hey wtf! Is the array of structs not lookin good?')
+        // console.dir(this.structs)
+        // console.log('which struct are we tryna click? does it really have no field???')
+        // console.dir(struct)
+        struct.field.addEventListener('click', async() => {
+            for (let i = 0; i < 3; i++){
+                if(this.structs[i] !== struct && this.structs[i].field.value.length > 0 && this.structs[i].firstInput){
+                    this.structs[i].valid = await this.fdUpFirstInput(this.structs[i]);
+                    console.dir(this.structs[i])
+                    console.log(`checking how well the validity check worked upon clicking! ${this.structs[i].valid}`)
+                    this.structs[i].firstInput = false;
+                    this.signalInvalid(this.structs[i], this.structs[i].valid ? this.structs[i].baseLabel : this.structs[i].fdUpFirstInputStr)
+                }
+            }
+        })
     }
 
     clearField(struct){
@@ -100,13 +124,13 @@ export default class extends AbstractView {
         
         login.field.addEventListener('input', async () => {
             this.clearField(login);
-            console.log(`wtf is goin on with check after clearing field? ${login.check.style.visibility}`)
+            // console.log(`wtf is goin on with check after clearing field? ${login.check.style.visibility}`)
             login.label.innerText = login.guidance;
-            console.log(`did the login value test as invalid???? ${login.field.value}`)
+            // console.log(`did the login value test as invalid???? ${login.field.value}`)
             if (!login.regex.test(login.field.value)){
                 
-                console.log(`wtf is it with the login regex? ${login.regex}`);
-                console.log(`how can it be possibly testing false? ${login.regex.test(login.field.value)}`)
+                // console.log(`wtf is it with the login regex? ${login.regex}`);
+                // console.log(`how can it be possibly testing false? ${login.regex.test(login.field.value)}`)
                 login.valid = false;
                 this.signalInvalid(login, login.guidance);
                 // login.firstInput = false;
@@ -148,6 +172,15 @@ export default class extends AbstractView {
                     this.signalInvalid(this.passStruct, this.passStruct.guidance);
                     
             }
+            if (struct === this.passStruct && this.repPassStruct.firstInput 
+                && !this.repPassStruct.regex.test(this.passStruct.field.value)){
+                    this.repPassStruct.firstInput = false;
+                    this.passStruct.valid = false;
+                    this.signalInvalid(this.passStruct, this.passStruct.guidance);
+                    
+            }///I mean I want the wrong repeated password to become red if it's been filled but wrongly and then I click on the password field
+            //Now I want a function that could look at a field being clicked and check if the other two have stuff inside them and feedback it
+            //if it was the first ti;e the field had been filled it hadn't been feedbacked yet for the repeated login or non-compliant reppass
             this.checkAllValid();
         })
     }
@@ -192,63 +225,28 @@ export default class extends AbstractView {
         
     }
 
-
-    // async loginLabel() {
-    //     this.login.addEventListener('input', () => {
-    //         const lab = this.findLabel(this.login);
-    //         this.login.classList.remove('is-invalid');
-    //         lab.innerText = "Login: ";
-    //         lab.style.color = '';
-    //         if (this.login.value.length > 0) this.pass.disabled = false;
-    //     })
-    // }
-
-    // async validateLogin() {
-
-    //     this.pass.addEventListener('click', async () => {
-    //         let logValue = this.login.value.trim();
-    //         if (logValue.length > 0) {
-    //             try {
-    //                 const checkResponse = await fetch(`${CONFIG.API_URL}/check_username/?username=${encodeURIComponent(logValue)}`);
-    //                 if (!checkResponse.ok) {
-    //                     const errorText = await checkResponse.text();
-    //                     console.error('Error:', errorText);
-    //                     this.signalInvalid(false, this.login, "Login already exists", "Login:");
-    //                     this.validatedLogin = false;
-    //                     if(this.pass.value.length === 0) this.pass.disabled = true;
-    //                 }
-    //                 else {  
-    //                     this.signalInvalid(true, this.login, "Login already exists", "Login:");
-    //                 }
-    //             } catch (error) {
-    //                 console.error('Error:', error);
-    //             }
-    //         } else this.pass.disabled = true;
-    //     })
-    // }
-
-    validatePass() {
+    // validatePass() {
         
-        this.pass.addEventListener('input', () => {
-            console.log('checking how often the input event listener gets called')
-            if (this.passwordRegex.test(this.pass.value)) {
-                this.signalInvalid(true, this.pass, "blabla", "Password:");
-                this.validPass = true;
-                if(this.repPass.value.length > 0 && this.repPass.value === this.pass.value){
-                    this.repPass = true; 
-                    this.signalInvalid(true, this.repPass, "blabla", "Repeat password:")
-                }
-                this.checkAllValid();
-            }
-            else if (!this.passFirstInput && !this.passwordRegex.test(this.pass.value)) {
-                this.signalInvalid(false, this.pass, "8 min, uppercase, lowercase, digit, special character", "blabla");
-                this.validPass = false;
-                this.checkAllValid();
-            }
+    //     this.pass.addEventListener('input', () => {
+    //         console.log('checking how often the input event listener gets called')
+    //         if (this.passwordRegex.test(this.pass.value)) {
+    //             this.signalInvalid(true, this.pass, "blabla", "Password:");
+    //             this.validPass = true;
+    //             if(this.repPass.value.length > 0 && this.repPass.value === this.pass.value){
+    //                 this.repPass = true; 
+    //                 this.signalInvalid(true, this.repPass, "blabla", "Repeat password:")
+    //             }
+    //             this.checkAllValid();
+    //         }
+    //         else if (!this.passFirstInput && !this.passwordRegex.test(this.pass.value)) {
+    //             this.signalInvalid(false, this.pass, "8 min, uppercase, lowercase, digit, special character", "blabla");
+    //             this.validPass = false;
+    //             this.checkAllValid();
+    //         }
             //now what if it's not the first input and it didn't match the rep before and now it matches it
-            this.passFirstInput = false;
-        })
-    }
+    //         this.passFirstInput = false;
+    //     })
+    // }
 
     repPassClickAndInput() {
         this.repPass.addEventListener('click', () => {
@@ -279,48 +277,6 @@ export default class extends AbstractView {
 
         })
     }
-
-    // validatePass() {
-    //     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/;
-    //     this.pass.addEventListener('input', () => {
-    //         const passLabel = this.findLabel(this.pass);
-    //         passLabel.innerText = "8 min, uppercase, lowercase, digit, special character"
-    //         if (passwordRegex.test(this.pass.value)) {
-    //             this.validPass = true;
-    //             this.signalInvalid(true, this.pass, "blabla", "Password:");
-    //         }
-    //         if (!this.passFirstInput && !passwordRegex.test(this.pass.value)) { //if the user got back to the field and started changing password, remove the green check
-    //             this.hideCheck(this.pass)
-    //             this.hideCheck(this.repPass)
-    //             this.validPass = false;
-    //             this.validRep = false;
-    //         }
-
-    //     })
-    //     this.repPass.addEventListener('click', () => {
-
-    //     }
-
-    //what if like had already typed the reppass before and now it's actually the same as the password
-    //        else if (this.validLog && this.validPass && this.validRep) {
-    //         this.validRep = true;
-    //         this.signalInvalid(true, this.repPass, "blabla", "Repeat password");
-    //         this.repEye.style.top = '5%'
-    //         this.submitButton.disabled = false;
-    //     }
-    //     else if (this.validPass) this.signalInvalid(true, this.pass, "blabla", "Password");
-    // })
-    //     this.repPass.addEventListener('input', () => {
-
-    //     if (this.validPass && this.repPass.value.trim() === this.pass.value.trim()) {
-    //         this.validRep = true;
-    //         this.signalInvalid(true, this.repPass, "blabla", "Repeat password");
-    //         this.repEye.style.top = '5%'
-
-    //         if (this.validLog) this.submitButton.disabled = false;
-    //     }
-    // })
-    // }
 
     async validateForm() {
         this.form.addEventListener('submit', async (e) => {
@@ -466,8 +422,9 @@ export default class extends AbstractView {
     async attachAllJs() {
         await this.loadElementsCreateStructs();
         await this.checkLogin();
-        await this.clickingFields(this.passStruct);
-        await this.clickingFields(this.repPassStruct);
+        for (let i = 0; i < 3; i++) this.clicking(this.structs[i])
+        // await this.clickingFields(this.passStruct);
+        // await this.clickingFields(this.repPassStruct);
         this.passInput();
         this.repPassInput();
         this.eyes();
