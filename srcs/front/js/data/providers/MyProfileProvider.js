@@ -58,8 +58,18 @@ export class MyProfileProvider {
 		return this._userAvatar;
 	}
 
-	async setAvatar() {
+	async setAvatar(image) {
 
+		let response = await MyProfileProvider._backend.uploadUserAvatar(image);
+
+		const currentUserProfile = this._userProfile.value;
+		const newImageUrl = response.image
+
+		this._userProfile.value = createProfile({
+			username: currentUserProfile.username,
+			avatarUrl: newImageUrl,
+			friendList: currentUserProfile.friendList
+		});
 	}
 
 	async updateProfile() {
