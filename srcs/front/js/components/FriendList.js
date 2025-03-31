@@ -36,8 +36,7 @@ export class FriendListItem extends Component {
 export class FriendsList extends Component {
 	constructor() {
 		super();
-		this.avatarUrl = null;
-		this.username = null;
+
 	}
 
 	static async create() {
@@ -47,6 +46,12 @@ export class FriendsList extends Component {
 	}
 
 	async init() {
+
+	}
+
+
+	_onLoaded()
+	{
 		let myProfileProvider = MyProfileProvider.getInstance();
 		
 		myProfileProvider.friendListStream.listen((friendList) => {
@@ -57,18 +62,19 @@ export class FriendsList extends Component {
 			this.updateComponent();
 		});
 		myProfileProvider.updateProfile();
-
 	}
+
 
 
 	_getComponentHtml() {
 		return `
-		<div class="col-3 offset-1 mt-3 text-center rounded-2" id="myfriends">
+		
+		<div class="text-center rounded-2" id="myfriends">
 				<h3 class="m-4 display-5 fw-bold">My friends</h3>
 				<div class="avatar-gallery py-4">
 					${this.friendListItems}
-					</div>
 				</div>
+		</div>
 		`
 	}
 }
