@@ -199,12 +199,13 @@ export default class extends AbstractView {
                     const errorData = await response.json();
                     this.errorMessageElement.textContent = errorData.error || "An error occurred";
                     this.errorMessageElement.style.display = "block";
+                    this.submitButton.disabled = true;
                 }
             } catch (error) {
                 console.log(error);
                 this.errorMessageElement.textContent = "An error occurred : " + error.message;
+                this.submitButton.disabled = true;
             }
-            this.submitButton.disabled = true;
         });
 
     }
