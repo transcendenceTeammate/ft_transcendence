@@ -116,7 +116,7 @@ export default class extends AbstractView {
                 login.valid = true;
                 this.signalInvalid(login, "Login:");
             }
-            else if (login.firstInput && this.passStruct.valid //c un peu tare mais bon oui si le couillon a decide de conquerir les champs mdp avant le login
+            else if (login.firstInput && this.passStruct.valid
                 && this.repPassStruct.valid && (await checkUniqueUsername(login.field.value))) {
                 login.firstInput = false;
                 login.valid = true;
@@ -197,11 +197,9 @@ export default class extends AbstractView {
     
                 if (response.ok) {
                     const data = await response.json();
-                    // console.dir(data);
                     takeMeThere(location.origin + '/start-game');
                 } else {
                     const errorData = await response.json();
-    
                     if (typeof errorData === 'object' && errorData !== null) {
                         Object.entries(errorData).forEach(([field, messages]) => {
                             if (Array.isArray(messages)) {
@@ -272,7 +270,7 @@ export default class extends AbstractView {
                 });
             };
             const showHideEyes = async (div, element, eye) => {
-                this.pageDiv.addEventListener('mousedown', (event) => {//am I completely sure abt the 'document' part?
+                this.pageDiv.addEventListener('mousedown', (event) => {
                     if (!(div.contains(event.target))) {
                         eye.style.visibility = 'hidden';
                     }
@@ -310,7 +308,6 @@ export default class extends AbstractView {
         <h1 class="p-5">Sign up to <span id="su-peng">Peng</span><span id="su-pong">Pong</span>App</h1>
         <div id="formdiv">
             <form action="avatar" id="form" class="form-floating">
-
                 <div class="form-floating mb-4">
                     <input type="text" class="form-control" name="login" placeholder="think of a nice login" id="login-signup" required>
                     <embed src="../public/green_check.svg" alt="no check" class="check" id="log-check">
