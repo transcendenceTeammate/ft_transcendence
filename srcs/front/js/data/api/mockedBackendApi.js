@@ -55,6 +55,14 @@ export class MockedBackendApi {
 
     }
 
+    static async setUsername(newUsername) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        return {
+            "nickname": newUsername.charAt(0).toUpperCase() + newUsername.slice(1),
+        };
+
+    }
+    
 
     static async getUserGameHistory() {
         await new Promise(resolve => setTimeout(resolve, 2000));
