@@ -19,6 +19,31 @@ export class MockedBackendApi {
                     username: "Fromage",
                     avatar_url: "https://picsum.photos/200#3",
                     is_online: true
+                },
+                {
+                    username: "irene",
+                    avatar_url: "https://picsum.photos/200#3",
+                    is_online: true
+                },
+                {
+                    username: "tom",
+                    avatar_url: "https://picsum.photos/200#3",
+                    is_online: true
+                },
+                {
+                    username: "tom",
+                    avatar_url: "https://picsum.photos/200#3",
+                    is_online: true
+                },
+                {
+                    username: "tete",
+                    avatar_url: "https://picsum.photos/200#3",
+                    is_online: true
+                },
+                {
+                    username: "titi",
+                    avatar_url: "https://picsum.photos/200#3",
+                    is_online: true
                 }
             ]
         };
