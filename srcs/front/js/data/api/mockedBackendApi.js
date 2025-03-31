@@ -1,95 +1,104 @@
 export class MockedBackendApi {
-    static async getUserData() {
+
+    constructor()
+    {
+
+    }
+    
+    async getUserData() {
         await new Promise(resolve => setTimeout(resolve, 100));
         return {
-            username: "GuyTariste",
+            nickname: "GuyTariste",
             avatar_url: "https://picsum.photos/200",
-            friend_list: [
-                {
-                    username: "SophieStiqué",
-                    avatar_url: "https://picsum.photos/200#1",
-                    is_online: true
-                },
-                {
-                    username: "BobIchon",
-                    avatar_url: "https://picsum.photos/200#2",
-                    is_online: false
-                },
-                {
-                    username: "Fromage",
-                    avatar_url: "https://picsum.photos/200#3",
-                    is_online: true
-                },
-                {
-                    username: "irene",
-                    avatar_url: "https://picsum.photos/200#3",
-                    is_online: true
-                },
-                {
-                    username: "tom",
-                    avatar_url: "https://picsum.photos/200#3",
-                    is_online: true
-                },
-                {
-                    username: "tom",
-                    avatar_url: "https://picsum.photos/200#3",
-                    is_online: true
-                },
-                {
-                    username: "tete",
-                    avatar_url: "https://picsum.photos/200#3",
-                    is_online: true
-                },
-                {
-                    username: "titi",
-                    avatar_url: "https://picsum.photos/200#3",
-                    is_online: true
-                }
-            ]
         };
     }
 
-    static async getFriendList() {
+    async getFriendList() {
         await new Promise(resolve => setTimeout(resolve, 100));
         return {
-            friend_list: [
-                {
-                    username: "SophieStiqué",
-                    avatar_url: "https://picsum.photos/200#1",
-                    is_online: true
-                },
-                {
-                    username: "BobIchon",
-                    avatar_url: "https://picsum.photos/200#2",
-                    is_online: false
-                },
-                {
-                    username: "Fromage",
-                    avatar_url: "https://picsum.photos/200#3",
-                    is_online: true
-                }
+            friends: [
+            {
+                nickname: "SophieStiqué",
+                avatar_url: "https://picsum.photos/200#1",
+                is_online: true
+            },
+            {
+                nickname: "BobIchon",
+                avatar_url: "https://picsum.photos/200#2",
+                is_online: false
+            },
+            {
+                nickname: "SarahClure",
+                avatar_url: "https://picsum.photos/200#3",
+                is_online: true
+            },
+            {
+                nickname: "MarieHônnete",
+                avatar_url: "https://picsum.photos/200#4",
+                is_online: false
+            },
+            {
+                nickname: "LucRatif",
+                avatar_url: "https://picsum.photos/200#5",
+                is_online: true
+            },
+            {
+                nickname: "YcareAmel",
+                avatar_url: "https://picsum.photos/200#6",
+                is_online: false
+            },
+            {
+                nickname: "LanaRguilé",
+                avatar_url: "https://picsum.photos/200#7",
+                is_online: true
+            },
+            {
+                nickname: "OttoPsie",
+                avatar_url: "https://picsum.photos/200#8",
+                is_online: false
+            },
+            {
+                nickname: "ThibaultLognaise",
+                avatar_url: "https://picsum.photos/200#9",
+                is_online: true
+            },
+            {
+                nickname: "LaraClure",
+                avatar_url: "https://picsum.photos/200#10",
+                is_online: false
+            },
+            {
+                nickname: "JustineTitegoutte",
+                avatar_url: "https://picsum.photos/200#11",
+                is_online: true
+            },
+            {
+                nickname: "TerryDicule",
+                avatar_url: "https://picsum.photos/200#12",
+                is_online: false
+            }
             ]
         }
     }
 
-    static async uploadUserAvatar(image) {
+    async uploadUserAvatar(image) {
         await new Promise(resolve => setTimeout(resolve, 100));
         return {
-            image: "https://picsum.photos/200#4"
+            avatar_url: "https://picsum.photos/200#4"
         };
 
     }
 
-    static async setUsername(newUsername) {
+    async setUsername(newUsername) {
         await new Promise(resolve => setTimeout(resolve, 100));
         return {
-            "nickname": newUsername.charAt(0).toUpperCase() + newUsername.slice(1),
+            nickname: newUsername.charAt(0).toUpperCase() + newUsername.slice(1),
         };
 
     }
     
 
-    static async getUserGameHistory() {
+    async getUserGameHistory() {
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         const gameHistory = [

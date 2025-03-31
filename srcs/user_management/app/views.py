@@ -180,8 +180,8 @@ def get_user_info(request):
 	user = request.user
 	image_url = API_URL + user.profile.picture.url if user.profile.picture and user.profile.picture.url else None
 	response = Response({
-		"username": user.username,
-		"image": image_url
+		"nickname": user.username,
+		"avatar_url": image_url
 	})
 	return response
 
@@ -203,7 +203,7 @@ def upload_profile_picture(request):
 
 	API_URL = os.getenv('API_URL')
 	return Response({
-		"image": API_URL + user.profile.picture.url
+		"avatar_url": API_URL + user.profile.picture.url
 	})
 
 @api_view(['PATCH'])
@@ -285,7 +285,7 @@ def list_friends(request):
 	friendships = Friendship.objects.filter(user=user_profile).select_related("friend")
 
 	friends_data = [
-		{"nickname": friendship.friend.nickname, "picture": friendship.friend.picture.url if friendship.friend.picture else None}
+		{"nickname": friendship.friend.nickname, "avatar_url": friendship.friend.picture.url if friendship.friend.picture else None, "is_online": False}
 		for friendship in friendships
 	]
 

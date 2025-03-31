@@ -1,4 +1,5 @@
 import { Stream } from "../../core/Stream.js";
+import { BackendApi } from "../api/backendApi.js";
 import { MockedBackendApi } from "../api/mockedBackendApi.js";
 
 function createHistoryRecord({ player1 = "", score1 = 0, player2 = "", score2 = 0, result = false } = {}) {
@@ -13,9 +14,9 @@ function createHistoryRecord({ player1 = "", score1 = 0, player2 = "", score2 = 
 
 export class GameHistoryProvider {
     static _instance = null;
-    static _backend = MockedBackendApi;
-
+    
     constructor() {
+        this._backend = new BackendApi();
         this._history = Stream.withDefault([]);
     }
 
@@ -28,7 +29,7 @@ export class GameHistoryProvider {
     }
 
     async updateHistory() {
-        let rawHistoryData = await GameHistoryProvider._backend.getUserGameHistory();
+        let rawHistoryData = await this._backend.getUserGameHistory();
 
         let gameHistory = rawHistoryData.map((game) => {
             return createHistoryRecord({
