@@ -15,7 +15,7 @@ const getRandomAvatar = () =>
     ]
 
     const randomAvatarIndex = Math.floor(Math.random() * avatars.length)
-    console.log(`random avatar is: ${avatars[randomAvatarIndex]}`)
+    // console.log(`random avatar is: ${avatars[randomAvatarIndex]}`)
     return avatars[randomAvatarIndex];
 }
 
