@@ -1,6 +1,6 @@
 import AbstractView from "./AbstractView.js";
 import User from "../user/User.js";
-import Navbar from "./Navbar.js";
+import { Navbar } from "../components/Navbar.js";
 import { assignAvatar, assignUsername } from "../user/UserApiCalls.js";
 
 export default class StartGame extends AbstractView {
@@ -21,16 +21,6 @@ export default class StartGame extends AbstractView {
 		}
 	}
 
-    async createNavbar() {
-        if (AbstractView.me === null)
-        {
-            const username = await assignUsername();
-            const avatar = assignAvatar();
-            AbstractView.me = new User(username, avatar, null, true)
-        }
-            this.navbar = await new Navbar().getHtml();
-    }
-
 	async attachAllJs() {
 		
 		await this.loadElements();
@@ -46,8 +36,8 @@ export default class StartGame extends AbstractView {
 	}
 
     async getHtml() {
-       await this.createNavbar();
-       await this.createNavbar();
+	   this.navbar = await Navbar.create();
+
        
         this.attachAllJs();
 
@@ -175,7 +165,7 @@ export default class StartGame extends AbstractView {
 	</div>
 		` +
 
-        this.navbar +
+        this.navbar.render() +
 
 
 			`<main class="container mt-5" id="start-main">

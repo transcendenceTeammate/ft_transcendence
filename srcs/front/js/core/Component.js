@@ -4,7 +4,6 @@ export class Component {
     constructor() {
         this.componentId = `component-${Component.idCounter++}`;
         this.needRefresh = false;
-        this._watchDomLoad()
     }
 
     _watchDomLoad()
@@ -12,8 +11,7 @@ export class Component {
         const checkIsInDom = () => document.getElementById(this.componentId);
 
         if (checkIsInDom()) {
-            this._onLoaded();
-            return;
+            this._onDomReady();
         }
         
         let timeoutId;
@@ -22,7 +20,7 @@ export class Component {
             if (checkIsInDom()) {
                 obs.disconnect();
                 clearTimeout(timeoutId);
-                this._onLoaded();
+                this._onDomReady();
             }
         });
 
@@ -36,13 +34,29 @@ export class Component {
         });
     }
 
+
+    _onDomReady() {
+		if (!this._isInitialized) {
+			this._onLoaded()
+			this._isInitialized = true;
+		}
+		this._onRefresh();
+
+		if (this.needRefresh) {
+			this.updateComponent();
+		}
+		console.debug(`${this.componentId} is ready`);
+	}
+
+
+    _onRefresh()
+    {
+
+    }
+
     _onLoaded()
     {
-        if (this.needRefresh)
-        {
-            this.updateComponent();
-        }
-        console.debug(`${this.componentId} loaded !`);
+        
     }
 
     updateComponent() {
@@ -51,7 +65,8 @@ export class Component {
         if (element) {
             console.debug(`${this.componentId} refresh`);
             this.needRefresh = false;
-            element.outerHTML = this.render();
+            element.innerHTML = this._getComponentHtml();
+			this._onRefresh(); 
         }
         else
         {
@@ -60,6 +75,7 @@ export class Component {
     }
 
     render() {
+        this._watchDomLoad();
         return `<section id="${this.componentId}" style="display: contents;">${this._getComponentHtml()}</section>`;
     }
 

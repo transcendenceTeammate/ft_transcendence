@@ -88,22 +88,41 @@ export default class Game extends AbstractView {
 	
 		this.ballX += this.ballSpeedX;
 		this.ballY += this.ballSpeedY;
-		if (this.ballY <= 0 || this.ballY >= this.canvas.height) {
+		if (this.ballY - this.ballSize / 2 <= 0) {
+			this.ballY = this.ballSize / 2;
 			this.ballSpeedY *= -1;
 		}
+	
+		if (this.ballY + this.ballSize / 2 >= this.canvas.height) {
+			this.ballY = this.canvas.height - this.ballSize / 2;
+			this.ballSpeedY *= -1;
+		}
+		
 		if (
 			(this.ballX <= this.paddleWidth && this.ballY >= this.player1Y && this.ballY <= this.player1Y + this.paddleHeight) ||
 			(this.ballX >= this.canvas.width - this.paddleWidth && this.ballY >= this.player2Y && this.ballY <= this.player2Y + this.paddleHeight)
 		) {
-			this.ballSpeedX *= -1;
+			let paddleCenter = this.ballY - (this.player1Y + this.paddleHeight / 2);
+			let angle = paddleCenter / (this.paddleHeight / 2);
+	
+			angle = Math.max(-0.75, Math.min(angle, 0.75));
 
-			if (this.ballY < this.player1Y || this.ballY < this.player2Y) {
-				this.ballSpeedY = Math.abs(this.ballSpeedY);
-			}
-			else if (this.ballY > this.player1Y + this.paddleHeight || this.ballY > this.player2Y + this.paddleHeight) {
-				this.ballSpeedY = -Math.abs(this.ballSpeedY);
+			this.ballSpeedX *= -1;
+			this.ballSpeedY = angle * 6;
+
+			let speedIncrease = 1.02;
+			this.ballSpeedX *= speedIncrease;
+			this.ballSpeedY *= speedIncrease;
+	
+			if (this.player1Score > this.player2Score + 3) {
+				this.ballSpeedX *= 0.98;
+				this.ballSpeedY *= 0.98;
+			} else if (this.player2Score > this.player1Score + 3) {
+				this.ballSpeedX *= 0.98;
+				this.ballSpeedY *= 0.98;
 			}
 		}
+	
 		if (this.ballX <= 0) {
 			this.player2Score++;
 			this.lastLoser = 1;
@@ -115,8 +134,28 @@ export default class Game extends AbstractView {
 			this.checkForWinner();
 			this.resetBall();
 		}
+	
 		this.score1.textContent = this.player1Score;
 		this.score2.textContent = this.player2Score;
+	}
+	
+	
+
+	adjustBallSpeedAndAngle() {
+
+		const paddle1Center = this.player1Y + this.paddleHeight / 2;
+		const paddle2Center = this.player2Y + this.paddleHeight / 2;
+		const angle1 = (this.ballY - paddle1Center) / this.paddleHeight * Math.PI / 4;
+		const angle2 = (this.ballY - paddle2Center) / this.paddleHeight * Math.PI / 4;
+
+		this.ballSpeedY = (this.ballSpeedY > 0 ? 1 : -1) * (Math.abs(this.ballSpeedY) + 1.5);
+		this.ballSpeedX = (this.ballSpeedX > 0 ? 1 : -1) * Math.abs(this.ballSpeedX) + 1;
+
+		if (this.ballX <= this.paddleWidth) {
+			this.ballSpeedY += angle1;
+		} else if (this.ballX >= this.canvas.width - this.paddleWidth) {
+			this.ballSpeedY += angle2;
+		}
 	}
 
 	checkForWinner() {

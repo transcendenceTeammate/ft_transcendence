@@ -36,6 +36,10 @@ urlpatterns = [
 	path('api/friend/remove/', views.remove_friend),
 	path('api/friend/list/', views.list_friends),
 
+	# Game
+	path('api/game/add/', views.create_game),
+	path('api/game/list/', views.get_game_history),
+
 	path('', views.index),
 	re_path(r'^.*$', views.index),
 ]
