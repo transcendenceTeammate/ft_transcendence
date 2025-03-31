@@ -42,7 +42,7 @@ export class GameHistoryProvider {
 
         this._history.value = gameHistory;
 
-        return this.gameHistory;
+        return this._history.value;
     }
 
     static getInstance() {
