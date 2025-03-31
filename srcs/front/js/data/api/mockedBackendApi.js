@@ -54,4 +54,83 @@ export class MockedBackendApi {
         };
 
     }
+
+
+    static async getUserGameHistory() {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        const gameHistory = [
+            {
+            "PlayerA_nickname": "Alice",
+            "PlayerA_score": 5,
+            "PlayerA_isWinner": true,
+            "PlayerB_nickname": "Bob",
+            "PlayerB_score": 3,
+            },
+            {
+            "PlayerA_nickname": "Charlie",
+            "PlayerA_score": 2,
+            "PlayerA_isWinner": false,
+            "PlayerB_nickname": "David",
+            "PlayerB_score": 6,
+            },
+            {
+            "PlayerA_nickname": "Eve",
+            "PlayerA_score": 7,
+            "PlayerA_isWinner": true,
+            "PlayerB_nickname": "Frank",
+            "PlayerB_score": 4,
+            },
+            {
+            "PlayerA_nickname": "Grace",
+            "PlayerA_score": 3,
+            "PlayerA_isWinner": true,
+            "PlayerB_nickname": "Hank",
+            "PlayerB_score": 1,
+            },
+            {
+            "PlayerA_nickname": "Ivy",
+            "PlayerA_score": 6,
+            "PlayerA_isWinner": false,
+            "PlayerB_nickname": "Jack",
+            "PlayerB_score": 7,
+            },
+            {
+            "PlayerA_nickname": "Kevin",
+            "PlayerA_score": 4,
+            "PlayerA_isWinner": false,
+            "PlayerB_nickname": "Liam",
+            "PlayerB_score": 5,
+            },
+            {
+            "PlayerA_nickname": "Grace",
+            "PlayerA_score": 3,
+            "PlayerA_isWinner": true,
+            "PlayerB_nickname": "Hank",
+            "PlayerB_score": 1,
+            },
+            {
+            "PlayerA_nickname": "Ivy",
+            "PlayerA_score": 6,
+            "PlayerA_isWinner": false,
+            "PlayerB_nickname": "Jack",
+            "PlayerB_score": 7,
+            },
+            {
+            "PlayerA_nickname": "Kevin",
+            "PlayerA_score": 4,
+            "PlayerA_isWinner": false,
+            "PlayerB_nickname": "Liam",
+            "PlayerB_score": 5,
+            },
+        ];
+
+        return gameHistory.sort(() => Math.random() - 0.5);
+    }
 }
+
+
+
+
+
+
