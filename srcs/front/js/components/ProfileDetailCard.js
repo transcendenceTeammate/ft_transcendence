@@ -34,7 +34,9 @@ export class ProfileDetailCard extends Component {
 	
 		usernameButton?.addEventListener('click', (e) => {
 			e.preventDefault();
+			const myProfileProvider = MyProfileProvider.getInstance();
 			uname.textContent = unameInput.value;
+			myProfileProvider.setUsername(unameInput.value);
 			usernameForm.classList.add('d-none');
 			usernameHeading.classList.remove('d-none');
 		});

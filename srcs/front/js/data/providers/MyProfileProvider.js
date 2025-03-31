@@ -3,12 +3,18 @@ import { MockedBackendApi } from "../api/mockedBackendApi.js";
 
 
 
-function createProfile({ username = null,
-	avatarUrl = null, friendList = [] } = {}) {
+function createProfile({ username = null, avatarUrl = null, friendList = [] } = {}) {
 	return {
 		username,
 		avatarUrl,
 		friendList,
+		copyWith: function (updates) {
+			return createProfile({
+				username: updates.username ?? this.username,
+				avatarUrl: updates.avatarUrl ?? this.avatarUrl,
+				friendList: updates.friendList ?? this.friendList,
+			});
+		},
 	};
 }
 
@@ -65,10 +71,20 @@ export class MyProfileProvider {
 		const currentUserProfile = this._userProfile.value;
 		const newImageUrl = response.image
 
-		this._userProfile.value = createProfile({
-			username: currentUserProfile.username,
-			avatarUrl: newImageUrl,
-			friendList: currentUserProfile.friendList
+		this._userProfile.value = currentUserProfile.copyWith({
+			avatarUrl: newImageUrl
+		});
+	}
+
+	async setUsername(newUsername)
+	{
+		let response = await MyProfileProvider._backend.setUsername(newUsername);
+
+		const currentUserProfile = this._userProfile.value;
+		const responseNewUsername = response.nickname
+
+		this._userProfile.value = currentUserProfile.copyWith({
+			username: responseNewUsername
 		});
 	}
 
