@@ -22,7 +22,7 @@ export async function isAuthenticated() {
         console.log("No access token found");
         return false;
     }
-    console.log("Access token found:", accessToken);
+    // console.log("Access token found:", accessToken);
     try {
         const response = await fetch(`${CONFIG.API_URL}/api/token/verify/`, {
             method: "POST",

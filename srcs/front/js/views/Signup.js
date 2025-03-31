@@ -7,7 +7,7 @@ export default class extends AbstractView {
         this.setTitle("Signup");
     }
 
-    async createStructs(){
+    async createStructs() {
         this.logStruct = {
             field: await super.loadElement('login-signup'),
             eye: null,
@@ -52,6 +52,7 @@ export default class extends AbstractView {
 
     async loadElementsCreateStructs() {
         try {
+            this.pageDiv = await super.loadElement('app-child-signup');
             this.form = await super.loadElement('form');
             this.submitButton = await super.loadElement('subm');
             this.errorMessageElement = await super.loadElement('error-message');
@@ -62,20 +63,20 @@ export default class extends AbstractView {
         }
     }
 
-    async fdUpFirstInput(struct){
-        for(let i = 0; i < 3; i++){
-            if (this.structs[i] === struct){
-               return i === 0 ? await checkUniqueUsername(struct.field.value) 
-                : i === 1 ? struct.regex.test(struct.field.value) 
-                    : (struct.regex.test(struct.field.value) && struct.field.value === this.passStruct.field.value)
+    async fdUpFirstInput(struct) {
+        for (let i = 0; i < 3; i++) {
+            if (this.structs[i] === struct) {
+                return i === 0 ? await checkUniqueUsername(struct.field.value)
+                    : i === 1 ? struct.regex.test(struct.field.value)
+                        : (struct.regex.test(struct.field.value) && struct.field.value === this.passStruct.field.value)
             }
         }
     }
 
-    async clicking(struct){
-        struct.field.addEventListener('click', async() => {
-            for (let i = 0; i < 3; i++){
-                if(this.structs[i] !== struct && this.structs[i].field.value.length > 0 && this.structs[i].firstInput){
+    async clicking(struct) {
+        struct.field.addEventListener('click', async () => {
+            for (let i = 0; i < 3; i++) {
+                if (this.structs[i] !== struct && this.structs[i].field.value.length > 0 && this.structs[i].firstInput) {
                     this.structs[i].valid = await this.fdUpFirstInput(this.structs[i]);
                     this.structs[i].firstInput = false;
                     this.signalInvalid(this.structs[i], this.structs[i].valid ? this.structs[i].baseLabel : this.structs[i].fdUpFirstInputStr)
@@ -84,7 +85,7 @@ export default class extends AbstractView {
         })
     }
 
-    clearField(struct){
+    clearField(struct) {
         struct.field.classList.remove('is-invalid');
         struct.label.innerText = struct.guidance;
         struct.label.style.color = '';
@@ -96,42 +97,45 @@ export default class extends AbstractView {
         this.submitButton.disabled = !allValid;
     }
 
-    async checkLogin(){
+    async checkLogin() {
         const login = this.logStruct;
-        
+
         login.field.addEventListener('input', async () => {
             this.clearField(login);
             login.label.innerText = login.guidance;
-            if (!login.regex.test(login.field.value)){
+            if (!login.regex.test(login.field.value)) {
                 login.valid = false;
+                login.firstInput = false;
                 this.signalInvalid(login, login.guidance);
-                this.checkAllValid();
-                return;
             }
-            if(!login.firstInput && !(await checkUniqueUsername(login.field.value))){
+            else if (!login.firstInput && !(await checkUniqueUsername(login.field.value))) {
                 login.valid = false;
                 this.signalInvalid(login, "Login already exists");
-                this.checkAllValid();
-                return;
             }
-            if (!login.firstInput && login.regex.test(login.field.value)){
+            else if (!login.firstInput && login.regex.test(login.field.value)) {
                 login.valid = true;
                 this.signalInvalid(login, "Login:");
-                this.checkAllValid();
             }
+            else if (login.firstInput && this.passStruct.valid //c un peu tare mais bon oui si le couillon a decide de conquerir les champs mdp avant le login
+                && this.repPassStruct.valid && (await checkUniqueUsername(login.field.value))) {
+                login.firstInput = false;
+                login.valid = true;
+                this.signalInvalid(login, "Login:")
+            }
+            this.checkAllValid();
         })
     }
 
-    passInput(){
+    passInput() {
         const pass = this.passStruct;
         const repPass = this.repPassStruct;
         pass.field.addEventListener('input', () => {
             this.clearField(pass);
-            if (pass.regex.test(pass.field.value)){
+            if (pass.regex.test(pass.field.value)) {
                 pass.valid = true;
                 pass.firstInput = false;
                 this.signalInvalid(pass, "Password:");
-                if(repPass.field.value.length > 0 && repPass.field.value === pass.field.value){
+                if (repPass.field.value.length > 0 && repPass.field.value === pass.field.value) {
                     repPass.firstInput = false;
                     repPass.valid = true;
                     this.signalInvalid(repPass, "Repeat password:")
@@ -141,7 +145,7 @@ export default class extends AbstractView {
                     this.signalInvalid(repPass, "Invalid");
                 }
             }
-            if (!pass.firstInput && !pass.regex.test(pass.field.value)){
+            if (!pass.firstInput && !pass.regex.test(pass.field.value)) {
                 pass.valid = false;
                 this.signalInvalid(pass, pass.guidance)
             }
@@ -149,21 +153,25 @@ export default class extends AbstractView {
         })
     }
 
-    repPassInput(){
+    repPassInput() {
         const pass = this.passStruct;
         const repPass = this.repPassStruct;
         repPass.field.addEventListener('input', () => {
             this.clearField(repPass);
-            if(repPass.regex.test(repPass.field.value) && repPass.field.value === pass.field.value){
+            if (repPass.regex.test(repPass.field.value) && repPass.field.value === pass.field.value) {
                 repPass.valid = true;
-                repPass.firstInput = false;
                 this.signalInvalid(repPass, "Repeat password:")
-            } else if (!repPass.firstInput && (!pass.valid || repPass.field.value !== pass.field.value)){
+            } else if (!pass.valid) {
+                repPass.valid = false;
+                this.signalInvalid(repPass, "We need a valid pass first")
+            }
+            else if (!repPass.firstInput && repPass.field.value !== pass.field.value) {
                 repPass.valid = false;
                 this.signalInvalid(repPass, "Invalid")
             }
-            this.checkAllValid();
-        })
+                repPass.firstInput = false;
+                this.checkAllValid();
+            })
     }
 
     async validateForm() {
@@ -185,7 +193,7 @@ export default class extends AbstractView {
 
                 if (response.ok) {
                     const data = await response.json();
-                    console.dir(data);
+                    // console.dir(data);
                     takeMeThere(location.origin + '/start-game');
                 } else {
                     const errorData = await response.json();
@@ -209,13 +217,13 @@ export default class extends AbstractView {
         const validity = struct.valid;
         if (!validity) {
             field.style.border = '';
-            field.classList.add('is-invalid');            
+            field.classList.add('is-invalid');
             lab.style.color = 'rgb(128, 0, 0, 0.6)';
             check.style.visibility = 'hidden'
         } else {
             field.classList.remove('is-invalid');
             lab.style.color = '';
-            check.style.visibility = 'visible' 
+            check.style.visibility = 'visible'
         }
         if (eye) eye.style.top = '5%'
         lab.innerText = message;
@@ -235,37 +243,22 @@ export default class extends AbstractView {
                             eye.src = '../public/eye_open.png';
                             field.type = 'password';
                         });
-                        // eye.addEventListener('touchstart', () => {  //because we don't give a fk about touchable devices
-                        //     eye.src = '../public/eye_closed.png';
-                        //     field.type = 'text';
-                        // });
-                        // eye.addEventListener('touchend', () => {
-                        //     eye.src = '../public/eye_open.png';
-                        //     field.type = 'password';
-                        // });
                     } else {
                         eye.style.visibility = 'hidden';
                     }
                 });
             };
-
             const showHideEyes = async (div, element, eye) => {
-                document.addEventListener('mousedown', (event) => {//am I completely sure abt the 'document' part?
-                    if (!(div.contains(event.target))) { 
-                        eye.style.visibility = 'hidden';
-                    }
-                });
-                document.addEventListener('focusin', (event) => {
+                this.pageDiv.addEventListener('mousedown', (event) => {//am I completely sure abt the 'document' part?
                     if (!(div.contains(event.target))) {
                         eye.style.visibility = 'hidden';
                     }
                 });
-                // document.addEventListener('touchstart', (event) => {
-                //     if (!(div.contains(event.target))) {
-                //         eye.style.visibility = 'hidden';
-                //     }
-                // });
-
+                this.pageDiv.addEventListener('focusin', (event) => {
+                    if (!(div.contains(event.target))) {
+                        eye.style.visibility = 'hidden';
+                    }
+                });
                 listen(element, 'focus', eye);
                 listen(element, 'input', eye);
             };

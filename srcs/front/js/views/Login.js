@@ -11,6 +11,7 @@ export default class extends AbstractView {
 
     async loadElements() {
         try {
+            this.pageDiv = await super.loadElement('app-child-login');
             this.form = await super.loadElement('form');
             this.login = await super.loadElement('login-login');
             this.form = await super.loadElement('form');
@@ -62,15 +63,15 @@ export default class extends AbstractView {
 
             const showHideEyes = async (div, element, eye) => {
              
-                document.addEventListener('mousedown', (event) => {
+                this.pageDiv.addEventListener('mousedown', (event) => {
                     if (!(div.contains(event.target))) eye.style.visibility = 'hidden';
                 });
-                document.addEventListener('focusin', (event) => {
+                this.pageDiv.addEventListener('focusin', (event) => {
                     if (!(div.contains(event.target))) eye.style.visibility = 'hidden';
                 });
-                document.addEventListener('touchstart', (event) => {
-                    if (!(div.contains(event.target))) eye.style.visibility = 'hidden';
-                });
+                // this.pageDiv.addEventListener('touchstart', (event) => {
+                //     if (!(div.contains(event.target))) eye.style.visibility = 'hidden';
+                // });
 
                 listen(element, 'focus', eye);
                 listen(element, 'input', eye);
@@ -87,7 +88,6 @@ export default class extends AbstractView {
     async validateForm(){
         this.form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            console.log('ADDING EVENT LISTNER TO FORM!!!!!!!!!!!!!!!!')
             const name = this.login.value.trim();
             const password = this.pass.value.trim();
             try {

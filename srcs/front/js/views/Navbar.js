@@ -13,7 +13,7 @@ export default class Navbar extends AbstractView {
 
 		logout.addEventListener('click', (e) => {
 			e.preventDefault();
-			console.log('log me out function from Navbar class. is the event listener getting added?')
+			// console.log('log me out function from Navbar class. is the event listener getting added?')
 			AbstractView.me = null;
 			document.cookie = "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.app.localhost";
 			takeMeThere(location.origin + '/')
