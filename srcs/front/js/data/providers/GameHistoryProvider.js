@@ -31,7 +31,7 @@ export class GameHistoryProvider {
     async updateHistory() {
         let rawHistoryData = await this._backend.getUserGameHistory();
 
-        let gameHistory = rawHistoryData.map((game) => {
+        let gameHistory = rawHistoryData.games.map((game) => {
             return createHistoryRecord({
             player1: game.PlayerA_nickname,
             score1: game.PlayerA_score,
