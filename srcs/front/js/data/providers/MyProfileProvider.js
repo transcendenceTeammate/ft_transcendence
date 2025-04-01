@@ -89,6 +89,49 @@ export class MyProfileProvider {
 		});
 	}
 
+	async addFriend(friendUsername)
+	{
+		let response = await this._backend.addFriend(friendUsername);
+
+		
+		const currentUserProfile = this._userProfile.value;
+		const rawFriendList = response.friends;
+		
+
+		this._userProfile.value = currentUserProfile.copyWith({
+			friendList : rawFriendList.map((friend) => {
+				return {
+					username: friend.nickname,
+					avatarUrl: friend.avatar_url ?? "/public/avatars/default/peng_head_def.webp",
+					isConnected: friend.is_online
+				};
+			}),
+		});
+		return response;
+	}
+
+	async removeFriend(friendUsername)
+	{
+		let response = await this._backend.removeFriend(friendUsername);
+
+		
+		const currentUserProfile = this._userProfile.value;
+		const rawFriendList = response.friends;
+		
+
+		this._userProfile.value = currentUserProfile.copyWith({
+			friendList : rawFriendList.map((friend) => {
+				return {
+					username: friend.nickname,
+					avatarUrl: friend.avatar_url ?? "/public/avatars/default/peng_head_def.webp",
+					isConnected: friend.is_online
+				};
+			}),
+		});
+		return response;
+	}
+
+
 	async updateProfile() {
 		let rawUserData = await this._backend.getUserData();
 		let rawFriendList = await this._backend.getFriendList();
