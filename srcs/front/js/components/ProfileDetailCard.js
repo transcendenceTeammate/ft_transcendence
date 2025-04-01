@@ -110,7 +110,7 @@ export class ProfileDetailCard extends Component {
 						</svg>
 					</a>
 				</span>
-				<img src="${this.avatarUrl}" class="card-img-top" alt="..." id="userpic">
+				<img src="${this.avatarUrl}" class="card-img-top" alt="..." id="userpic" style="width: 300px; height: 300px; object-fit: cover;">
 			</div>
 			<div class="card-body">
 				<div class="d-none" id="usernameForm">

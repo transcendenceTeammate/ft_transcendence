@@ -5,33 +5,25 @@ import { MyProfileProvider } from "../data/providers/MyProfileProvider.js";
 export class FriendListItem extends Component {
 	constructor(username, avatarUrl, isConnected) {
 		super();
-
 		this.username = username;
 		this.avatarUrl = avatarUrl;
 		this.isConnected = isConnected;
 	}
-	_getComponentHtml() {
 
-		if (this.isConnected) {
-			return `
-				<a href="#" class="text-decoration-none d-flex flex-column align-items-center link-dark">
-					<div class="avatar-item">
-						<img src="${this.avatarUrl}" alt="Avatar">
-					</div>
-					${this.username}
-				</a>
-				`
-		}
+	_getComponentHtml() {
+		const borderClass = this.isConnected ? "online" : "offline";
+
 		return `
-				<a href="#" class="text-decoration-none d-flex flex-column align-items-center link-dark">
-					<div class="avatar-item border border-success border-4">
-						<img src="${this.avatarUrl}" alt="Avatar">
-					</div>
-					${this.username}
-				</a>
-				`
+			<a href="#" class="text-decoration-none d-flex flex-column align-items-center link-dark">
+				<div class="avatar-item ${borderClass}">
+					<img src="${this.avatarUrl}" alt="Avatar">
+				</div>
+				${this.username}
+			</a>
+		`;
 	}
 }
+
 
 export class FriendsList extends Component {
 	constructor() {
@@ -68,13 +60,14 @@ export class FriendsList extends Component {
 
 	_getComponentHtml() {
 		return `
-		
-		<div class="text-center rounded-2" id="myfriends">
+			<div id="myfriends">
 				<h3 class="m-4 display-5 fw-bold">My friends</h3>
+			</div>
+			<div id="friendListContainer">
 				<div class="avatar-gallery py-4">
 					${this.friendListItems}
 				</div>
-		</div>
-		`
-	}
+			</div>
+		`;
+	}	
 }
