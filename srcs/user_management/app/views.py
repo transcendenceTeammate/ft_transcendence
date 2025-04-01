@@ -253,7 +253,15 @@ def add_friend(request):
 
 	Friendship.objects.create(user=user_profile, friend=friend_profile)
 
-	return Response({"message": f"{friend_profile.nickname} added as a friend."}, status=status.HTTP_201_CREATED)
+	friendships = Friendship.objects.filter(user=user_profile).select_related("friend")
+	API_URL = os.getenv('API_URL')
+
+	friends_data = [
+		{"nickname": friendship.friend.nickname, "avatar_url": API_URL + friendship.friend.picture.url if friendship.friend.picture else None, "is_online": False}
+		for friendship in friendships
+	]
+
+	return Response({"friends": friends_data}, status=status.HTTP_201_CREATED)
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
@@ -273,19 +281,31 @@ def remove_friend(request):
 	deleted, _ = Friendship.objects.filter(user=user_profile, friend=friend_profile).delete()
 
 	if deleted:
-		return Response({"message": f"Friendship with {friend_profile.nickname} removed."})
+		API_URL = os.getenv('API_URL')
+		friendships = Friendship.objects.filter(user=user_profile).select_related("friend")
+
+		friends_data = [
+			{"nickname": friendship.friend.nickname, "avatar_url": API_URL + friendship.friend.picture.url if friendship.friend.picture else None, "is_online": False}
+			for friendship in friendships
+		]
+
+		return Response({
+			"friends": friends_data,
+		})
 
 	return Response({"error": "Friendship does not exist."}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_friends(request):
+	API_URL = os.getenv('API_URL')
+
 	user_profile = request.user.profile
 
 	friendships = Friendship.objects.filter(user=user_profile).select_related("friend")
 
 	friends_data = [
-		{"nickname": friendship.friend.nickname, "avatar_url": friendship.friend.picture.url if friendship.friend.picture else None, "is_online": False}
+		{"nickname": friendship.friend.nickname, "avatar_url": API_URL + friendship.friend.picture.url if friendship.friend.picture else None, "is_online": False}
 		for friendship in friendships
 	]
 
