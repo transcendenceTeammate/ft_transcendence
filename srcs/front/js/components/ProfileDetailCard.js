@@ -4,6 +4,10 @@
 import { Component } from "../core/Component.js";
 import { MyProfileProvider } from "../data/providers/MyProfileProvider.js";
 
+import { showToast } from "../core/toast.js";
+
+
+
 export class ProfileDetailCard extends Component {
 	constructor() {
 		super();
@@ -26,35 +30,47 @@ export class ProfileDetailCard extends Component {
 		const upload = document.getElementById('upload');
 		const changeAvatarModal = document.getElementById('change_avatar_div');
 	
-		pencil?.addEventListener('click', (e) => {
+		pencil?.removeEventListener('click', this._pencilClickHandler);
+		this._pencilClickHandler = (e) => {
 			e.preventDefault();
 			usernameHeading.classList.add('d-none');
 			usernameForm.classList.remove('d-none');
-		});
-	
-		usernameButton?.addEventListener('click', (e) => {
+		};
+		pencil?.addEventListener('click', this._pencilClickHandler);
+
+		usernameButton?.removeEventListener('click', this._usernameButtonClickHandler);
+		this._usernameButtonClickHandler = (e) => {
 			e.preventDefault();
 			const myProfileProvider = MyProfileProvider.getInstance();
 			uname.textContent = unameInput.value;
-				myProfileProvider.setUsername(unameInput.value).catch((error) => {
-					console.error("Failed to update username:", error);
-					uname.textContent = this.username;
+			myProfileProvider.setUsername(unameInput.value).catch((error) => {
+				console.error("Failed to update username:", error);
+				uname.textContent = this.username;
+				showToast({
+					title: "Failed to update username",
+					message: `${error}`,
+					type: "error",
+					duration: 4000
 				});
+			});
 			usernameForm.classList.add('d-none');
 			usernameHeading.classList.remove('d-none');
-		});
-	
-		upload?.addEventListener('change', (e) => {
+		};
+		usernameButton?.addEventListener('click', this._usernameButtonClickHandler);
+
+		upload?.removeEventListener('change', this._uploadChangeHandler);
+		this._uploadChangeHandler = (e) => {
 			e.preventDefault();
 			const file = e.target.files[0];
 			if (!file) return;
-	
+
 			const myProfileProvider = MyProfileProvider.getInstance();
 			myProfileProvider.setAvatar(file);
-	
+
 			const modal = bootstrap.Modal.getOrCreateInstance(changeAvatarModal);
 			modal.hide();
-		});
+		};
+		upload?.addEventListener('change', this._uploadChangeHandler);
 	}
 	
 	_onLoaded()
