@@ -36,7 +36,10 @@ export class ProfileDetailCard extends Component {
 			e.preventDefault();
 			const myProfileProvider = MyProfileProvider.getInstance();
 			uname.textContent = unameInput.value;
-			myProfileProvider.setUsername(unameInput.value);
+				myProfileProvider.setUsername(unameInput.value).catch((error) => {
+					console.error("Failed to update username:", error);
+					uname.textContent = this.username;
+				});
 			usernameForm.classList.add('d-none');
 			usernameHeading.classList.remove('d-none');
 		});
