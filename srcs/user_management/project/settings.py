@@ -18,7 +18,10 @@ SECRET_KEY = os.getenv('JWT_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = [ 'user-management' ]
+ALLOWED_HOSTS = ['user-management']
+
+
+ASGI_APPLICATION = 'project.asgi.application'
 
 # Application definition
 
@@ -33,6 +36,7 @@ INSTALLED_APPS = [
 	'app',
 	'corsheaders',
 	'rest_framework_simplejwt',
+	'channels',
 ]
 
 MIDDLEWARE = [
@@ -68,7 +72,7 @@ TEMPLATES = [
 	},
 ]
 
-WSGI_APPLICATION = 'project.wsgi.application'
+# WSGI_APPLICATION = 'project.wsgi.application'
 
 
 # Database

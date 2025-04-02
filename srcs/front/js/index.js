@@ -10,6 +10,26 @@ import Tournament from "./views/Tournament.js";
 import TournamentGame from "./views/TournamentGame.js";
 import { isAuthenticated } from "./user/UserApiCalls.js";
 
+
+function initializeChatSocket() {
+	const chatSocket = new WebSocket("wss://api.app.localhost:8443/ws/chat/");
+
+	chatSocket.onopen = function() {
+		console.log('WebSocket connection established.');
+		const message = {
+			'message': 'Hello, world!'
+		};
+		chatSocket.send(JSON.stringify(message));
+	};
+
+	chatSocket.onmessage = function(event) {
+		const message = JSON.parse(event.data);
+		console.log('Received message:', message);
+	};
+}
+
+initializeChatSocket();
+
 window.takeMeThere = function (url) {
 	// Clean up any bootstrap modals before navigation
 	cleanupModals();
