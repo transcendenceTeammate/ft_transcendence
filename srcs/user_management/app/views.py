@@ -260,7 +260,7 @@ def add_friend(request):
 	API_URL = os.getenv('API_URL')
 
 	friends_data = [
-		{"nickname": friendship.friend.nickname, "avatar_url": API_URL + friendship.friend.picture.url if friendship.friend.picture else None, "is_online": is_user_connected(friendship.friend.id)}
+		{"nickname": friendship.friend.nickname, "avatar_url": API_URL + friendship.friend.picture.url if friendship.friend.picture else None, "is_online": is_user_connected(friendship.friend.user.id)}
 		for friendship in friendships
 	]
 
@@ -288,7 +288,7 @@ def remove_friend(request):
 		friendships = Friendship.objects.filter(user=user_profile).select_related("friend")
 
 		friends_data = [
-			{"nickname": friendship.friend.nickname, "avatar_url": API_URL + friendship.friend.picture.url if friendship.friend.picture else None, "is_online": is_user_connected(friendship.friend.id)}
+			{"nickname": friendship.friend.nickname, "avatar_url": API_URL + friendship.friend.picture.url if friendship.friend.picture else None, "is_online": is_user_connected(friendship.friend.user.id)}
 			for friendship in friendships
 		]
 
@@ -308,7 +308,7 @@ def list_friends(request):
 	friendships = Friendship.objects.filter(user=user_profile).select_related("friend")
 
 	friends_data = [
-		{"nickname": friendship.friend.nickname, "avatar_url": API_URL + friendship.friend.picture.url if friendship.friend.picture else None, "is_online": is_user_connected(friendship.friend.id)}
+		{"nickname": friendship.friend.nickname, "avatar_url": API_URL + friendship.friend.picture.url if friendship.friend.picture else None, "is_online": is_user_connected(friendship.friend.user.id)}
 		for friendship in friendships
 	]
 
