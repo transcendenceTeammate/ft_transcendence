@@ -25,4 +25,4 @@ RUN mkdir -p /app/media
 
 # Set the entrypoint script
 ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["daphne", "project.asgi:application", "--port", "8000", "--bind", "0.0.0.0"]
