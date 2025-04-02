@@ -32,7 +32,7 @@ class PresenceConsumer(AsyncWebsocketConsumer):
             return
 
         await self.accept()
-        self.user_id = self.user.id - 1 #TODO clean this ugly hack (profile id != user id cause of root user)
+        self.user_id = self.user.id
         self.alive = True
 
         set_user_status(self.user_id, PresenceStatus.ONLINE.value)
