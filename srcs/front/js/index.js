@@ -9,27 +9,28 @@ import Game from "./views/Game.js";
 import Tournament from "./views/Tournament.js";
 import TournamentGame from "./views/TournamentGame.js";
 import { isAuthenticated } from "./user/UserApiCalls.js";
+import { PresenceService } from "./services/PresenceService.js";
 
+// function initializeChatSocket() {
+//     const chatSocket = new WebSocket("wss://api.app.localhost:8443/ws/presence/");
 
-function initializeChatSocket() {
-	const chatSocket = new WebSocket("wss://api.app.localhost:8443/ws/chat/");
+//     chatSocket.onopen = function() {
+//         console.log('WebSocket connection established.');
+//         const message = {
+//             'message': 'Hello, world!'
+//         };
+//         chatSocket.send(JSON.stringify(message));
+//     };
 
-	chatSocket.onopen = function() {
-		console.log('WebSocket connection established.');
-		const message = {
-			'message': 'Hello, world!'
-		};
-		chatSocket.send(JSON.stringify(message));
-	};
+//     chatSocket.onmessage = function(event) {
+//         const message = JSON.parse(event.data);
+//         console.log('Received message:', message);
+//     };
+// }
 
-	chatSocket.onmessage = function(event) {
-		const message = JSON.parse(event.data);
-		console.log('Received message:', message);
-	};
-}
+// initializeChatSocket();
 
-initializeChatSocket();
-
+const presenceService = new PresenceService();
 window.takeMeThere = function (url) {
 	// Clean up any bootstrap modals before navigation
 	cleanupModals();
@@ -82,6 +83,7 @@ const router = async () => {
 		{ path: '/online-game', view: OnlineGame },
 	];
 
+	
 	const match = routes.find(route => location.pathname === route.path) || routes[3];
 
 	const view = new match.view();
