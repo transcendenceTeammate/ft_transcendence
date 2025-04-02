@@ -8,3 +8,5 @@ django-cors-headers
 django-extensions
 pyOpenSSL
 Pillow
+daphne
+channels

@@ -47,7 +47,6 @@ services:
     volumes:
       - media_data:/app/media
       - ./srcs/nginx/ssl:/etc/ssl
-    command: python manage.py runserver 0.0.0.0:8000
     healthcheck:
       test: ["CMD", "curl", "-f", "https://localhost:8000"]
       interval: 30s

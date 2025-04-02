@@ -16,7 +16,10 @@ SECRET_KEY = 'django-insecure-!d=%657wtc(e7p4agvog+9yd*s))tn917x9e7*2pj#-jrjh4m2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [ 'user-management' ]
+ALLOWED_HOSTS = ['user-management']
+
+
+ASGI_APPLICATION = 'project.asgi.application'
 
 # Application definition
 
@@ -32,6 +35,7 @@ INSTALLED_APPS = [
 	'app',
 	'corsheaders',
 	'rest_framework_simplejwt',
+	'channels',
 ]
 
 MIDDLEWARE = [
@@ -67,7 +71,7 @@ TEMPLATES = [
 	},
 ]
 
-WSGI_APPLICATION = 'project.wsgi.application'
+# WSGI_APPLICATION = 'project.wsgi.application'
 
 
 # Database
