@@ -21,7 +21,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-roq6@i@6)n=vox&h-ulhc_4m-vn)q&_g!27a)8w3ekt+^=h4%%'
+# Must match user_management SECRET_KEY for JWT token validation
+SECRET_KEY = 'django-insecure-!d=%657wtc(e7p4agvog+9yd*s))tn917x9e7*2pj#-jrjh4m2'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -140,5 +141,22 @@ CHANNEL_LAYERS = {
     },
 }
 
-# Add CORS settings
-CORS_ALLOW_ALL_ORIGINS = True  # For development only
+CORS_ALLOWED_ORIGINS = [
+    'https://app.localhost:8443',
+]
+CORS_ALLOW_CREDENTIALS = True
+
+REDIS_HOST = 'localhost'
+REDIS_PORT = 6379
+REDIS_DB = 1
+
+# Cache Configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}

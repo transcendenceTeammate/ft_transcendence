@@ -1,0 +1,30 @@
+# Canvas dimensions
+CANVAS_WIDTH = 800
+CANVAS_HEIGHT = 600
+
+# Paddle properties
+PADDLE_WIDTH = 12
+PADDLE_HEIGHT = 120
+PADDLE_SPEED = 12
+
+# Ball properties
+BALL_SIZE = 20
+BALL_INITIAL_SPEED_X = 7
+BALL_INITIAL_SPEED_Y = 7
+
+# Physics properties
+SPEED_INCREASE_FACTOR = 1.02
+RUBBER_BAND_FACTOR = 0.98
+ANGLE_LIMIT = 0.75
+
+# Game rules
+WINNING_SCORE = 10
+
+# Network settings
+SERVER_UPDATE_RATE = 60  # Updates per second
+SERVER_RECONCILIATION_THRESHOLD = 5  # Pixels
+
+VERSION = '1.0.0'
+
+def get_version():
+    return VERSION 
