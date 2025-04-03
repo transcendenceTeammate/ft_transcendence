@@ -415,33 +415,72 @@ class GameConsumer(AsyncWebsocketConsumer):
             }))
         
     async def handle_paddle_position(self, data):
-        """Handle paddle position updates from clients"""
+        """
+        Handle paddle position updates from clients with client authority
+        """
         if not self.player_number:
             return
         
         player_number = data.get('player_number')
         position = data.get('position')
         sequence = data.get('sequence', 0)
+        authoritative = data.get('authoritative', False)
         
+        # Basic validation - player can only update their own paddle
         if player_number != self.player_number:
             return
-            
+        
         game = await self.get_game_state()
         if not game:
             return
         
-        if self.player_number == 1:
+        # Validate the position is within bounds
+        if position < 0:
+            position = 0
+        elif position > game.canvas_height - game.paddle_height:
+            position = game.canvas_height - game.paddle_height
+        
+        # Ball collision check for server authority
+        force_reconcile = False
+        ball_radius = game.ball_size / 2
+        
+        # Check if paddle is involved in ball collision
+        # - For player 1 (left paddle)
+        if (player_number == 1 and 
+            game.ball_x - ball_radius <= game.paddle_width + 5 and 
+            game.ball_x > 0 and game.ball_speed_x < 0):
+            
+            # We're near a potential ball collision - server needs authority
+            force_reconcile = True
+        
+        # - For player 2 (right paddle)
+        elif (player_number == 2 and 
+            game.ball_x + ball_radius >= game.canvas_width - game.paddle_width - 5 and 
+            game.ball_x < game.canvas_width and game.ball_speed_x > 0):
+            
+            # We're near a potential ball collision - server needs authority  
+            force_reconcile = True
+        
+        # Update the game state with the validated client position
+        if player_number == 1:
+            # Only update if position passed validation
             game.player_1_paddle_y = position
-        elif self.player_number == 2:
+            game.force_reconcile_p1 = force_reconcile
+        elif player_number == 2:
+            # Only update if position passed validation
             game.player_2_paddle_y = position
+            game.force_reconcile_p2 = force_reconcile
         
         await self.save_game_state(game)
         
+        # Always send acknowledgment to client
         if sequence > 0:
             await self.send(text_data=json.dumps({
                 'type': 'input_ack', 
                 'sequence': sequence,
-                'server_time': time.time() * 1000  # In milliseconds
+                'server_time': time.time() * 1000,  # In milliseconds
+                'position': position, # Send back validated position
+                'force_reconcile': force_reconcile # Let client know if we need server authority
             }))
 
     async def handle_pause_game(self, data):

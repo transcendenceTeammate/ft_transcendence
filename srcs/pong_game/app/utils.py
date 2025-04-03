@@ -39,7 +39,12 @@ def generate_room_code(length=6):
             return code
 
 def game_state_to_dict(game_state):
-    return {
+    # Add force_reconcile flags to the state dict
+    force_reconcile_p1 = getattr(game_state, 'force_reconcile_p1', False)
+    force_reconcile_p2 = getattr(game_state, 'force_reconcile_p2', False)
+    
+    # Basic state dict with standard properties
+    state_dict = {
         'room_code': game_state.room_code,
         'status': game_state.status,
         'canvas_width': game_state.canvas_width,
@@ -62,6 +67,16 @@ def game_state_to_dict(game_state):
         'winning_score': game_state.winning_score,
         'timestamp': time.time() * 1000,
     }
+    
+    # Add force_reconcile flag for player 1 (only if they need to reconcile)
+    if force_reconcile_p1:
+        state_dict['force_reconcile'] = True
+    
+    # Add force_reconcile flag for player 2 (only if they need to reconcile)
+    if force_reconcile_p2 and game_state.player_2_id:
+        state_dict['force_reconcile'] = True
+    
+    return state_dict
 
 def calculate_state_delta(old_state, new_state):
     """

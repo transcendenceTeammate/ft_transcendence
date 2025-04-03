@@ -81,26 +81,21 @@ class GameState(models.Model):
         return self.ball_speed_x, self.ball_speed_y
     
     def update_game_state(self):
-        """Update game state for one frame"""
+        """Update game state for one frame with client-authoritative paddles"""
         if self.is_paused:
             return 0
         
-        if self.player_1_moving_up and self.player_1_paddle_y > 0:
-            self.player_1_paddle_y -= self.paddle_speed
-            
-        if self.player_1_moving_down and self.player_1_paddle_y < self.canvas_height - self.paddle_height:
-            self.player_1_paddle_y += self.paddle_speed
-            
-        if self.player_2_moving_up and self.player_2_paddle_y > 0:
-            self.player_2_paddle_y -= self.paddle_speed
-            
-        if self.player_2_moving_down and self.player_2_paddle_y < self.canvas_height - self.paddle_height:
-            self.player_2_paddle_y += self.paddle_speed
+        # Reset reconciliation flags at the start of each frame
+        self.force_reconcile_p1 = False
+        self.force_reconcile_p2 = False
         
+        # Update the ball position
         self.ball_x += self.ball_speed_x
         self.ball_y += self.ball_speed_y
         
         ball_radius = self.ball_size / 2
+        
+        # Ball collision with top and bottom walls
         if self.ball_y - ball_radius <= 0:
             self.ball_y = ball_radius
             self.ball_speed_y *= -1
@@ -108,10 +103,15 @@ class GameState(models.Model):
             self.ball_y = self.canvas_height - ball_radius
             self.ball_speed_y *= -1
         
+        # Ball collision with paddles - now check if we need to set reconciliation flags
         if (self.ball_x - ball_radius <= self.paddle_width and 
             self.ball_y >= self.player_1_paddle_y and 
             self.ball_y <= self.player_1_paddle_y + self.paddle_height):
             
+            # Set reconciliation flag for player 1 during collision
+            self.force_reconcile_p1 = True
+            
+            # Continue with normal collision physics
             paddle_center = self.player_1_paddle_y + self.paddle_height / 2
             relative_intersect_y = self.ball_y - paddle_center
             angle = relative_intersect_y / (self.paddle_height / 2)
@@ -126,11 +126,15 @@ class GameState(models.Model):
             if self.player_1_score > self.player_2_score + 3:
                 self.ball_speed_x *= RUBBER_BAND_FACTOR
                 self.ball_speed_y *= RUBBER_BAND_FACTOR
-            
+        
         elif (self.ball_x + ball_radius >= self.canvas_width - self.paddle_width and 
-              self.ball_y >= self.player_2_paddle_y and 
-              self.ball_y <= self.player_2_paddle_y + self.paddle_height):
+            self.ball_y >= self.player_2_paddle_y and 
+            self.ball_y <= self.player_2_paddle_y + self.paddle_height):
             
+            # Set reconciliation flag for player 2 during collision
+            self.force_reconcile_p2 = True
+            
+            # Continue with normal collision physics
             paddle_center = self.player_2_paddle_y + self.paddle_height / 2
             relative_intersect_y = self.ball_y - paddle_center
             angle = relative_intersect_y / (self.paddle_height / 2)
@@ -146,6 +150,7 @@ class GameState(models.Model):
                 self.ball_speed_x *= RUBBER_BAND_FACTOR
                 self.ball_speed_y *= RUBBER_BAND_FACTOR
         
+        # Check for goals
         if self.ball_x - ball_radius <= 0:
             self.player_2_score += 1
             self.last_loser = 1
@@ -161,7 +166,7 @@ class GameState(models.Model):
         self.last_update = timezone.now().timestamp() * 1000
         
         return 0  # No goal
-    
+
     def check_for_winner(self):
         """Check if a player has won the game"""
         if self.player_1_score >= self.winning_score:
