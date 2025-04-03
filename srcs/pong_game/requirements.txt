@@ -1,4 +1,4 @@
-django>=3.0,<4.0
+django>=4.2.16
 daphne
 channels
 channels_redis
