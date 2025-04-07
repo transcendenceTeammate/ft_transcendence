@@ -17,7 +17,7 @@ export default class extends AbstractView {
             firstInput: true,
             regex: /^[a-zA-Z0-9@.+_-]{1,150}$/,
             baseLabel: "Login:",
-            guidance: "only alphanumeric or @.+_-",
+            guidance: "only alphanumeric or @.+_-, 1-150 symb",
             fdUpFirstInputStr: "Login already exists"
         };
 
@@ -31,8 +31,8 @@ export default class extends AbstractView {
             valid: false,
             regex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[a-zA-Z0-9@$!%*?\&~#^()\-\_=+\[\]{};:,./\?])[A-Za-z\da-zA-Z0-9@$!%*?\&~#^()\-\_=+\[\]{};:,./\?]{8,128}$/,
             baseLabel: "Password:",
-            guidance: "8 min, uppercase, lowercase, digit, special symb",
-            fdUpFirstInputStr: "8 min, uppercase, lowercase, digit, special symb"
+            guidance: "uppercase, lowercase, digit, special symb, 8-128 symb",
+            fdUpFirstInputStr: "uppercase, lowercase, digit, special symb, 8-128 symb"
         };
 
         this.repPassStruct = {
