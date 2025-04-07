@@ -1,6 +1,7 @@
 import AbstractView from "./AbstractView.js";
 import User from "../user/User.js";
 import { Navbar } from "../components/Navbar.js";
+import { Navbar } from "../components/Navbar.js";
 import { assignAvatar, assignUsername } from "../user/UserApiCalls.js";
 
 export default class StartGame extends AbstractView {
@@ -569,7 +570,10 @@ export default class StartGame extends AbstractView {
 
     async getHtml() {
 	   this.navbar = await Navbar.create();
+
        
+        this.attachAllJs();
+
         return   `
         <div id="app-child-start">
        

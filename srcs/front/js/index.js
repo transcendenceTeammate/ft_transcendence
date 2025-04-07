@@ -5,7 +5,6 @@ import NotFound from "./views/NotFound.js";
 import StartGame from "./views/StartGame.js";
 import Profile from "./views/Profile.js";
 import OnlineGame from "./views/OnlineGame.js";
-
 import Game from "./views/Game.js";
 import Tournament from "./views/Tournament.js";
 import TournamentGame from "./views/TournamentGame.js";
@@ -98,7 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		if (e.target.matches("[data-link]")) {
 
 			e.preventDefault();
-			console.log(`does e.target match href? ${e.target.matches('[href]')}`)
+			// console.log(`does e.target match href? ${e.target.matches('[href]')}`)
 			if (!e.target.matches('[href]')) takeMeThere(e.target.parentElement.href)
 			else takeMeThere(e.target.href)
 		

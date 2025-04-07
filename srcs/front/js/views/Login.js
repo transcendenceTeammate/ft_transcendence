@@ -11,6 +11,7 @@ export default class extends AbstractView {
 
     async loadElements() {
         try {
+            this.pageDiv = await super.loadElement('app-child-login');
             this.form = await super.loadElement('form');
             this.login = await super.loadElement('login-login');
             this.form = await super.loadElement('form');
@@ -18,6 +19,7 @@ export default class extends AbstractView {
             this.passEye = await super.loadElement('passEye');
             this.passdiv = await super.loadElement('passdiv');
             this.errorMessageElement = await super.loadElement('error-message');
+            this.submitButton = await super.loadElement('subm');
         } catch (e) {
             console.log(e);
         }
@@ -30,11 +32,11 @@ export default class extends AbstractView {
     };
 
     async eyes() {
-       
         try {
             const listen = async (field, whatsgoinon, eye) => {
                 field.addEventListener(whatsgoinon, () => {
                     if (field.value.length > 0) {
+                        this.submitButton.disabled = false;
                         eye.style = 'visibility: visible';
                         if (field === this.pass && !this.validPass) eye.style.top = '5%';
                         else if (field === this.repPass && !this.validRep) eye.style.top = '5%';
@@ -59,23 +61,17 @@ export default class extends AbstractView {
                     }
                 });
             };
-
             const showHideEyes = async (div, element, eye) => {
              
-                document.addEventListener('mousedown', (event) => {
+                this.pageDiv.addEventListener('mousedown', (event) => {
                     if (!(div.contains(event.target))) eye.style.visibility = 'hidden';
                 });
-                document.addEventListener('focusin', (event) => {
+                this.pageDiv.addEventListener('focusin', (event) => {
                     if (!(div.contains(event.target))) eye.style.visibility = 'hidden';
                 });
-                document.addEventListener('touchstart', (event) => {
-                    if (!(div.contains(event.target))) eye.style.visibility = 'hidden';
-                });
-
                 listen(element, 'focus', eye);
                 listen(element, 'input', eye);
             };
-
             showHideEyes(this.passdiv, this.pass, this.passEye);
 
         } catch (error) {
@@ -87,7 +83,6 @@ export default class extends AbstractView {
     async validateForm(){
         this.form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            console.log('ADDING EVENT LISTNER TO FORM!!!!!!!!!!!!!!!!')
             const name = this.login.value.trim();
             const password = this.pass.value.trim();
             try {
@@ -107,10 +102,18 @@ export default class extends AbstractView {
                     const errorData = await response.json();
                     this.errorMessageElement.textContent = errorData.error || "An error occurred";
                     this.errorMessageElement.style.display = "block";
+                    this.submitButton.disabled  = true;
                 }
             } catch (error) {
                 this.errorMessageElement.textContent = "An error occurred : " + error.message;
+                this.submitButton.disabled = true;
             }
+        })
+    }
+
+    clickLoginEnableButton(){
+        this.login.addEventListener('click', () => {
+            this.submitButton.disabled = false;
         })
     }
     
@@ -118,6 +121,7 @@ export default class extends AbstractView {
         await this.loadElements();
         this.validateForm();
         this.eyes();
+        this.clickLoginEnableButton();
     }
 
 
