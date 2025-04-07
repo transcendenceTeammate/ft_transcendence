@@ -134,20 +134,21 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [(os.environ.get('REDIS_HOST', 'redis'), int(os.environ.get('REDIS_PORT', 6379)))],
+            "hosts": [(os.environ.get('REDIS_HOST', 'redis'), int(os.environ.get('REDIS_PORT', 6378)))],
             "capacity": 1500,
             "expiry": 10,
         },
     },
 }
 
-CORS_ALLOWED_ORIGINS = [
-    'https://app.localhost:8443',
-]
-CORS_ALLOW_CREDENTIALS = True
+##CORS_ALLOWED_ORIGINS = [
+##    'https://app.10.24.102.1.nip.io:8443',
+##]
+
+##CORS_ALLOW_CREDENTIALS = True
 
 REDIS_HOST = 'localhost'
-REDIS_PORT = 6379
+REDIS_PORT = 6378
 REDIS_DB = 1
 
 # Cache Configuration

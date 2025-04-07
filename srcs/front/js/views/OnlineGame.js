@@ -338,18 +338,18 @@ export default class OnlineGame extends Game {
                 font-size: 12px;
                 z-index: 100;
             }
-            
+
             .indicator {
                 width: 10px;
                 height: 10px;
                 border-radius: 50%;
                 transition: background-color 0.3s;
             }
-            
+
             .connected { background-color: #2ecc71; }
             .connecting { background-color: #f39c12; }
             .disconnected { background-color: #e74c3c; }
-            
+
             .debug-overlay {
                 position: absolute;
                 top: 10px;
@@ -437,7 +437,7 @@ export default class OnlineGame extends Game {
         const token = this.getAuthToken();
 
         // Create WebSocket URL with room code and token (if available)
-        let wsUrl = `wss://app.localhost:8443/ws/game/${this.roomCode}/`;
+        let wsUrl = `wss://app.10.24.102.1.nip.io:8443/ws/game/${this.roomCode}/`;
         if (token) {
             wsUrl += `?token=${encodeURIComponent(token)}`;
         }
@@ -556,7 +556,7 @@ export default class OnlineGame extends Game {
             player_number: this.playerNumber
         };
 
-        // Send to server right away - no need to store pending inputs 
+        // Send to server right away - no need to store pending inputs
         // when we prioritize local movement first
         this.socket.send('key_event', input);
     }

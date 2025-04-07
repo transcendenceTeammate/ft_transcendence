@@ -63,7 +63,7 @@ services:
         condition: service_healthy
     environment:
       - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      - REDIS_PORT=6378
     ports:
       - "8001:8000"
 
