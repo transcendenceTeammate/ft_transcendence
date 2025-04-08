@@ -84,6 +84,21 @@ def signup(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+def oauth_redirect_uri(request):
+	load_dotenv()
+	client_id = os.getenv('CLIENT_ID')
+	redirect_uri = os.getenv('API_URL') + '/auth42/'
+	query = urlencode({
+		'client_id': client_id,
+		'redirect_uri': redirect_uri,
+		'response_type': 'code',
+	})
+	url = f'https://api.intra.42.fr/oauth/authorize?{query}'
+	return HttpResponseRedirect(url)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def auth42(request):
 	code = request.GET.get('code')
 	if not code:

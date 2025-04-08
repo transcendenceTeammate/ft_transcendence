@@ -9,7 +9,6 @@ from django.conf.urls.static import static
 
 urlpatterns = [
 	path('admin/', admin.site.urls),
-	path('auth42/', views.auth42),
 
 	# Authentication
 	path('api/auth/signup/', views.signup),
@@ -26,6 +25,10 @@ urlpatterns = [
 
 	# User info
 	path('api/users/me/', views.get_user_info),
+
+	# get oauth code
+	path('api/oauth/get-authorization-uri/', views.oauth_redirect_uri),
+	path('auth42/', views.auth42),
 
 	# Friendship
 	path('api/friend/add/', views.add_friend),
