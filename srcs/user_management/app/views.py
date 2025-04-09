@@ -28,7 +28,7 @@ from .serializers import UserSerializer
 
 from django.http import JsonResponse
 
-from app.presence_registry import set_user_status, update_ping, get_user_status, is_user_connected
+from app.presence_registry import presenceService
 
 
 @api_view(['GET'])
@@ -254,7 +254,7 @@ def add_friend(request):
 	API_URL = os.getenv('API_URL')
 
 	friends_data = [
-		{"nickname": friendship.friend.nickname, "avatar_url": API_URL + friendship.friend.picture.url if friendship.friend.picture else None, "is_online": is_user_connected(friendship.friend.user.id)}
+		{"nickname": friendship.friend.nickname, "avatar_url": API_URL + friendship.friend.picture.url if friendship.friend.picture else None, "is_online": presenceService.is_user_connected(friendship.friend.user.id)}
 		for friendship in friendships
 	]
 
@@ -282,7 +282,7 @@ def remove_friend(request):
 		friendships = Friendship.objects.filter(user=user_profile).select_related("friend")
 
 		friends_data = [
-			{"nickname": friendship.friend.nickname, "avatar_url": API_URL + friendship.friend.picture.url if friendship.friend.picture else None, "is_online": is_user_connected(friendship.friend.user.id)}
+			{"nickname": friendship.friend.nickname, "avatar_url": API_URL + friendship.friend.picture.url if friendship.friend.picture else None, "is_online": presenceService.is_user_connected(friendship.friend.user.id)}
 			for friendship in friendships
 		]
 
@@ -302,7 +302,7 @@ def list_friends(request):
 	friendships = Friendship.objects.filter(user=user_profile).select_related("friend")
 
 	friends_data = [
-		{"nickname": friendship.friend.nickname, "avatar_url": API_URL + friendship.friend.picture.url if friendship.friend.picture else None, "is_online": is_user_connected(friendship.friend.user.id)}
+		{"nickname": friendship.friend.nickname, "avatar_url": API_URL + friendship.friend.picture.url if friendship.friend.picture else None, "is_online": presenceService.is_user_connected(friendship.friend.user.id)}
 		for friendship in friendships
 	]
 

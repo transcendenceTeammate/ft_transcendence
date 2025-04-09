@@ -4,7 +4,7 @@ import { MockedBackendApi } from "../api/mockedBackendApi.js";
 
 
 
-function createProfile({ username = null, avatarUrl = null, friendList = [] } = {}) {
+function createProfile({ username = null, avatarUrl = "", friendList = [] } = {}) {
 	return {
 		username,
 		avatarUrl,
@@ -26,7 +26,7 @@ export class MyProfileProvider {
 	constructor() {
 		this._backend = new BackendApi();
 		this._userProfile = Stream.withDefault(createProfile());
-		this._userAvatar = new Stream();
+		this._userAvatar = Stream.withDefault("");
 		this._username = Stream.withDefault("username");
 		this._friendList = Stream.withDefault([]);
 
@@ -131,6 +131,26 @@ export class MyProfileProvider {
 		return response;
 	}
 
+
+
+
+	async updateFriendList() {
+		let rawFriendList = await this._backend.getFriendList();
+
+		const currentUserProfile = this._userProfile.value;
+
+		this._userProfile.value = currentUserProfile.copyWith({
+			friendList: rawFriendList.friends.map((friend) => {
+				return {
+					username: friend.nickname,
+					avatarUrl: friend.avatar_url ?? "/public/avatars/default/peng_head_def.webp",
+					isConnected: friend.is_online
+				};
+			}),
+		});
+
+		return this._userProfile.value;
+	}
 
 	async updateProfile() {
 		let rawUserData = await this._backend.getUserData();

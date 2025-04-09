@@ -55,6 +55,16 @@ export class FriendsList extends Component {
 			this.updateComponent();
 		});
 		myProfileProvider.updateProfile();
+
+		this._intervalId = setInterval(() => {
+			if (!document.getElementById(this.componentId)) {
+				clearInterval(this._intervalId);
+			}
+			else
+			{
+				myProfileProvider.updateFriendList();
+			}
+		}, 10000);
 	}
 
 	_onRefresh()

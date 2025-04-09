@@ -11,8 +11,6 @@ window.takeMeThere = (url) => {
 	routerService.navigateTo(url)
 };
 
-
-
 document.addEventListener("DOMContentLoaded", async () => {
 	
 	await AuthProvider.getInstance().init();
