@@ -1,4 +1,5 @@
 import CONFIG from "../config.js";
+import { AuthProvider } from "../data/providers/AuthProvider.js";
 import { checkUniqueUsername } from "../user/UserApiCalls.js";
 import AbstractView from "./AbstractView.js";
 export default class extends AbstractView {
@@ -178,49 +179,55 @@ export default class extends AbstractView {
         this.form.addEventListener('submit', async (e) => {
             e.preventDefault();
             try {
-                const response = await fetch(`${CONFIG.API_URL}/api/auth/signup/`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    },
-                    body: JSON.stringify({
-                        username: this.logStruct.field.value,
-                        password: this.passStruct.field.value,
-                    }),
-                    credentials: "include"
-                });
+                
+                const authProvider = AuthProvider.getInstance();
+                const username = this.logStruct.field.value;
+                const password = this.passStruct.field.value;
+                await authProvider.signup(username, password);
+                
+                // const response = await fetch(`${CONFIG.API_URL}/api/auth/signup/`, {
+                //     method: "POST",
+                //     headers: {
+                //         "Content-Type": "application/json",
+                //         "Accept": "application/json"
+                //     },
+                //     body: JSON.stringify({
+                //         username: this.logStruct.field.value,
+                //         password: this.passStruct.field.value,
+                //     }),
+                //     credentials: "include"
+                // });
     
-                const errorMessageElement = this.errorMessageElement;
-                errorMessageElement.innerHTML = "";
-                errorMessageElement.style.display = "none";
+                // const errorMessageElement = this.errorMessageElement;
+                // errorMessageElement.innerHTML = "";
+                // errorMessageElement.style.display = "none";
     
-                if (response.ok) {
-                    const data = await response.json();
-                    takeMeThere(location.origin + '/start-game');
-                } else {
-                    const errorData = await response.json();
-                    if (typeof errorData === 'object' && errorData !== null) {
-                        Object.entries(errorData).forEach(([field, messages]) => {
-                            if (Array.isArray(messages)) {
-                                messages.forEach(message => {
-                                    const errorItem = document.createElement("div");
-                                    errorItem.textContent = `${field}: ${message}`;
-                                    errorMessageElement.appendChild(errorItem);
-                                });
-                            } else {
-                                const errorItem = document.createElement("div");
-                                errorItem.textContent = `${field}: ${messages}`;
-                                errorMessageElement.appendChild(errorItem);
-                            }
-                        });
-                    } else {
-                        errorMessageElement.textContent = "An unexpected error occurred.";
-                    }
+                // if (response.ok) {
+                //     const data = await response.json();
+                //     takeMeThere(location.origin + '/start-game');
+                // } else {
+                //     const errorData = await response.json();
+                //     if (typeof errorData === 'object' && errorData !== null) {
+                //         Object.entries(errorData).forEach(([field, messages]) => {
+                //             if (Array.isArray(messages)) {
+                //                 messages.forEach(message => {
+                //                     const errorItem = document.createElement("div");
+                //                     errorItem.textContent = `${field}: ${message}`;
+                //                     errorMessageElement.appendChild(errorItem);
+                //                 });
+                //             } else {
+                //                 const errorItem = document.createElement("div");
+                //                 errorItem.textContent = `${field}: ${messages}`;
+                //                 errorMessageElement.appendChild(errorItem);
+                //             }
+                //         });
+                //     } else {
+                //         errorMessageElement.textContent = "An unexpected error occurred.";
+                //     }
                     
-                    errorMessageElement.style.display = "block";
-                    this.submitButton.disabled = true;
-                }
+                //     errorMessageElement.style.display = "block";
+                //     this.submitButton.disabled = true;
+                // }
             } catch (error) {
                 console.log(error);
                 this.errorMessageElement.textContent = "An error occurred : " + error.message;

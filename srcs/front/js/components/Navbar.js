@@ -1,5 +1,6 @@
 import { Component } from "../core/Component.js";
 import { MyProfileProvider } from "../data/providers/MyProfileProvider.js";
+import { AuthProvider } from "../data/providers/AuthProvider.js";
 
 export class Navbar extends Component {
 	constructor() {
@@ -23,9 +24,8 @@ export class Navbar extends Component {
 
 		logout.addEventListener('click', (e) => {
 				e.preventDefault();
-				document.cookie = "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.app.10.24.108.2.nip.io"; //TODO Remove hardcoded domain
-				takeMeThere(location.origin + '/')
-		})
+				AuthProvider.getInstance().logout();
+		});
 	}
 
 	_onLoaded()

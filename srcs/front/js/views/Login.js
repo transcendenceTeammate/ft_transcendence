@@ -1,4 +1,4 @@
-import CONFIG from "../config.js";
+import { AuthProvider } from "../data/providers/AuthProvider.js";
 
 import AbstractView from "./AbstractView.js";
 export default class extends AbstractView {
@@ -83,27 +83,31 @@ export default class extends AbstractView {
     async validateForm(){
         this.form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const name = this.login.value.trim();
+            const username = this.login.value.trim();
             const password = this.pass.value.trim();
+
+            
+            
             try {
-                const response = await fetch(`${CONFIG.API_URL}/api/auth/login/`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    credentials: "include",
-                    body: JSON.stringify({ username: name, password: password })
-                });
+                await AuthProvider.getInstance().login(username, password);
+                // const response = await fetch(`${CONFIG.API_URL}/api/auth/login/`, {
+                //     method: "POST",
+                //     headers: {
+                //         "Content-Type": "application/json"
+                //     },
+                //     credentials: "include",
+                //     body: JSON.stringify({ username: name, password: password })
+                // });
         
-                if (response.ok) {
-                    const data = await response.json();
-                    takeMeThere(location.origin + '/start-game');
-                } else {
-                    const errorData = await response.json();
-                    this.errorMessageElement.textContent = errorData.error || "An error occurred";
-                    this.errorMessageElement.style.display = "block";
-                    this.submitButton.disabled  = true;
-                }
+                // if (response.ok) {
+                //     const data = await response.json();
+                //     takeMeThere(location.origin + '/start-game');
+                // } else {
+                //     const errorData = await response.json();
+                //     this.errorMessageElement.textContent = errorData.error || "An error occurred";
+                //     this.errorMessageElement.style.display = "block";
+                //     this.submitButton.disabled  = true;
+                // }
             } catch (error) {
                 this.errorMessageElement.textContent = "An error occurred : " + error.message;
                 this.submitButton.disabled = true;

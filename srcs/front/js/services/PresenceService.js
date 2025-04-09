@@ -1,30 +1,6 @@
 import { Stream } from "../core/Stream.js";
 import CONFIG from "../config.js";
-
-// function initializeChatSocket() {
-//     const chatSocket = new WebSocket("wss://api.app.localhost:8443/ws/chat/");
-
-//     chatSocket.onopen = function() {
-//         console.log('WebSocket connection established.');
-//         const message = {
-//             'message': 'Hello, world!'
-//         };
-//         chatSocket.send(JSON.stringify(message));
-//     };
-
-//     chatSocket.onmessage = function(event) {
-//         const message = JSON.parse(event.data);
-//         console.log('Received message:', message);
-//     };
-// }
-
-// initializeChatSocket();
-
-// window.takeMeThere = function (url) {
-//     history.pushState(null, null, url);
-//     router();
-// }
-
+import { AuthProvider, AuthConnectionStatus } from "../data/providers/AuthProvider.js";
 
 
 
@@ -70,30 +46,51 @@ class SendEventFactory {
 
 export class PresenceService
 {
+    static _instance = null;
 
     constructor()
     {
         this._baseUrl = `${CONFIG.API_URL}`;
         this._connectionStatus = Stream.withDefault(ConnectionStatus.DISCONNECTED);
         this._presenceStatus = Stream.withDefault(PresenceStatus.OFFLINE);
+        this._webSocket = null;
+        AuthProvider.getInstance().authConnectionStatusStream.listen((status) => {
+            switch (status) {
+                case AuthConnectionStatus.CONNECTED:
+                    this.connect();
+                    break;
+                case AuthConnectionStatus.DISCONNECTING:
+                    this.disconnect();
+                    break;
+                default:
+                    this.disconnect();
+            }
+        });
+    }
+
+
+    connect()
+    {
+        this._connectionStatus = Stream.withDefault(ConnectionStatus.CONNECTING);
         this._webSocket = new WebSocket(this._baseUrl.replace(/^http/, "ws") + "/ws/presence");
         this._webSocket.onopen = this._onWsOpen.bind(this);
         this._webSocket.onclose = this._onWsClose.bind(this);
         this._webSocket.onerror = this._onWsError.bind(this);
         this._webSocket.onmessage = this._onWsMessage.bind(this);
     }
-
  
 
     onConnected()
     {
+        this._connectionStatus.value = ConnectionStatus.CONNECTED;
         this.setPresenceStatus(PresenceStatus.ONLINE);
     }
 
     disconnect()
     {
+        this._connectionStatus.value = ConnectionStatus.DISCONNECTED;
         this.setPresenceStatus(PresenceStatus.OFFLINE);
-        if (this._webSocket.readyState === WebSocket.OPEN || this._webSocket.readyState === WebSocket.CONNECTING) {
+        if (this._webSocket?.readyState === WebSocket.OPEN || this._webSocket?.readyState === WebSocket.CONNECTING) {
             this._webSocket.close(1000, "Normal closure");
         }
     }
@@ -106,7 +103,7 @@ export class PresenceService
 
     _sendPresenceStatus(status)
     {
-        this._sendMessage(SendEventFactory.presenceUpdate(PresenceStatus.ONLINE));
+        this._sendMessage(SendEventFactory.presenceUpdate(status));
     }
 
     _sendPongResponse()
@@ -117,10 +114,10 @@ export class PresenceService
     
     _sendMessage(event)
     {
-        if (this._webSocket.readyState === WebSocket.OPEN) {
+        if (this._webSocket?.readyState === WebSocket.OPEN) {
             this._webSocket.send(JSON.stringify(event));
         } else {
-            console.error("WebSocket is not open. Unable to send message:", event);
+            console.warn("WebSocket is not open. Unable to send message:", event);
         }
     }
 
@@ -166,6 +163,11 @@ export class PresenceService
         this._handleMessage(message);
     }
 
-    
+	static getInstance() {
+		if (PresenceService._instance == null) {
+			PresenceService._instance = new PresenceService();
+		}
+		return PresenceService._instance;
+	}
 
 }

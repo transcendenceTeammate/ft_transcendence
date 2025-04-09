@@ -113,4 +113,25 @@ export class BackendApi {
 		const response = await this._httpClient.post("api/game/add/", payload, {});
 		return response.json()
 	}
+
+
+	async login(username, password) {
+		const payload = { username: username, password: password };
+		const response = await this._httpClient.post("api/auth/login/", payload, {});
+		return response.json();
+	}
+	
+	async signup(username, password) {
+		const payload = { username: username, password: password };
+		const response = await this._httpClient.post("api/auth/signup/", payload, {});
+		return response.json();
+	}
+
+	async checkTokenValidity(token)
+	{
+
+		const payload = {token : token};
+		const response = await this._httpClient.post("api/token/verify/", payload, {});
+		return response.json();
+	}
 }
