@@ -1,8 +1,5 @@
 from pathlib import Path
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -12,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY_PONG_GAME')
+SECRET_KEY = os.getenv('SECRET_KEY_USER_MANAGEMENT')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -132,7 +129,7 @@ CHANNEL_LAYERS = {
 }
 
 ##CORS_ALLOWED_ORIGINS = [
-##    'https://app.192.168.70.1.nip.io:8443',
+##    'https://app.10.24.108.2.nip.io:8443',
 ##]
 
 ##CORS_ALLOW_CREDENTIALS = True

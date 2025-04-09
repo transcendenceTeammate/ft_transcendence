@@ -23,7 +23,7 @@ export class Navbar extends Component {
 
 		logout.addEventListener('click', (e) => {
 				e.preventDefault();
-				document.cookie = "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.app.localhost"; //TODO Remove hardcoded domain
+				document.cookie = "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.app.10.24.108.2.nip.io"; //TODO Remove hardcoded domain
 				takeMeThere(location.origin + '/')
 		})
 	}

@@ -31,6 +31,7 @@ def create_room(request):
             try:
                 payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
                 user_id = str(payload.get('user_id'))
+                logger.info(f"Decoded token payload: {payload}")
                 username = payload.get('username')
                 logger.info(f"Extracted user_id from token: {user_id}, username: {username}")
             except Exception as e:
@@ -99,10 +100,13 @@ def join_room(request):
         username = None
         auth_header = request.headers.get('Authorization')
 
+        logger.info(f"Auth header: {auth_header}")
+
         if auth_header and auth_header.startswith('Bearer '):
             token = auth_header.split(' ')[1]
             try:
                 payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+                logger.info(f"Decoded token payload: {payload}")
                 user_id = str(payload.get('user_id'))
                 username = payload.get('username')
                 logger.info(f"Join room - extracted user_id from token: {user_id}")
