@@ -139,6 +139,7 @@ export default class Game extends AbstractView {
 		this.score2.textContent = this.player2Score;
 	}
 	
+	
 
 	adjustBallSpeedAndAngle() {
 
@@ -214,34 +215,9 @@ export default class Game extends AbstractView {
 	}
 
 	gameLoop() {
-		// Calculate delta time for smooth animation
-		const now = performance.now();
-		const deltaTime = this.lastFrameTime ? (now - this.lastFrameTime) / 1000 : 0.016; // Convert to seconds
-		this.lastFrameTime = now;
-		
-		// Cap delta time to avoid physics issues on slow devices
-		const cappedDelta = Math.min(deltaTime, 0.1); // Max 100ms (0.1s)
-		
-		// Update game state
-		this.update(cappedDelta);
-		
-		// Draw the current game state
-		this.draw();
-		
-		// Continue the game loop
-		requestAnimationFrame(() => this.gameLoop());
-	}
-
-	update(deltaTime) {
-		// Skip updates if game is over
-		if (this.gameOver) return;
-		
-		// Move paddles
 		this.movePaddles();
-		
-		// Only move ball if not paused
-		if (!this.paused) {
-			this.moveBall();
-		}
+		this.moveBall();
+		this.draw();
+		requestAnimationFrame(() => this.gameLoop());
 	}
 }

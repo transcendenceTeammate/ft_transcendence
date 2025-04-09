@@ -22,7 +22,7 @@ export const GameConstants = {
     WINNING_SCORE: 10,
     
     // Network settings
-    SERVER_UPDATE_RATE: 60,
+    SERVER_UPDATE_RATE: 120,
     SERVER_RECONCILIATION_THRESHOLD: 5,
     
     getVersion: function() {

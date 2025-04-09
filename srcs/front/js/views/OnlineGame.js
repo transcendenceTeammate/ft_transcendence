@@ -2,7 +2,7 @@ import AbstractView from "./AbstractView.js";
 import Game from "./Game.js";
 import GameConstants from "../core/GameConstants.js";
 
-class EnhancedWebSocket {
+class WebSocket {
     constructor(url, options = {}) {
         this.url = url;
         this.options = {
@@ -350,7 +350,7 @@ export default class OnlineGame extends Game {
             }
         });
 
-        this.gameLoop = this.enhancedGameLoop.bind(this);
+        this.gameLoop = this.GameLoop.bind(this);
 
         requestAnimationFrame(this.gameLoop);
     }
@@ -397,8 +397,8 @@ export default class OnlineGame extends Game {
             wsUrl += `?token=${encodeURIComponent(token)}`;
         }
 
-        this.socket = new EnhancedWebSocket(wsUrl, {
-            reconnectInterval: 2000,
+        this.socket = new WebSocket(wsUrl, {
+            reconnectInterval: 1000,
             maxReconnectAttempts: 5
         });
 
@@ -495,19 +495,19 @@ export default class OnlineGame extends Game {
         this.socket.send('key_event', input);
     }
 
-    enhancedGameLoop(timestamp) {
+    GameLoop(timestamp) {
         requestAnimationFrame(this.gameLoop);
 
         if (this.gameOver) return;
 
         const now = timestamp || performance.now();
-        const deltaTime = 1 / 60;
+        const deltaTime = this.lastFrameTime ? (now - this.lastFrameTime) / 1000 : 0.016; // Convert to seconds
         this.lastFrameTime = now;
 
-        this.processPlayerInput(deltaTime);
+        const cappedDelta = Math.min(deltaTime, 0.1); // Max 100ms
 
-        this.updateWithPrediction(deltaTime);
-
+        this.processPlayerInput(cappedDelta);
+        this.updateWithPrediction(cappedDelta);
         this.draw();
 
         if (!this._lastStatusUpdate || now - this._lastStatusUpdate > 500) {
@@ -526,9 +526,9 @@ export default class OnlineGame extends Game {
 
     processPlayerInput(deltaTime) {
         if (!this.playerNumber) return;
-
-        const actualPaddleSpeed = this.paddleSpeed * (deltaTime * 60);
-
+        
+        const actualPaddleSpeed = this.paddleSpeed * deltaTime * 60;
+        
         if (this.playerNumber === 1) {
             if (this.upPressed) {
                 this.player1Y = Math.max(0, this.player1Y - actualPaddleSpeed);
@@ -545,7 +545,6 @@ export default class OnlineGame extends Game {
             }
         }
     }
-
     updateWithPrediction(deltaTime) {
         if (this.predictionEnabled && this.playerNumber) {
 
@@ -560,8 +559,8 @@ export default class OnlineGame extends Game {
     }
 
     interpolateOpponentPaddle(deltaTime) {
-        const factor = 0.35;
-
+        const factor = 0.35 * (deltaTime * 60);
+    
         if (this.playerNumber === 1) {
             const diff = this.opponentPaddleTarget - this.player2Y;
             if (Math.abs(diff) > 0.1) {
@@ -795,7 +794,7 @@ export default class OnlineGame extends Game {
 
         const position = this.playerNumber === 1 ? this.player1Y : this.player2Y;
 
-        if (this._lastSentPosition === position) return;
+        if (Math.abs(this._lastSentPosition - position) <= 1) return;
         this._lastSentPosition = position;
 
         this.socket.send('paddle_position', {
