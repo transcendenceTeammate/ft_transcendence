@@ -4,3 +4,4 @@ channels
 channels_redis
 websockets
 django-cors-headers
+python-dotenv
