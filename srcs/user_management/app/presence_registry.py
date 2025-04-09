@@ -1,53 +1,59 @@
 from datetime import datetime, timedelta
 import logging
 
-EXPIRATION = timedelta(seconds=10)
+EXPIRATION_THRESHOLD = timedelta(seconds=10)
 
-# user_id: {"last_seen": datetime, "status": "available"}
-_userPresence = {}
 
-def set_user_status(user_id, status):
-    _userPresence[user_id] = {
-        "last_seen": datetime.utcnow(),
-        "status": status
-    }
+class PresenceService:
+    def __init__(self):
+        self.connection_store = {}
 
-def update_ping(user_id):
-    print(f"Updating ping for user_id: {user_id}")
-    logger = logging.getLogger(__name__)
-    logger.info(f"Ping updated for user_id: {user_id}")
-    logger.info(_userPresence)
-    if user_id in _userPresence:
-        _userPresence[user_id]["last_seen"] = datetime.utcnow()
+    def _get_current_time(self):
+        return datetime.now()
 
-def get_user_status(user_id):
-    data = _userPresence.get(user_id)
-    if not data:
-        return "offline"
-    if datetime.utcnow() - data["last_seen"] > EXPIRATION:
-        return "offline"
-    return data["status"]
+    def register_connection(self, userId):
+        userConnections = self.connection_store.setdefault(userId, {}).setdefault("connections", {})
+        connectionId = len(userConnections) + 1
+        userConnections[connectionId] = {"last_seen": self._get_current_time()}
+        return connectionId
 
-def is_user_connected(user_id):
-    logger = logging.getLogger(__name__)
-    logger.info(f"check: {user_id}")
-    logger.info(_userPresence)
-    data = _userPresence.get(user_id)
-    if not data:
+    def ping_connection(self, userId, connectionId):
+        userConnections = self.connection_store.setdefault(userId, {}).setdefault("connections", {})
+        userConnections[connectionId] = {"last_seen": self._get_current_time()}
+
+    def is_connection_valid(self, userId, connectionId):
+        user = self.connection_store.get(userId)
+        if not user or "connections" not in user:
+            return False
+
+        connection = user["connections"].get(connectionId)
+        if not connection:
+            return False
+
+        now = self._get_current_time()
+        return now - connection["last_seen"] <= EXPIRATION_THRESHOLD
+
+    def is_user_connected(self, userId):
+        user = self.connection_store.get(userId)
+        if not user:
+            return False
+
+        now = self._get_current_time()
+        for connection in user.get("connections", {}).values():
+            if now - connection["last_seen"] <= EXPIRATION_THRESHOLD:
+                return True
         return False
-    return datetime.utcnow() - data["last_seen"] <= EXPIRATION and data["status"] != "offline"
+    
+    def remove_connection(self, userId, connectionId):
+        user = self.connection_store.get(userId)
+        if user and "connections" in user:
+            user["connections"].pop(connectionId, None)
+            if not user["connections"]:
+                self.connection_store.pop(userId, None)
+    
 
 
 
+presenceService = PresenceService()
 
-def remove_user(user_id):
-    _userPresence.pop(user_id, None)
 
-def get_all_statuses():
-    now = datetime.utcnow()
-    return {
-        uid: data["status"]
-        if now - data["last_seen"] < EXPIRATION
-        else "offline"
-        for uid, data in _userPresence.items()
-    }

@@ -17,7 +17,6 @@ const PresenceStatus = Object.freeze({
 
 const SendEventType = Object.freeze({
     PONG: 'pong',
-    PRESENCE_UPDATE: 'presence_update',
 });
 
 const ReceiveEventType = Object.freeze({
@@ -32,17 +31,7 @@ class SendEventFactory {
             eventData: {},
         };
     }
-
-    static presenceUpdate(status) {
-        return {
-            eventType: SendEventType.PRESENCE_UPDATE,
-            eventData: { status: status },
-        };
-    }
 }
-
-
-
 
 export class PresenceService
 {
@@ -52,7 +41,6 @@ export class PresenceService
     {
         this._baseUrl = `${CONFIG.API_URL}`;
         this._connectionStatus = Stream.withDefault(ConnectionStatus.DISCONNECTED);
-        this._presenceStatus = Stream.withDefault(PresenceStatus.OFFLINE);
         this._webSocket = null;
         AuthProvider.getInstance().authConnectionStatusStream.listen((status) => {
             switch (status) {
@@ -83,28 +71,16 @@ export class PresenceService
     onConnected()
     {
         this._connectionStatus.value = ConnectionStatus.CONNECTED;
-        this.setPresenceStatus(PresenceStatus.ONLINE);
     }
 
     disconnect()
     {
         this._connectionStatus.value = ConnectionStatus.DISCONNECTED;
-        this.setPresenceStatus(PresenceStatus.OFFLINE);
         if (this._webSocket?.readyState === WebSocket.OPEN || this._webSocket?.readyState === WebSocket.CONNECTING) {
             this._webSocket.close(1000, "Normal closure");
         }
     }
 
-    setPresenceStatus(status)
-    {
-        this._sendPresenceStatus(status);
-        this._presenceStatus.value = status;
-    }
-
-    _sendPresenceStatus(status)
-    {
-        this._sendMessage(SendEventFactory.presenceUpdate(status));
-    }
 
     _sendPongResponse()
     {
@@ -133,8 +109,6 @@ export class PresenceService
                 console.warn("Unknown event type received:", message.eventType);
         }
     }
-
-
 
 
 

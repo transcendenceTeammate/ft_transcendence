@@ -5,8 +5,8 @@ import { AuthProvider } from "../data/providers/AuthProvider.js";
 export class Navbar extends Component {
 	constructor() {
 		super();
-		this.avatarUrl = null;
-		this.username = null;
+		this.avatarUrl = "";
+		this.username = "username";
 	}
 
 	static async create() {

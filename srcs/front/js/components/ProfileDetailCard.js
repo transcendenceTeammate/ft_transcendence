@@ -11,8 +11,8 @@ import { showToast } from "../core/toast.js";
 export class ProfileDetailCard extends Component {
 	constructor() {
 		super();
-		this.avatarUrl = null;
-		this.username = null;
+		this.avatarUrl = "";
+		this.username = "";
 	}
 
 	static async create() {
@@ -46,6 +46,7 @@ export class ProfileDetailCard extends Component {
 			myProfileProvider.setUsername(unameInput.value).catch((error) => {
 				console.error("Failed to update username:", error);
 				uname.textContent = this.username;
+				unameInput.value = this.username;
 				showToast({
 					title: "Failed to update username",
 					message: `${error}`,
