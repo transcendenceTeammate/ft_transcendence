@@ -58,7 +58,7 @@ def login(request):
 	response = Response({
 		"user": serializer.data
 	})
-	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.10.24.108.2.nip.io')
+	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.192.168.70.1.nip.io')
 	return response
 
 @api_view(['POST'])
@@ -77,17 +77,10 @@ def signup(request):
 			"type": user.profile.type,
 			"picture": user.profile.picture.url if user.profile.picture else None
 		})
-		response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.10.24.108.2.nip.io')
+		response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.192.168.70.1.nip.io')
 		return response
 
 	return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-def index(request):
-	return render(request, 'index.html')
-
-def generate_random_password(length=12):
-	characters = string.ascii_letters + string.digits + string.punctuation
-	return ''.join(random.choice(characters) for i in range(length))
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -102,6 +95,7 @@ def oauth_redirect_uri(request):
 	})
 	url = f'https://api.intra.42.fr/oauth/authorize?{query}'
 	return HttpResponseRedirect(url)
+
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -148,7 +142,7 @@ def auth42(request):
 	access_token = AccessToken.for_user(user)
 
 	response = HttpResponseRedirect(os.getenv('BASE_URL') + '/start-game')
-	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.10.24.108.2.nip.io')
+	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.192.168.70.1.nip.io')
 
 	return response
 
@@ -158,7 +152,7 @@ def get_access_token(request):
 	if request.method == "POST":
 		client_id = "VOTRE_CLIENT_ID"
 		client_secret = "VOTRE_CLIENT_SECRET"
-		redirect_uri = "http://10.24.108.2.nip.io:8000/auth42/"
+		redirect_uri = "http://192.168.70.1.nip.io:8000/auth42/"
 		code = request.POST.get("code")
 
 		url = "https://api.intra.42.fr/oauth/token"

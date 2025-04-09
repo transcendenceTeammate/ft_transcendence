@@ -1,6 +1,6 @@
 const CONFIG = {
-	BASE_URL: "https://app.10.24.108.2.nip.io:8443",
-	API_URL: "https://api.app.10.24.108.2.nip.io:8443"
+	BASE_URL: "https://app.192.168.70.1.nip.io:8443",
+	API_URL: "https://api.app.192.168.70.1.nip.io:8443"
 };
 
 export default CONFIG;

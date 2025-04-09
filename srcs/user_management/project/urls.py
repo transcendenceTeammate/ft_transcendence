@@ -9,7 +9,6 @@ from django.conf.urls.static import static
 
 urlpatterns = [
 	path('admin/', admin.site.urls),
-	path('auth42/', views.auth42),
 
 	# Authentication
 	path('api/auth/signup/', views.signup),
@@ -17,6 +16,7 @@ urlpatterns = [
 
 	#update user info
 	path('api/users/update-username/', views.update_username),
+	path('api/users/upload-profile-picture/', views.upload_profile_picture),
 
 	# Token
 	path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
@@ -28,8 +28,7 @@ urlpatterns = [
 
 	# get oauth code
 	path('api/oauth/get-authorization-uri/', views.oauth_redirect_uri),
-
-	path('api/users/upload-profile-picture/', views.upload_profile_picture),
+	path('auth42/', views.auth42),
 
 	# Friendship
 	path('api/friend/add/', views.add_friend),
@@ -40,8 +39,6 @@ urlpatterns = [
 	path('api/game/add/', views.create_game),
 	path('api/game/list/', views.get_game_history),
 
-	path('', views.index),
-	re_path(r'^.*$', views.index),
 ]
 
 if settings.DEBUG:

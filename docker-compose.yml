@@ -62,7 +62,6 @@ services:
       redis:
         condition: service_healthy
 
-
   cli-game:
     build:
       context: ./srcs/cli_game
