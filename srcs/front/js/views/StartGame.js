@@ -112,10 +112,8 @@ export default class StartGame extends AbstractView {
 	async createRoom() {
         try {
             console.log("Creating room...");
-
-            this.createGameButton.disabled = true;
-            this.createGameButton.textContent = "Creating...";
-
+            
+            // Button state is already set in the event handler, don't set it again here
             const authToken = this.getAuthToken();
 
             const headers = {

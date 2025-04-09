@@ -2,7 +2,7 @@ import AbstractView from "./AbstractView.js";
 import Game from "./Game.js";
 import GameConstants from "../core/GameConstants.js";
 
-class WebSocket {
+class EnhancedWebSocket {
     constructor(url, options = {}) {
         this.url = url;
         this.options = {
@@ -127,12 +127,14 @@ class WebSocket {
             const data = JSON.parse(event.data);
 
             if (data.type === 'ping') {
+                console.log("Ping received, sending pong with time:", data.time);
                 this.send('pong', { time: data.time });
                 return;
             }
 
             if (data.type === 'input_ack' && data.sequence) {
                 const rtt = Date.now() - data.server_time;
+                console.log("Input ACK received, RTT:", rtt, "ms");
                 this.updateLatencyMeasurement(rtt);
                 this.lastAcknowledgedSequence = Math.max(this.lastAcknowledgedSequence, data.sequence);
                 return;
@@ -158,19 +160,23 @@ class WebSocket {
 
     updateLatencyMeasurement(rtt) {
         const latency = rtt / 2;
-
+        console.log(`RTT: ${rtt}ms, Calculated latency: ${latency}ms`);
+        
         this.latencyMeasurements.push(latency);
         if (this.latencyMeasurements.length > 10) {
             this.latencyMeasurements.shift();
         }
-
+        
+        // Calculate average with outlier rejection
         if (this.latencyMeasurements.length > 3) {
             const sorted = [...this.latencyMeasurements].sort((a, b) => a - b);
             const withoutExtremes = sorted.slice(1, -1);
-            this.avgLatency = withoutExtremes.reduce((sum, val) => sum + val, 0) / withoutExtremes.length;
+            this.avgLatency = withoutExtremes.reduce((sum, val) => sum + val, 0) / withoutExtremes.length || 50;
         } else {
-            this.avgLatency = this.latencyMeasurements.reduce((sum, val) => sum + val, 0) / this.latencyMeasurements.length;
+            this.avgLatency = this.latencyMeasurements.reduce((sum, val) => sum + val, 0) / this.latencyMeasurements.length || 50;
         }
+        
+        console.log("New average latency:", this.avgLatency, "ms");
     }
 
     getLatency() {
@@ -350,7 +356,7 @@ export default class OnlineGame extends Game {
             }
         });
 
-        this.gameLoop = this.GameLoop.bind(this);
+        this.gameLoop = this.gameLoop.bind(this);
 
         requestAnimationFrame(this.gameLoop);
     }
@@ -397,9 +403,10 @@ export default class OnlineGame extends Game {
             wsUrl += `?token=${encodeURIComponent(token)}`;
         }
 
-        this.socket = new WebSocket(wsUrl, {
+        this.socket = new EnhancedWebSocket(wsUrl, {
             reconnectInterval: 1000,
-            maxReconnectAttempts: 5
+            maxReconnectAttempts: 5,
+            debug: true // Enable debugging
         });
 
         this.socket.on('connect', this.handleConnect.bind(this));
@@ -495,7 +502,7 @@ export default class OnlineGame extends Game {
         this.socket.send('key_event', input);
     }
 
-    GameLoop(timestamp) {
+    gameLoop(timestamp) {
         requestAnimationFrame(this.gameLoop);
 
         if (this.gameOver) return;
@@ -597,13 +604,21 @@ export default class OnlineGame extends Game {
         this.player1Score = data.player_1_score;
         this.player2Score = data.player_2_score;
 
+        // Debug the paddle positions
+        console.log(`Received paddle positions - P1: ${data.player_1_paddle_y}, P2: ${data.player_2_paddle_y}`);
+        console.log(`Current player number: ${this.playerNumber}`);
+
         if (this.playerNumber === 1) {
             this.opponentPaddleTarget = data.player_2_paddle_y;
+            console.log(`Player 1: Setting opponent (P2) paddle target to ${this.opponentPaddleTarget}`);
         } else if (this.playerNumber === 2) {
             this.opponentPaddleTarget = data.player_1_paddle_y;
+            console.log(`Player 2: Setting opponent (P1) paddle target to ${this.opponentPaddleTarget}`);
         } else {
+            // Spectator mode
             this.player1Y = data.player_1_paddle_y;
             this.player2Y = data.player_2_paddle_y;
+            console.log(`Spectator: Setting both paddles directly - P1: ${this.player1Y}, P2: ${this.player2Y}`);
         }
 
         this.ballX = data.ball_x;
@@ -794,9 +809,14 @@ export default class OnlineGame extends Game {
 
         const position = this.playerNumber === 1 ? this.player1Y : this.player2Y;
 
-        if (Math.abs(this._lastSentPosition - position) <= 1) return;
+        // Handle the case where _lastSentPosition might be null/undefined
+        if (this._lastSentPosition !== null && this._lastSentPosition !== undefined) {
+            if (Math.abs(this._lastSentPosition - position) <= 1) return;
+        }
+        
         this._lastSentPosition = position;
-
+        
+        console.log(`Sending paddle position: ${position} for player ${this.playerNumber}`);
         this.socket.send('paddle_position', {
             player_number: this.playerNumber,
             position: position
