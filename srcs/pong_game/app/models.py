@@ -77,7 +77,7 @@ class GameState(models.Model):
         self.ball_speed_x = -BALL_INITIAL_SPEED_X if self.last_loser == 1 else BALL_INITIAL_SPEED_X
         self.ball_speed_y = (1 if random.random() > 0.5 else -1) * BALL_INITIAL_SPEED_Y
         
-        print(f"Ball resumed with speeds: ({self.ball_speed_x}, {self.ball_speed_y})")
+        logging.info(f"Ball resumed with speeds: ({self.ball_speed_x}, {self.ball_speed_y})")
         return self.ball_speed_x, self.ball_speed_y
     
     def update_game_state(self):
