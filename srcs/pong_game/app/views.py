@@ -130,7 +130,7 @@ def join_room(request):
 
         if game_state.player_1_id and game_state.player_2_id:
             if user_id in [game_state.player_1_id, game_state.player_2_id]:
-                player_number = 1 if user_id == game_state.player_1_id else 2
+                player_number = 2 if user_id == game_state.player_2_id else 1
 
                 player_session, created = PlayerSession.objects.get_or_create(
                     room_code=room_code,

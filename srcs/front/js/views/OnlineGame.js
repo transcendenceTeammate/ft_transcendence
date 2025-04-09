@@ -437,7 +437,7 @@ export default class OnlineGame extends Game {
         const token = this.getAuthToken();
 
         // Create WebSocket URL with room code and token (if available)
-        let wsUrl = `wss://app.10.24.102.1.nip.io:8443/ws/game/${this.roomCode}/`;
+        let wsUrl = `wss://app.10.24.108.2.nip.io:8443/ws/game/${this.roomCode}/`;
         if (token) {
             wsUrl += `?token=${encodeURIComponent(token)}`;
         }
