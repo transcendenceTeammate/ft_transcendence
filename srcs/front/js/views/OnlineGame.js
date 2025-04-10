@@ -263,7 +263,7 @@ export default class OnlineGame extends Game {
         // State buffer for interpolation
         this.stateBuffer = [];
         this.stateBufferSize = 60; // Store 1 second of states at 60Hz
-        this.renderDelay = 100; // Render 100ms behind server time for smoother interpolation
+        this.renderDelay = 150; // Increased from 100ms to 150ms for smoother interpolation during network jitter
 
         // Game state
         this.paused = true;
@@ -607,13 +607,31 @@ export default class OnlineGame extends Game {
         const t = (renderTime - beforeState.timestamp) / 
                  (afterState.timestamp - beforeState.timestamp);
         
-        // Interpolate all entity positions
-        this.renderState = {
-            player1Y: this.lerp(beforeState.player1Y, afterState.player1Y, t),
-            player2Y: this.lerp(beforeState.player2Y, afterState.player2Y, t),
-            ballX: this.lerp(beforeState.ballX, afterState.ballX, t),
-            ballY: this.lerp(beforeState.ballY, afterState.ballY, t)
-        };
+        // Check if ball is near collision for potential extrapolation
+        const isNearPaddle1 = this.isCollisionImminent(1);
+        const isNearPaddle2 = this.isCollisionImminent(2);
+        const isNearCollision = isNearPaddle1 || isNearPaddle2;
+        
+        // Interpolate paddle positions
+        this.renderState.player1Y = this.lerp(beforeState.player1Y, afterState.player1Y, t);
+        this.renderState.player2Y = this.lerp(beforeState.player2Y, afterState.player2Y, t);
+        
+        // Ball position - either interpolate or extrapolate based on collision proximity
+        if (isNearCollision && !this.paused && (this.simulationState.ballSpeedX !== 0 || this.simulationState.ballSpeedY !== 0)) {
+            // Use extrapolation based on current velocity for smoother collision visuals
+            const extrapolationTime = 16; // Look 16ms into the future
+            const ballX = this.simulationState.ballX;
+            const ballY = this.simulationState.ballY;
+            const ballSpeedX = this.simulationState.ballSpeedX;
+            const ballSpeedY = this.simulationState.ballSpeedY;
+            
+            this.renderState.ballX = ballX + ballSpeedX * (extrapolationTime / 1000);
+            this.renderState.ballY = ballY + ballSpeedY * (extrapolationTime / 1000);
+        } else {
+            // Normal interpolation for non-collision scenarios
+            this.renderState.ballX = this.lerp(beforeState.ballX, afterState.ballX, t);
+            this.renderState.ballY = this.lerp(beforeState.ballY, afterState.ballY, t);
+        }
         
         // For the local player's paddle, use the simulation state directly for responsiveness
         if (this.playerNumber === 1) {
@@ -801,10 +819,16 @@ export default class OnlineGame extends Game {
             const clientPos = this.simulationState.player1Y;
             const diff = serverPos - clientPos;
             
+            // Determine if a ball collision is imminent (ball approaching paddle)
+            const isNearCollision = this.isCollisionImminent(1);
+            
             // If difference is significant, reconcile
             if (Math.abs(diff) > 3) {
-                // Correct position with small bias toward server
-                this.simulationState.player1Y = clientPos + diff * 0.3;
+                // Use a stronger correction factor when collision is imminent
+                const correctionFactor = isNearCollision ? 0.7 : 0.3;
+                
+                // Correct position with appropriate weight toward server
+                this.simulationState.player1Y = clientPos + diff * correctionFactor;
                 
                 // Reapply pending inputs
                 this._pendingInputs.forEach(input => {
@@ -816,14 +840,57 @@ export default class OnlineGame extends Game {
             const clientPos = this.simulationState.player2Y;
             const diff = serverPos - clientPos;
             
+            // Determine if a ball collision is imminent (ball approaching paddle)
+            const isNearCollision = this.isCollisionImminent(2);
+            
             if (Math.abs(diff) > 3) {
-                this.simulationState.player2Y = clientPos + diff * 0.3;
+                // Use a stronger correction factor when collision is imminent
+                const correctionFactor = isNearCollision ? 0.7 : 0.3;
+                
+                this.simulationState.player2Y = clientPos + diff * correctionFactor;
                 
                 this._pendingInputs.forEach(input => {
                     this.applyInput(input);
                 });
             }
         }
+    }
+
+    // New helper method to determine if ball is about to collide with paddle
+    isCollisionImminent(playerNumber) {
+        // Ball position and velocity
+        const ballX = this.simulationState.ballX;
+        const ballY = this.simulationState.ballY;
+        const ballSpeedX = this.simulationState.ballSpeedX;
+        const ballRadius = this.ballSize / 2;
+        
+        // Check if ball is moving toward the paddle
+        const movingTowardPaddle = (playerNumber === 1 && ballSpeedX < 0) || 
+                                   (playerNumber === 2 && ballSpeedX > 0);
+        
+        if (!movingTowardPaddle) return false;
+        
+        // Paddle properties
+        const paddleWidth = this.paddleWidth;
+        const paddleY = playerNumber === 1 ? 
+                        this.simulationState.player1Y : 
+                        this.simulationState.player2Y;
+        const paddleHeight = this.paddleHeight;
+        
+        // Calculate distance to paddle
+        const distanceToPaddle = playerNumber === 1 ? 
+                                ballX - (paddleWidth + ballRadius) : 
+                                (this.canvas.width - paddleWidth - ballRadius) - ballX;
+        
+        // Check if ball is close to paddle horizontally (within ~3 frames of collision at current speed)
+        const isCloseHorizontally = distanceToPaddle <= Math.abs(ballSpeedX) * 3 && distanceToPaddle >= 0;
+        
+        // Check if ball is at a height that could potentially hit the paddle
+        const canHitVertically = ballY + ballRadius >= paddleY && 
+                                ballY - ballRadius <= paddleY + paddleHeight;
+        
+        // Calculate if the ball will hit within the next few frames
+        return isCloseHorizontally && canHitVertically;
     }
 
     handleConnect() {
