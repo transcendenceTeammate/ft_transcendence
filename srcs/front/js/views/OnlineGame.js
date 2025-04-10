@@ -232,6 +232,27 @@ export default class OnlineGame extends Game {
         // Physics accumulator for fixed timestep
         this.accumulator = 0;
         this.physicsStep = 1/120; // 120 Hz physics
+        
+        // State management for smooth transitions
+        this.stateBuffer = [];
+        this.maxBufferSize = 10;
+        this.stateBufferTime = 100; // ms to buffer states
+        
+        // Visual object states (for rendering)
+        this.visualState = {
+            player1Y: 0,
+            player2Y: 0,
+            ballX: 0,
+            ballY: 0
+        };
+        
+        // Target states (where objects are moving toward)
+        this.targetState = {
+            player1Y: 0,
+            player2Y: 0,
+            ballX: 0,
+            ballY: 0
+        };
 
         // Validate player information
         if (!this.playerId) {
@@ -468,17 +489,50 @@ export default class OnlineGame extends Game {
             this.accumulator -= this.physicsStep;
         }
         
-        // Draw with interpolation factor
+        // Update visual states for smooth rendering
+        this.updateVisualStates(cappedDelta);
+        
+        // Draw with the visual states
         this.draw();
     }
 
-    // New method for physics updates at fixed timestep
+    // Update draw method to use visual states
+    draw() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        this.ctx.fillStyle = "white";
+        this.ctx.fillRect(this.canvas.width / 2 - 2, 0, 4, this.canvas.height);
+
+        // Draw paddles using visual state
+        this.ctx.fillStyle = "white";
+        this.ctx.fillRect(0, this.visualState.player1Y, this.paddleWidth, this.paddleHeight);
+        this.ctx.fillRect(this.canvas.width - this.paddleWidth, this.visualState.player2Y, this.paddleWidth, this.paddleHeight);
+
+        // Draw ball using visual state
+        this.ctx.beginPath();
+        this.ctx.arc(this.visualState.ballX, this.visualState.ballY, this.ballSize / 2, 0, Math.PI * 2);
+        this.ctx.fillStyle = "#f39c12";
+        this.ctx.fill();
+        this.ctx.closePath();
+    }
+
+    // Update physics method to handle player input
     updatePhysics(fixedDelta) {
+        // Process player input to move their paddle
         this.processPlayerInput(fixedDelta);
+        
+        // Update paddle target positions based on player input
+        if (this.playerNumber === 1) {
+            this.targetState.player1Y = this.player1Y;
+        } else if (this.playerNumber === 2) {
+            this.targetState.player2Y = this.player2Y;
+        }
+        
+        // Send paddle updates to server at appropriate intervals
         this.updateWithPrediction(fixedDelta);
     }
 
-    // Modify existing process player input to use fixed timestep
+    // Simplify processPlayerInput to only handle direct input
     processPlayerInput(deltaTime) {
         if (!this.playerNumber) return;
         
@@ -501,78 +555,20 @@ export default class OnlineGame extends Game {
         }
     }
 
+    // We no longer need the original interpolateOpponentPaddle as it's handled by the state system
+    // Simplify updateWithPrediction to just send updates
     updateWithPrediction(deltaTime) {
         if (this.predictionEnabled && this.playerNumber) {
-
-            this.interpolateOpponentPaddle(deltaTime);
-
             const now = Date.now();
-            if (now - this.lastPaddleUpdate > 16) {
+            if (now - this.lastPaddleUpdate > this.minPaddleUpdateInterval || 16) {
                 this.sendPaddlePosition();
                 this.lastPaddleUpdate = now;
             }
         }
     }
 
-    interpolateOpponentPaddle(deltaTime) {
-        // Cubic easing function for smoother transitions
-        const easeInOutCubic = (t) => {
-            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-        };
-        
-        // Base interpolation speed
-        let factor = Math.min(1.0, 0.35 * (deltaTime * 60));
-        
-        // Apply easing to the factor
-        factor = easeInOutCubic(factor);
-        
-        if (this.playerNumber === 1) {
-            const diff = this.opponentPaddleTarget - this.player2Y;
-            // Lower threshold for more frequent micro-adjustments
-            if (Math.abs(diff) > 0.05) {
-                // Adjust the movement amount based on distance (faster for large gaps)
-                const moveAmount = diff * factor * (Math.abs(diff) > 10 ? 1.2 : 1.0);
-                this.player2Y += moveAmount;
-            }
-        } else if (this.playerNumber === 2) {
-            const diff = this.opponentPaddleTarget - this.player1Y;
-            if (Math.abs(diff) > 0.05) {
-                const moveAmount = diff * factor * (Math.abs(diff) > 10 ? 1.2 : 1.0);
-                this.player1Y += moveAmount;
-            }
-        }
-    }
-
-    draw() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-        this.ctx.fillStyle = "white";
-        this.ctx.fillRect(this.canvas.width / 2 - 2, 0, 4, this.canvas.height);
-
-        this.ctx.fillStyle = "white";
-        this.ctx.fillRect(0, this.player1Y, this.paddleWidth, this.paddleHeight);
-        this.ctx.fillRect(this.canvas.width - this.paddleWidth, this.player2Y, this.paddleWidth, this.paddleHeight);
-
-        // Interpolated ball position if we have velocity
-        let drawBallX = this.ballX;
-        let drawBallY = this.ballY;
-        
-        if (!this.paused && this.ballSpeedX !== 0) {
-            // Calculate a time factor for smoother interpolation
-            const timeSinceLastUpdate = this.lastFrameTime ? (performance.now() - this.lastFrameTime) / 1000 : 0;
-            const interpolationFactor = Math.min(timeSinceLastUpdate / 0.016, 1.0); // Cap at 1.0
-            
-            // Predict ball position based on its velocity
-            drawBallX = this.ballX + this.ballSpeedX * interpolationFactor;
-            drawBallY = this.ballY + this.ballSpeedY * interpolationFactor;
-        }
-
-        this.ctx.beginPath();
-        this.ctx.arc(drawBallX, drawBallY, this.ballSize / 2, 0, Math.PI * 2);
-        this.ctx.fillStyle = "#f39c12";
-        this.ctx.fill();
-        this.ctx.closePath();
-    }
+    // We also no longer need the original reconcilePlayerPaddle, as reconciliation is now
+    // handled by the state management system with gradual transitions.
 
     handleGameState(data) {
         this.lastReceivedState = { ...data };
@@ -587,45 +583,142 @@ export default class OnlineGame extends Game {
 
         this.player1Score = data.player_1_score;
         this.player2Score = data.player_2_score;
+        
+        // Buffer the state for smooth transitions
+        this.addStateToBuffer({
+            timestamp: Date.now(),
+            player1Y: data.player_1_paddle_y,
+            player2Y: data.player_2_paddle_y,
+            ballX: data.ball_x,
+            ballY: data.ball_y,
+            ballSpeedX: data.ball_speed_x,
+            ballSpeedY: data.ball_speed_y
+        });
 
-        if (this.playerNumber === 1) {
-            this.opponentPaddleTarget = data.player_2_paddle_y;
-        } else if (this.playerNumber === 2) {
-            this.opponentPaddleTarget = data.player_1_paddle_y;
-        } else {
-            // Spectator mode
-            this.player1Y = data.player_1_paddle_y;
-            this.player2Y = data.player_2_paddle_y;
-        }
-
-        this.ballX = data.ball_x;
-        this.ballY = data.ball_y;
+        // Immediately update score display
+        this.score1.textContent = this.player1Score;
+        this.score2.textContent = this.player2Score;
+        
+        // Update game state
         this.ballSpeedX = data.ball_speed_x;
         this.ballSpeedY = data.ball_speed_y;
         this.paused = data.is_paused;
+    }
 
-        this.score1.textContent = this.player1Score;
-        this.score2.textContent = this.player2Score;
-
-        if (this.reconciliationEnabled && this.playerNumber) {
-            if (this.playerNumber === 1) {
-                this.reconcilePlayerPaddle(data.player_1_paddle_y, 1);
-            } else if (this.playerNumber === 2) {
-                this.reconcilePlayerPaddle(data.player_2_paddle_y, 2);
-            }
+    // New method to add state to buffer
+    addStateToBuffer(state) {
+        // Add new state to buffer
+        this.stateBuffer.push(state);
+        
+        // Keep buffer size limited
+        while (this.stateBuffer.length > this.maxBufferSize) {
+            this.stateBuffer.shift();
+        }
+        
+        // Update target state immediately
+        this.targetState = { ...state };
+        
+        // Initialize visual state if it's empty
+        if (this.visualState.player1Y === 0 && this.visualState.player2Y === 0) {
+            this.visualState = { ...state };
+        }
+        
+        // For player's own paddle, update immediately if local player
+        if (this.playerNumber === 1) {
+            // Only affect our own paddle
+            this.player1Y = state.player1Y;
+        } else if (this.playerNumber === 2) {
+            // Only affect our own paddle
+            this.player2Y = state.player2Y;
         }
     }
 
-    reconcilePlayerPaddle(serverPaddleY, playerNum) {
-        const clientPaddleY = playerNum === 1 ? this.player1Y : this.player2Y;
-
-        if (Math.abs(serverPaddleY - clientPaddleY) > 10) {
-            if (playerNum === 1) {
-                this.player1Y = serverPaddleY * 0.1 + clientPaddleY * 0.9;
-            } else {
-                this.player2Y = serverPaddleY * 0.1 + clientPaddleY * 0.9;
-            }
+    // Update visual states from buffer in the game loop
+    updateVisualStates(deltaTime) {
+        // If no state in buffer, nothing to do
+        if (this.stateBuffer.length === 0) return;
+        
+        // Calculate interpolation factors for different objects
+        const paddleFactor = Math.min(1.0, deltaTime * 12); // Smooth paddle movement
+        const ballFactor = this.calculateBallFactor(deltaTime);
+        
+        // Update visual positions with smooth interpolation
+        // Paddle positions - gentle easing
+        this.visualState.player1Y = this.lerpWithEasing(
+            this.visualState.player1Y, 
+            this.targetState.player1Y, 
+            this.playerNumber === 1 ? 1.0 : paddleFactor
+        );
+        this.visualState.player2Y = this.lerpWithEasing(
+            this.visualState.player2Y, 
+            this.targetState.player2Y, 
+            this.playerNumber === 2 ? 1.0 : paddleFactor
+        );
+        
+        // Ball position - predictive interpolation
+        if (!this.paused && (this.ballSpeedX !== 0 || this.ballSpeedY !== 0)) {
+            // Predict where ball should be based on last known position and velocity
+            const predictedBallX = this.targetState.ballX + this.ballSpeedX * (deltaTime * 60);
+            const predictedBallY = this.targetState.ballY + this.ballSpeedY * (deltaTime * 60);
+            
+            // Blend server position with prediction
+            this.visualState.ballX = this.lerp(this.visualState.ballX, predictedBallX, ballFactor);
+            this.visualState.ballY = this.lerp(this.visualState.ballY, predictedBallY, ballFactor);
+        } else {
+            // If ball isn't moving, just interpolate to exact position
+            this.visualState.ballX = this.lerp(this.visualState.ballX, this.targetState.ballX, ballFactor);
+            this.visualState.ballY = this.lerp(this.visualState.ballY, this.targetState.ballY, ballFactor);
         }
+        
+        // Update actual positions for collision detection
+        // We only use visual positions for rendering, not physics
+        this.ballX = this.targetState.ballX;
+        this.ballY = this.targetState.ballY;
+        
+        // Don't update player paddles here - they're controlled by input
+        // or by the interpolation system for opponent paddles
+    }
+
+    // Utility to calculate appropriate ball factor based on game state
+    calculateBallFactor(deltaTime) {
+        // Base factor - faster than paddle for responsive ball movement
+        let factor = Math.min(1.0, deltaTime * 15);
+        
+        // Adjust based on distance (further = faster)
+        const ballDistance = Math.sqrt(
+            Math.pow(this.visualState.ballX - this.targetState.ballX, 2) +
+            Math.pow(this.visualState.ballY - this.targetState.ballY, 2)
+        );
+        
+        // If ball is far from target, increase catch-up speed
+        if (ballDistance > 20) {
+            factor = Math.min(1.0, factor * (ballDistance / 20));
+        }
+        
+        // If ball just changed direction, faster correction
+        if (Math.sign(this.visualState.ballX - this.targetState.ballX) !== 
+            Math.sign(this.ballSpeedX)) {
+            factor = Math.min(1.0, factor * 2);
+        }
+        
+        return factor;
+    }
+
+    // Linear interpolation utility
+    lerp(start, end, factor) {
+        return start + (end - start) * factor;
+    }
+
+    // Cubic easing interpolation
+    lerpWithEasing(start, end, factor) {
+        // Apply cubic easing function
+        const easeInOutCubic = (t) => {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        };
+        
+        // Apply easing to factor
+        const easedFactor = easeInOutCubic(Math.min(1.0, Math.max(0, factor)));
+        return start + (end - start) * easedFactor;
     }
 
     flashBall(count = 3, delay = 200) {
