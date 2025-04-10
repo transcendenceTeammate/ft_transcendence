@@ -1,8 +1,5 @@
 from pathlib import Path
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -12,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY_PONG_GAME')
+SECRET_KEY = os.getenv('JWT_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -131,5 +128,23 @@ CHANNEL_LAYERS = {
     },
 }
 
-# Add CORS settings
-CORS_ALLOW_ALL_ORIGINS = True  # For development only
+##CORS_ALLOWED_ORIGINS = [
+##    'https://app.10.24.108.2.nip.io:8443',
+##]
+
+##CORS_ALLOW_CREDENTIALS = True
+
+REDIS_HOST = 'redis'
+REDIS_PORT = 6379
+REDIS_DB = 1
+
+# Cache Configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}

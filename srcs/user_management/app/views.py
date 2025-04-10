@@ -58,7 +58,7 @@ def login(request):
 	response = Response({
 		"user": serializer.data
 	})
-	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.localhost')
+	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.10.24.108.2.nip.io')
 	return response
 
 @api_view(['POST'])
@@ -77,7 +77,7 @@ def signup(request):
 			"type": user.profile.type,
 			"picture": user.profile.picture.url if user.profile.picture else None
 		})
-		response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.localhost')
+		response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.10.24.108.2.nip.io')
 		return response
 
 	return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -114,7 +114,7 @@ def auth42(request):
 		'client_id': client_id,
 		'client_secret': client_secret,
 		'code': code,
-		'redirect_uri': redirect_uri,    
+		'redirect_uri': redirect_uri,
 	}
 
 	token_response = requests.post(token_url, data=token_data)
@@ -142,9 +142,29 @@ def auth42(request):
 	access_token = AccessToken.for_user(user)
 
 	response = HttpResponseRedirect(os.getenv('BASE_URL') + '/start-game')
-	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.localhost')
+	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.10.24.108.2.nip.io')
 
 	return response
+
+
+
+def get_access_token(request):
+	if request.method == "POST":
+		client_id = "VOTRE_CLIENT_ID"
+		client_secret = "VOTRE_CLIENT_SECRET"
+		redirect_uri = "http://10.24.108.2.nip.io:8000/auth42/"
+		code = request.POST.get("code")
+
+		url = "https://api.intra.42.fr/oauth/token"
+		data = {
+			"grant_type": "authorization_code",
+			"client_id": client_id,
+			"client_secret": client_secret,
+			"code": code,
+			"redirect_uri": redirect_uri,
+		}
+		response = requests.post(url, data=data)
+		return JsonResponse(response.json(), safe=False)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

@@ -1,7 +1,10 @@
-django>=3.0,<4.0
+Django>=4.2.16
 daphne
 channels
 channels_redis
 websockets
 django-cors-headers
-python-dotenv
+pyjwt
+redis>=4.5.1
+django-redis>=5.2.0
+dotenv

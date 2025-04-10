@@ -105,6 +105,7 @@ export class FriendsList extends Component {
 	}
 
 
+
 	_getComponentHtml() {
 		return `
 			<div id="myfriends">
