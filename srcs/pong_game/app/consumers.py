@@ -285,6 +285,11 @@ class GameConsumer(AsyncWebsocketConsumer):
         is_down = data.get('is_down', False)
         player_number = data.get('player_number')
         sequence = data.get('sequence', 0)
+        
+        # Extract paddle position from the prediction data if available
+        paddle_y = None
+        if data.get('prediction') and 'paddleY' in data.get('prediction'):
+            paddle_y = data.get('prediction').get('paddleY')
 
         if player_number != self.player_number:
             return
@@ -293,7 +298,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         if not game:
             return
 
-        # Update the appropriate movement flags
+        # Update the appropriate movement flags and paddle position if provided
         updates = {}
         if self.player_number == 1:
             if key in ('w', 'arrowup'):
@@ -302,6 +307,10 @@ class GameConsumer(AsyncWebsocketConsumer):
             elif key in ('s', 'arrowdown'):
                 updates['player_1_moving_down'] = is_down
                 logger.info(f"Player 1 moving down: {is_down}")
+            
+            # Update paddle position if provided in prediction data
+            if paddle_y is not None:
+                updates['player_1_paddle_y'] = paddle_y
         elif self.player_number == 2:
             if key in ('w', 'arrowup'):
                 updates['player_2_moving_up'] = is_down
@@ -309,20 +318,29 @@ class GameConsumer(AsyncWebsocketConsumer):
             elif key in ('s', 'arrowdown'):
                 updates['player_2_moving_down'] = is_down
                 logger.info(f"Player 2 moving down: {is_down}")
+                
+            # Update paddle position if provided in prediction data
+            if paddle_y is not None:
+                updates['player_2_paddle_y'] = paddle_y
 
         if updates:
             success = update_game_state(self.room_code, updates)
-            logger.info(f"Updated movement flags: {updates}, success: {success}")
+            logger.info(f"Updated movement flags and position: {updates}, success: {success}")
 
         # Acknowledge the input with more information
-        if sequence > 0:
-            await self.send(text_data=json.dumps({
-                'type': 'input_ack',
-                'sequence': sequence,
-                'server_time': time.time() * 1000,
-                'key': key,
-                'is_down': is_down
-            }))
+        response = {
+            'type': 'input_ack',
+            'sequence': sequence,
+            'server_time': time.time() * 1000,
+            'key': key,
+            'is_down': is_down
+        }
+        
+        # Include paddle position in acknowledgment if it was updated
+        if paddle_y is not None:
+            response['paddle_y'] = paddle_y
+            
+        await self.send(text_data=json.dumps(response))
 
     async def handle_paddle_position(self, data):
         """
@@ -334,6 +352,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         player_number = data.get('player_number')
         position = data.get('position')
         sequence = data.get('sequence', 0)
+        moving_up = data.get('moving_up', False)
+        moving_down = data.get('moving_down', False)
 
         # Basic validation - player can only update their own paddle
         if player_number != self.player_number:
@@ -370,20 +390,24 @@ class GameConsumer(AsyncWebsocketConsumer):
             # We're near a potential ball collision - server needs authority
             force_reconcile = True
 
-        # Update the position in game state
+        # Update the position and movement flags in game state
         updates = {}
         if player_number == 1:
             updates['player_1_paddle_y'] = position
+            updates['player_1_moving_up'] = moving_up
+            updates['player_1_moving_down'] = moving_down
             updates['force_reconcile_p1'] = force_reconcile
         elif player_number == 2:
             updates['player_2_paddle_y'] = position
+            updates['player_2_moving_up'] = moving_up
+            updates['player_2_moving_down'] = moving_down
             updates['force_reconcile_p2'] = force_reconcile
             
-        # Make sure we're not overriding movement flags
+        # Apply the updates
         if updates:
-            update_game_state(self.room_code, updates)
+            success = update_game_state(self.room_code, updates)
             # Log successful update for debugging
-            logger.info(f"Updated paddle position for player {player_number} to {position}")
+            logger.info(f"Updated paddle position for player {player_number} to {position}, up={moving_up}, down={moving_down}, success={success}")
 
         # Always send acknowledgment to client
         if sequence > 0:
@@ -392,7 +416,9 @@ class GameConsumer(AsyncWebsocketConsumer):
                 'sequence': sequence,
                 'server_time': time.time() * 1000,
                 'position': position,
-                'force_reconcile': force_reconcile
+                'force_reconcile': force_reconcile,
+                'moving_up': moving_up,
+                'moving_down': moving_down
             }))
 
     async def handle_pause_game(self, data):

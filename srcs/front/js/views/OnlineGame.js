@@ -685,7 +685,11 @@ export default class OnlineGame extends Game {
             ballY: data.ball_y,
             ballSpeedX: data.ball_speed_x,
             ballSpeedY: data.ball_speed_y,
-            lastUpdateTime: Date.now()
+            lastUpdateTime: Date.now(),
+            player1MovingUp: data.player_1_moving_up,
+            player1MovingDown: data.player_1_moving_down,
+            player2MovingUp: data.player_2_moving_up,
+            player2MovingDown: data.player_2_moving_down
         };
         
         // Always update ball position and speed (server authority)
@@ -694,24 +698,65 @@ export default class OnlineGame extends Game {
         this.simulationState.ballSpeedX = serverState.ballSpeedX;
         this.simulationState.ballSpeedY = serverState.ballSpeedY;
         
+        // Store our current paddle position before updates for comparison
+        const myOldPaddleY = this.playerNumber === 1 ? 
+            this.simulationState.player1Y : 
+            this.simulationState.player2Y;
+            
         // For the opponent paddle, use server position directly
         if (this.playerNumber === 1) {
             // We control player 1, update player 2 (opponent) from server
             this.simulationState.player2Y = serverState.player2Y;
             
-            // For our own paddle, use smart reconciliation
-            this.reconcilePlayerPaddle(data);
+            // For our own paddle, use smart reconciliation - BUT ONLY IF THERE'S A SIGNIFICANT DIFFERENCE
+            // AND we're not actively pressing keys
+            const serverDiff = Math.abs(serverState.player1Y - this.simulationState.player1Y);
+            
+            // If the difference is large and we're not actively pressing keys, reconcile position
+            if (serverDiff > 20 && !this.upPressed && !this.downPressed) {
+                console.log(`Large position difference detected (${serverDiff.toFixed(2)}px), reconciling to server position`);
+                this.reconcilePlayerPaddle(data);
+            } else {
+                // Log that we're preserving local position due to active input
+                if (serverDiff > 5 && (this.upPressed || this.downPressed)) {
+                    console.log(`Preserving local position despite server difference of ${serverDiff.toFixed(2)}px due to active input`);
+                }
+            }
         } else if (this.playerNumber === 2) {
             // We control player 2, update player 1 (opponent) from server
             this.simulationState.player1Y = serverState.player1Y;
             
-            // For our own paddle, use smart reconciliation
-            this.reconcilePlayerPaddle(data);
+            // For our own paddle, use smart reconciliation - BUT ONLY IF THERE'S A SIGNIFICANT DIFFERENCE
+            // AND we're not actively pressing keys
+            const serverDiff = Math.abs(serverState.player2Y - this.simulationState.player2Y);
+            
+            // If the difference is large and we're not actively pressing keys, reconcile position
+            if (serverDiff > 20 && !this.upPressed && !this.downPressed) {
+                console.log(`Large position difference detected (${serverDiff.toFixed(2)}px), reconciling to server position`);
+                this.reconcilePlayerPaddle(data);
+            } else {
+                // Log that we're preserving local position due to active input
+                if (serverDiff > 5 && (this.upPressed || this.downPressed)) {
+                    console.log(`Preserving local position despite server difference of ${serverDiff.toFixed(2)}px due to active input`);
+                }
+            }
         } else {
             // Spectator mode, update both paddles from server
             this.simulationState.player1Y = serverState.player1Y;
             this.simulationState.player2Y = serverState.player2Y;
         }
+        
+        // Log our paddle position after updates
+        const myNewPaddleY = this.playerNumber === 1 ? 
+            this.simulationState.player1Y : 
+            this.simulationState.player2Y;
+            
+        if (Math.abs(myOldPaddleY - myNewPaddleY) > 1) {
+            console.log(`My paddle position: ${myOldPaddleY.toFixed(2)} -> ${myNewPaddleY.toFixed(2)}`);
+        }
+        
+        // Re-apply pending inputs after server updates
+        this.reapplyPendingInputs();
     }
     
     reconcilePlayerPaddle(serverState) {
@@ -1011,14 +1056,32 @@ export default class OnlineGame extends Game {
         // Accumulate time for fixed timestep physics
         this.accumulator += cappedDelta;
         
+        // Fixed physics timestep (1/60 second)
+        const physicsStep = 1/60;
+        
         // Run simulation steps
-        while (this.accumulator >= this.physicsStep) {
-            this.updateSimulation(this.physicsStep);
-            this.accumulator -= this.physicsStep;
+        while (this.accumulator >= physicsStep) {
+            this.updateSimulation(physicsStep);
+            this.accumulator -= physicsStep;
         }
         
         // Interpolate game state for rendering
         this.interpolateState();
+        
+        // Debug: Display network status and input state
+        if (this._debugCounter === undefined) {
+            this._debugCounter = 0;
+        }
+        
+        this._debugCounter++;
+        if (this._debugCounter % 60 === 0) {  // Log every 60 frames (about 1 second)
+            console.log(`Input state: upPressed=${this.upPressed}, downPressed=${this.downPressed}`);
+            if (this.playerNumber === 1) {
+                console.log(`Player 1 paddle position: ${this.simulationState.player1Y.toFixed(2)}`);
+            } else if (this.playerNumber === 2) {
+                console.log(`Player 2 paddle position: ${this.simulationState.player2Y.toFixed(2)}`);
+            }
+        }
         
         // Render the game
         this.render();
@@ -1029,6 +1092,11 @@ export default class OnlineGame extends Game {
         if (this.playerNumber) {
             const paddleSpeed = this.paddleSpeed * deltaTime;
             
+            // Store previous position for comparison
+            const prevPosition = this.playerNumber === 1 ? 
+                this.simulationState.player1Y : this.simulationState.player2Y;
+            
+            // Apply input-based movement
             if (this.playerNumber === 1) {
                 if (this.upPressed) {
                     this.simulationState.player1Y = Math.max(0, this.simulationState.player1Y - paddleSpeed);
@@ -1051,9 +1119,51 @@ export default class OnlineGame extends Game {
                 }
             }
             
-            // Send paddle position updates to server at appropriate rate
-            this.sendPaddlePosition();
+            // Get current position after input
+            const currPosition = this.playerNumber === 1 ? 
+                this.simulationState.player1Y : this.simulationState.player2Y;
+            
+            // Debug logging
+            if (Math.abs(prevPosition - currPosition) > 0.1) {
+                console.log(`Local paddle moved: ${prevPosition.toFixed(2)} -> ${currPosition.toFixed(2)}`);
+            }
+            
+            // Always send paddle updates when keys are pressed, not just when position changed
+            // This ensures the server knows our current input state
+            if (Math.abs(prevPosition - currPosition) > 0.1 || this.upPressed || this.downPressed) {
+                this.sendPaddlePosition();
+            }
         }
+    }
+    
+    // Send paddle position and input state to server
+    sendPaddlePosition() {
+        if (!this.socket || !this.playerNumber) return;
+        
+        const now = Date.now();
+        // Rate limit to avoid flooding the server
+        if (now - (this.lastPaddleUpdate || 0) < 33) return; // ~30 Hz updates
+        
+        const position = this.playerNumber === 1 ? 
+            this.simulationState.player1Y : this.simulationState.player2Y;
+        
+        // Check if ball collision is imminent
+        const isNearCollision = this.isCollisionImminent(this.playerNumber);
+        
+        // Include movement flags in the update to ensure server has current state
+        this.socket.send('paddle_position', {
+            player_number: this.playerNumber,
+            position: position,
+            sequence: this._inputSequence, // Include the latest input sequence
+            moving_up: this.upPressed,
+            moving_down: this.downPressed,
+            isNearCollision: isNearCollision
+        });
+        
+        console.log(`Sent paddle position: ${position.toFixed(2)}, movingUp: ${this.upPressed}, movingDown: ${this.downPressed}, nearCollision: ${isNearCollision}`);
+        
+        this.lastPaddleUpdate = now;
+        this._lastSentPosition = position;
     }
 
     interpolateState() {

@@ -527,25 +527,50 @@ def assign_player_number(room_code, player_id, username):
 def update_game_physics(room_code):
     """Update game physics and return scorer (if any)"""
     game = get_game_state(room_code)
-    if not game or game['is_paused']:
+    if not game:
+        logger.error(f"Game state not found for room {room_code}")
+        return 0
+        
+    if game['is_paused']:
         return 0
     
+    # Log movement flags if either is true
+    if (game.get('player_1_moving_up', False) or game.get('player_1_moving_down', False) or
+        game.get('player_2_moving_up', False) or game.get('player_2_moving_down', False)):
+        logger.info(f"Movement flags for room {room_code}: P1 Up={game.get('player_1_moving_up', False)}, P1 Down={game.get('player_1_moving_down', False)}, P2 Up={game.get('player_2_moving_up', False)}, P2 Down={game.get('player_2_moving_down', False)}")
+    
+    # Store original paddle positions for logging
+    original_p1y = game['player_1_paddle_y']
+    original_p2y = game['player_2_paddle_y']
+    
     # Update paddle positions based on movement flags
-    paddle_speed = 12  # Use the same value as in constants.py
+    paddle_speed = 8  # Use a slightly lower speed than client for safety
     
     # Player 1 paddle movement
-    if game['player_1_moving_up']:
+    p1_moved = False
+    if game.get('player_1_moving_up', False):
         game['player_1_paddle_y'] = max(0, game['player_1_paddle_y'] - paddle_speed)
-    if game['player_1_moving_down']:
+        p1_moved = True
+    if game.get('player_1_moving_down', False):
         game['player_1_paddle_y'] = min(game['canvas_height'] - game['paddle_height'], 
-                                     game['player_1_paddle_y'] + paddle_speed)
+                                    game['player_1_paddle_y'] + paddle_speed)
+        p1_moved = True
     
     # Player 2 paddle movement
-    if game['player_2_moving_up']:
+    p2_moved = False
+    if game.get('player_2_moving_up', False):
         game['player_2_paddle_y'] = max(0, game['player_2_paddle_y'] - paddle_speed)
-    if game['player_2_moving_down']:
+        p2_moved = True
+    if game.get('player_2_moving_down', False):
         game['player_2_paddle_y'] = min(game['canvas_height'] - game['paddle_height'], 
-                                     game['player_2_paddle_y'] + paddle_speed)
+                                    game['player_2_paddle_y'] + paddle_speed)
+        p2_moved = True
+    
+    # Log paddle position changes only when they actually moved due to flags
+    if p1_moved:
+        logger.info(f"P1 paddle moved by flags: {original_p1y} -> {game['player_1_paddle_y']}")
+    if p2_moved:
+        logger.info(f"P2 paddle moved by flags: {original_p2y} -> {game['player_2_paddle_y']}")
     
     # Ball position update
     game['ball_x'] += game['ball_speed_x']
