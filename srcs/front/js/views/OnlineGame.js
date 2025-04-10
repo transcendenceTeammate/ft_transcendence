@@ -19,6 +19,11 @@ class EnhancedWebSocket {
         this.messageQueue = [];
         this.sequenceNumber = 0;
         this.lastAcknowledgedSequence = 0;
+        
+        // Latency tracking
+        this.latencyHistory = [];
+        this.currentLatency = 50; // Default 50ms latency assumption
+        this.latencyWindowSize = 20; // Track last 20 messages
     }
 
     connect() {
@@ -122,6 +127,12 @@ class EnhancedWebSocket {
         try {
             const data = JSON.parse(event.data);
 
+            // Track latency if server sends back client_time
+            if (data.client_time) {
+                const roundTripTime = Date.now() - data.client_time;
+                this.trackLatency(roundTripTime);
+            }
+
             if (data.type === 'input_ack' && data.sequence) {
                 this.lastAcknowledgedSequence = Math.max(this.lastAcknowledgedSequence, data.sequence);
                 return;
@@ -165,6 +176,39 @@ class EnhancedWebSocket {
             callback(data);
         }
     }
+
+    // New method to track and calculate latency
+    trackLatency(roundTripTime) {
+        // We estimate one-way latency as half of round trip
+        const latency = Math.max(5, roundTripTime / 2);
+        
+        this.latencyHistory.push(latency);
+        
+        // Keep history size limited
+        if (this.latencyHistory.length > this.latencyWindowSize) {
+            this.latencyHistory.shift();
+        }
+        
+        // Calculate weighted average (recent values count more)
+        let sum = 0;
+        let weights = 0;
+        
+        for (let i = 0; i < this.latencyHistory.length; i++) {
+            const weight = i + 1; // More recent values get higher weights
+            sum += this.latencyHistory[i] * weight;
+            weights += weight;
+        }
+        
+        this.currentLatency = sum / weights;
+        
+        // Emit latency update event
+        this.emit('latency_update', this.currentLatency);
+    }
+    
+    // Method to get current latency
+    getLatency() {
+        return this.currentLatency;
+    }
 }
 
 export default class OnlineGame extends Game {
@@ -184,6 +228,10 @@ export default class OnlineGame extends Game {
         this.playerNumber = parseInt(localStorage.getItem('current_player_number') || '0', 10);
         this.playerId = localStorage.getItem('current_player_id');
         this.username = localStorage.getItem('current_username');
+
+        // Physics accumulator for fixed timestep
+        this.accumulator = 0;
+        this.physicsStep = 1/120; // 120 Hz physics
 
         // Validate player information
         if (!this.playerId) {
@@ -213,7 +261,8 @@ export default class OnlineGame extends Game {
         this.lastPaddleUpdate = 0;
 
         this.networkStatus = {
-            connected: false
+            connected: false,
+            latency: 50 // Default assumption
         };
 
         window.addEventListener('keydown', (e) => {
@@ -315,6 +364,7 @@ export default class OnlineGame extends Game {
         this.socket.on('game_over', this.handleGameOver.bind(this));
         this.socket.on('game_paused', this.handleGamePaused.bind(this));
         this.socket.on('game_resumed', this.handleGameResumed.bind(this));
+        this.socket.on('latency_update', this.handleLatencyUpdate.bind(this));
 
         this.socket.connect();
 
@@ -397,6 +447,7 @@ export default class OnlineGame extends Game {
     }
 
     gameLoop(timestamp) {
+        // Schedule next frame immediately
         requestAnimationFrame(this.gameLoop);
 
         if (this.gameOver) return;
@@ -405,13 +456,29 @@ export default class OnlineGame extends Game {
         const deltaTime = this.lastFrameTime ? (now - this.lastFrameTime) / 1000 : 0.016; // Convert to seconds
         this.lastFrameTime = now;
 
+        // Cap delta time to avoid spiral of death during lag spikes
         const cappedDelta = Math.min(deltaTime, 0.1); // Max 100ms
-
-        this.processPlayerInput(cappedDelta);
-        this.updateWithPrediction(cappedDelta);
+        
+        // Accumulate time since last frame
+        this.accumulator += cappedDelta;
+        
+        // Run multiple physics updates if needed (fixed timestep)
+        while (this.accumulator >= this.physicsStep) {
+            this.updatePhysics(this.physicsStep);
+            this.accumulator -= this.physicsStep;
+        }
+        
+        // Draw with interpolation factor
         this.draw();
     }
 
+    // New method for physics updates at fixed timestep
+    updatePhysics(fixedDelta) {
+        this.processPlayerInput(fixedDelta);
+        this.updateWithPrediction(fixedDelta);
+    }
+
+    // Modify existing process player input to use fixed timestep
     processPlayerInput(deltaTime) {
         if (!this.playerNumber) return;
         
@@ -433,6 +500,7 @@ export default class OnlineGame extends Game {
             }
         }
     }
+
     updateWithPrediction(deltaTime) {
         if (this.predictionEnabled && this.playerNumber) {
 
@@ -447,17 +515,30 @@ export default class OnlineGame extends Game {
     }
 
     interpolateOpponentPaddle(deltaTime) {
-        const factor = 0.35 * (deltaTime * 60);
-    
+        // Cubic easing function for smoother transitions
+        const easeInOutCubic = (t) => {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        };
+        
+        // Base interpolation speed
+        let factor = Math.min(1.0, 0.35 * (deltaTime * 60));
+        
+        // Apply easing to the factor
+        factor = easeInOutCubic(factor);
+        
         if (this.playerNumber === 1) {
             const diff = this.opponentPaddleTarget - this.player2Y;
-            if (Math.abs(diff) > 0.1) {
-                this.player2Y += diff * factor;
+            // Lower threshold for more frequent micro-adjustments
+            if (Math.abs(diff) > 0.05) {
+                // Adjust the movement amount based on distance (faster for large gaps)
+                const moveAmount = diff * factor * (Math.abs(diff) > 10 ? 1.2 : 1.0);
+                this.player2Y += moveAmount;
             }
         } else if (this.playerNumber === 2) {
             const diff = this.opponentPaddleTarget - this.player1Y;
-            if (Math.abs(diff) > 0.1) {
-                this.player1Y += diff * factor;
+            if (Math.abs(diff) > 0.05) {
+                const moveAmount = diff * factor * (Math.abs(diff) > 10 ? 1.2 : 1.0);
+                this.player1Y += moveAmount;
             }
         }
     }
@@ -472,8 +553,22 @@ export default class OnlineGame extends Game {
         this.ctx.fillRect(0, this.player1Y, this.paddleWidth, this.paddleHeight);
         this.ctx.fillRect(this.canvas.width - this.paddleWidth, this.player2Y, this.paddleWidth, this.paddleHeight);
 
+        // Interpolated ball position if we have velocity
+        let drawBallX = this.ballX;
+        let drawBallY = this.ballY;
+        
+        if (!this.paused && this.ballSpeedX !== 0) {
+            // Calculate a time factor for smoother interpolation
+            const timeSinceLastUpdate = this.lastFrameTime ? (performance.now() - this.lastFrameTime) / 1000 : 0;
+            const interpolationFactor = Math.min(timeSinceLastUpdate / 0.016, 1.0); // Cap at 1.0
+            
+            // Predict ball position based on its velocity
+            drawBallX = this.ballX + this.ballSpeedX * interpolationFactor;
+            drawBallY = this.ballY + this.ballSpeedY * interpolationFactor;
+        }
+
         this.ctx.beginPath();
-        this.ctx.arc(this.ballX, this.ballY, this.ballSize / 2, 0, Math.PI * 2);
+        this.ctx.arc(drawBallX, drawBallY, this.ballSize / 2, 0, Math.PI * 2);
         this.ctx.fillStyle = "#f39c12";
         this.ctx.fill();
         this.ctx.closePath();
@@ -674,14 +769,25 @@ export default class OnlineGame extends Game {
     sendPaddlePosition() {
         if (!this.socket || !this.playerNumber) return;
 
+        const now = Date.now();
         const position = this.playerNumber === 1 ? this.player1Y : this.player2Y;
-
+        
+        // Use adaptive update interval based on network quality
+        const updateInterval = this.minPaddleUpdateInterval || 16;
+        
+        if (now - this.lastPaddleUpdate < updateInterval) return;
+        
+        // Optimize: skip small movements based on latency
+        // Higher latency = require more significant movement to send updates
+        const minMovementThreshold = Math.max(0.5, Math.min(3, this.networkStatus.latency / 50));
+        
         // Handle the case where _lastSentPosition might be null/undefined
         if (this._lastSentPosition !== null && this._lastSentPosition !== undefined) {
-            if (Math.abs(this._lastSentPosition - position) <= 1) return;
+            if (Math.abs(this._lastSentPosition - position) <= minMovementThreshold) return;
         }
         
         this._lastSentPosition = position;
+        this.lastPaddleUpdate = now;
         
         this.socket.send('paddle_position', {
             player_number: this.playerNumber,
@@ -736,5 +842,33 @@ export default class OnlineGame extends Game {
                 }
             }, 500);
         }, duration);
+    }
+
+    // New handler for latency updates
+    handleLatencyUpdate(latency) {
+        this.networkStatus.latency = latency;
+        
+        // Adjust game parameters based on latency
+        this.adaptToNetworkConditions();
+    }
+    
+    // New method to adjust game settings based on network conditions
+    adaptToNetworkConditions() {
+        const latency = this.networkStatus.latency;
+        
+        // Connection quality categories
+        if (latency < 50) { // Excellent connection
+            this.interpolationSpeed = 0.4;
+            this.minPaddleUpdateInterval = 16; // ~60 fps
+        } else if (latency < 100) { // Good connection
+            this.interpolationSpeed = 0.3;
+            this.minPaddleUpdateInterval = 25; // ~40 fps
+        } else if (latency < 200) { // Average connection
+            this.interpolationSpeed = 0.25;
+            this.minPaddleUpdateInterval = 33; // ~30 fps
+        } else { // Poor connection
+            this.interpolationSpeed = 0.2;
+            this.minPaddleUpdateInterval = 50; // ~20 fps
+        }
     }
 }
