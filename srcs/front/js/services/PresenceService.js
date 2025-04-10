@@ -59,7 +59,7 @@ export class PresenceService
 
     connect()
     {
-        this._connectionStatus = Stream.withDefault(ConnectionStatus.CONNECTING);
+        this._connectionStatus.value = ConnectionStatus.CONNECTING;
         this._webSocket = new WebSocket(this._baseUrl.replace(/^http/, "ws") + "/ws/presence");
         this._webSocket.onopen = this._onWsOpen.bind(this);
         this._webSocket.onclose = this._onWsClose.bind(this);
