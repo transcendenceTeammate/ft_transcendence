@@ -24,6 +24,11 @@ class EnhancedWebSocket {
         this.latencyHistory = [];
         this.currentLatency = 50; // Default 50ms latency assumption
         this.latencyWindowSize = 20; // Track last 20 messages
+        
+        // Enhanced message queuing with priorities
+        this.highPriorityQueue = [];
+        this.normalPriorityQueue = [];
+        this.processingQueues = false;
     }
 
     connect() {
@@ -39,7 +44,7 @@ class EnhancedWebSocket {
                 this.reconnectAttempts = 0;
                 this.emit('connect', event);
 
-                this.processQueue();
+                this.processMessageQueues();
             };
 
             this.socket.onmessage = (event) => {
@@ -89,38 +94,82 @@ class EnhancedWebSocket {
     }
 
     send(type, data = {}) {
-        if (['key_event', 'paddle_position', 'client_prediction'].includes(type)) {
-            this.sequenceNumber++;
-            data.sequence = this.sequenceNumber;
-        }
-
-        const message = JSON.stringify({
+        const now = Date.now();
+        
+        // Create the message with proper metadata
+        const message = {
             type,
             ...data,
-            client_time: Date.now()
-        });
-
+            client_time: now
+        };
+        
+        // Add sequence number to tracking message types
+        if (['key_event', 'paddle_position', 'client_prediction'].includes(type)) {
+            this.sequenceNumber++;
+            message.sequence = this.sequenceNumber;
+        }
+        
+        // Convert to JSON
+        const messageJson = JSON.stringify(message);
+        
+        // Handle immediate sending or queuing based on connection state
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-            this.socket.send(message);
+            // High priority messages (related to ball collisions) get sent immediately
+            const isHighPriority = 
+                (type === 'paddle_position' && data.prediction && data.isNearCollision) || 
+                type === 'resume_game' || 
+                type === 'pause_game';
+                
+            if (isHighPriority) {
+                this.socket.send(messageJson);
+                return true;
+            }
+            
+            // Queue in appropriate priority queue
+            if (type === 'key_event' || type === 'paddle_position') {
+                this.highPriorityQueue.push(messageJson);
+            } else {
+                this.normalPriorityQueue.push(messageJson);
+            }
+            
+            // Process queues if not already processing
+            if (!this.processingQueues) {
+                this.processMessageQueues();
+            }
+            
             return true;
         } else {
-            this.messageQueue.push(message);
+            // Store in appropriate queue for later sending
+            if (type === 'key_event' || type === 'paddle_position') {
+                this.highPriorityQueue.push(messageJson);
+            } else {
+                this.normalPriorityQueue.push(messageJson);
+            }
             return false;
         }
     }
-
-    processQueue() {
-        if (this.messageQueue.length === 0) return;
-
-        while (this.messageQueue.length > 0) {
-            const message = this.messageQueue.shift();
-            if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-                this.socket.send(message);
-            } else {
-                this.messageQueue.unshift(message);
-                break;
-            }
+    
+    // Process queued messages with prioritization
+    processMessageQueues() {
+        if (this.processingQueues || !this.socket || this.socket.readyState !== WebSocket.OPEN) {
+            return;
         }
+        
+        this.processingQueues = true;
+        
+        // Process high priority queue first
+        while (this.highPriorityQueue.length > 0) {
+            const message = this.highPriorityQueue.shift();
+            this.socket.send(message);
+        }
+        
+        // Then process normal priority queue
+        while (this.normalPriorityQueue.length > 0) {
+            const message = this.normalPriorityQueue.shift();
+            this.socket.send(message);
+        }
+        
+        this.processingQueues = false;
     }
 
     handleIncomingMessage(event) {
@@ -254,9 +303,10 @@ export default class OnlineGame extends Game {
             packetLoss: 0,
         };
 
-        // Input tracking
+        // Input tracking with enhanced sequencing
         this._inputSequence = 0;
         this._pendingInputs = [];
+        this._lastAcknowledgedSequence = 0;
         this.upPressed = false;
         this.downPressed = false;
 
@@ -445,13 +495,24 @@ export default class OnlineGame extends Game {
     sendInput(key, isDown) {
         if (!this.socket || !this.playerNumber) return;
         
-        // Create an input with sequence number
+        // Create an input with sequence number and timestamp
         this._inputSequence++;
+        
+        // Get current paddle position for prediction verification
+        const paddleY = this.playerNumber === 1 ? 
+            this.simulationState.player1Y : 
+            this.simulationState.player2Y;
+        
         const input = {
+            type: 'key_event',
             key,
             is_down: isDown,
             player_number: this.playerNumber,
-            sequence: this._inputSequence
+            sequence: this._inputSequence,
+            timestamp: Date.now(),
+            prediction: {
+                paddleY: paddleY
+            }
         };
         
         // Apply input locally for immediate feedback
@@ -460,7 +521,7 @@ export default class OnlineGame extends Game {
         // Save pending input for reconciliation
         this._pendingInputs.push(input);
         
-        // Send to server
+        // Send to server with all metadata
         this.socket.send('key_event', input);
     }
     
@@ -500,211 +561,48 @@ export default class OnlineGame extends Game {
         }
     }
 
-    // Handler for server acknowledgment of inputs
+    // Enhanced handler for input acknowledgments
     handleInputAck(data) {
+        // Update the last acknowledged sequence
         if (data.sequence) {
+            this._lastAcknowledgedSequence = Math.max(this._lastAcknowledgedSequence, data.sequence);
+            
             // Remove acknowledged inputs from pending list
             this._pendingInputs = this._pendingInputs.filter(input => 
-                input.sequence > data.sequence);
+                input.sequence > this._lastAcknowledgedSequence);
+            
+            // If the server includes corrected position, use it for enhanced reconciliation
+            if (data.corrected_position !== undefined && this.playerNumber) {
+                const serverPos = data.corrected_position;
+                const playerPaddleY = this.playerNumber === 1 ? 
+                    this.simulationState.player1Y : this.simulationState.player2Y;
+                
+                // Only apply correction if significant difference exists
+                if (Math.abs(serverPos - playerPaddleY) > 5) {
+                    // Blend between current position and server position
+                    if (this.playerNumber === 1) {
+                        this.simulationState.player1Y = (0.3 * serverPos) + (0.7 * playerPaddleY);
+                    } else {
+                        this.simulationState.player2Y = (0.3 * serverPos) + (0.7 * playerPaddleY);
+                    }
+                }
+            }
         }
     }
 
-    // Main game loop with fixed physics timestep
-    gameLoop(timestamp) {
-        requestAnimationFrame(this.gameLoop);
-        
-        if (this.gameOver) return;
-        
-        const now = timestamp || performance.now();
-        const deltaTime = this.lastFrameTime ? (now - this.lastFrameTime) / 1000 : 0.016;
-        this.lastFrameTime = now;
-        
-        // Cap delta time to avoid spiral of death during lag
-        const cappedDelta = Math.min(deltaTime, 0.1);
-        
-        // Accumulate time for fixed timestep physics
-        this.accumulator += cappedDelta;
-        
-        // Run simulation steps
-        while (this.accumulator >= this.simulationRate) {
-            this.updateSimulation(this.simulationRate);
-            this.accumulator -= this.simulationRate;
-        }
-        
-        // Interpolate game state for rendering
-        this.interpolateState();
-        
-        // Render the game
-        this.render();
-    }
-    
-    updateSimulation(deltaTime) {
-        // Only update our own paddle based on input
-        if (this.playerNumber) {
-            const paddleSpeed = this.paddleSpeed * deltaTime;
-            
-            if (this.playerNumber === 1) {
-                if (this.upPressed) {
-                    this.simulationState.player1Y = Math.max(0, this.simulationState.player1Y - paddleSpeed);
-                }
-                if (this.downPressed) {
-                    this.simulationState.player1Y = Math.min(
-                        this.canvas.height - this.paddleHeight, 
-                        this.simulationState.player1Y + paddleSpeed
-                    );
-                }
-            } else if (this.playerNumber === 2) {
-                if (this.upPressed) {
-                    this.simulationState.player2Y = Math.max(0, this.simulationState.player2Y - paddleSpeed);
-                }
-                if (this.downPressed) {
-                    this.simulationState.player2Y = Math.min(
-                        this.canvas.height - this.paddleHeight, 
-                        this.simulationState.player2Y + paddleSpeed
-                    );
-                }
-            }
-            
-            // Send paddle position updates to server at appropriate rate
-            this.sendPaddlePosition();
-        }
-    }
-    
-    interpolateState() {
-        // If buffer is empty, return
-        if (this.stateBuffer.length < 2) return;
-        
-        // Calculate render time (current time minus renderDelay)
-        const renderTime = Date.now() - this.renderDelay;
-        
-        // Find the two states to interpolate between
-        let beforeState = this.stateBuffer[0];
-        let afterState = this.stateBuffer[1];
-        
-        // Find the two states that surround our render time
-        for (let i = 0; i < this.stateBuffer.length - 1; i++) {
-            if (this.stateBuffer[i].timestamp <= renderTime && 
-                this.stateBuffer[i + 1].timestamp >= renderTime) {
-                beforeState = this.stateBuffer[i];
-                afterState = this.stateBuffer[i + 1];
-                break;
-            }
-        }
-        
-        // If render time is beyond the newest state, use the most recent state
-        if (renderTime > afterState.timestamp) {
-            this.renderState = { ...afterState };
-            return;
-        }
-        
-        // If render time is before the oldest state, use the oldest state
-        if (renderTime < beforeState.timestamp) {
-            this.renderState = { ...beforeState };
-            return;
-        }
-        
-        // Calculate interpolation factor
-        const t = (renderTime - beforeState.timestamp) / 
-                 (afterState.timestamp - beforeState.timestamp);
-        
-        // Check if ball is near collision for potential extrapolation
-        const isNearPaddle1 = this.isCollisionImminent(1);
-        const isNearPaddle2 = this.isCollisionImminent(2);
-        const isNearCollision = isNearPaddle1 || isNearPaddle2;
-        
-        // Interpolate paddle positions
-        this.renderState.player1Y = this.lerp(beforeState.player1Y, afterState.player1Y, t);
-        this.renderState.player2Y = this.lerp(beforeState.player2Y, afterState.player2Y, t);
-        
-        // Ball position - either interpolate or extrapolate based on collision proximity
-        if (isNearCollision && !this.paused && (this.simulationState.ballSpeedX !== 0 || this.simulationState.ballSpeedY !== 0)) {
-            // Use extrapolation based on current velocity for smoother collision visuals
-            const extrapolationTime = 16; // Look 16ms into the future
-            const ballX = this.simulationState.ballX;
-            const ballY = this.simulationState.ballY;
-            const ballSpeedX = this.simulationState.ballSpeedX;
-            const ballSpeedY = this.simulationState.ballSpeedY;
-            
-            this.renderState.ballX = ballX + ballSpeedX * (extrapolationTime / 1000);
-            this.renderState.ballY = ballY + ballSpeedY * (extrapolationTime / 1000);
-        } else {
-            // Normal interpolation for non-collision scenarios
-            this.renderState.ballX = this.lerp(beforeState.ballX, afterState.ballX, t);
-            this.renderState.ballY = this.lerp(beforeState.ballY, afterState.ballY, t);
-        }
-        
-        // For the local player's paddle, use the simulation state directly for responsiveness
-        if (this.playerNumber === 1) {
-            this.renderState.player1Y = this.simulationState.player1Y;
-        } else if (this.playerNumber === 2) {
-            this.renderState.player2Y = this.simulationState.player2Y;
-        }
-    }
-    
-    lerp(start, end, t) {
-        return start + (end - start) * Math.min(Math.max(t, 0), 1);
-    }
-    
-    render() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        
-        // Draw center line
-        this.ctx.fillStyle = "white";
-        this.ctx.fillRect(this.canvas.width / 2 - 2, 0, 4, this.canvas.height);
-        
-        // Draw paddles
-        this.ctx.fillStyle = "white";
-        this.ctx.fillRect(0, this.renderState.player1Y, this.paddleWidth, this.paddleHeight);
-        this.ctx.fillRect(
-            this.canvas.width - this.paddleWidth, 
-            this.renderState.player2Y, 
-            this.paddleWidth, 
-            this.paddleHeight
-        );
-        
-        // Draw ball
-        this.ctx.beginPath();
-        this.ctx.arc(
-            this.renderState.ballX, 
-            this.renderState.ballY, 
-            this.ballSize / 2, 
-            0, 
-            Math.PI * 2
-        );
-        this.ctx.fillStyle = "#f39c12";
-        this.ctx.fill();
-        this.ctx.closePath();
-    }
-    
-    sendPaddlePosition() {
-        if (!this.socket || !this.playerNumber) return;
-        
-        const now = Date.now();
-        // Rate limit to avoid flooding the server
-        if (now - this.lastPaddleUpdate < 33) return; // ~30 Hz updates
-        
-        const position = this.playerNumber === 1 ? 
-            this.simulationState.player1Y : this.simulationState.player2Y;
-        
-        // Only send if position has changed significantly
-        if (this._lastSentPosition !== undefined && 
-            Math.abs(this._lastSentPosition - position) < 1) {
-            return;
-        }
-        
-        this._lastSentPosition = position;
-        this.lastPaddleUpdate = now;
-        
-        this.socket.send('paddle_position', {
-            player_number: this.playerNumber,
-            position: position,
-            sequence: this._inputSequence // Include the latest input sequence
-        });
-    }
-
-    // Server state handling
+    // Enhanced game state handling to support input reconciliation
     handleGameState(data) {
         const now = Date.now();
+        
+        // Check for processed input acknowledgments in the game state
+        if (data.processed_inputs && data.processed_inputs[this.playerId]) {
+            const lastProcessedSequence = data.processed_inputs[this.playerId];
+            
+            // Update acknowledged sequence and remove processed inputs
+            this._lastAcknowledgedSequence = Math.max(this._lastAcknowledgedSequence, lastProcessedSequence);
+            this._pendingInputs = this._pendingInputs.filter(input => 
+                input.sequence > this._lastAcknowledgedSequence);
+        }
         
         // Store the full state
         this.lastReceivedState = { ...data };
@@ -738,6 +636,9 @@ export default class OnlineGame extends Game {
         
         // Update the simulation state with authoritative server data
         this.updateSimulationFromServer(data);
+        
+        // Re-apply any pending inputs that weren't processed by server yet
+        this.reapplyPendingInputs();
         
         // Update score display
         this.score1.textContent = this.player1Score;
@@ -787,27 +688,30 @@ export default class OnlineGame extends Game {
             lastUpdateTime: Date.now()
         };
         
-        // Update opponent paddle immediately
-        if (this.playerNumber === 1) {
-            // We control player 1, so update player 2 from server
-            this.simulationState.player2Y = serverState.player2Y;
-        } else if (this.playerNumber === 2) {
-            // We control player 2, so update player 1 from server
-            this.simulationState.player1Y = serverState.player1Y;
-        } else {
-            // Spectator mode, update both paddles
-            this.simulationState.player1Y = serverState.player1Y;
-            this.simulationState.player2Y = serverState.player2Y;
-        }
-        
-        // Always update ball from server (it's authoritative)
+        // Always update ball position and speed (server authority)
         this.simulationState.ballX = serverState.ballX;
         this.simulationState.ballY = serverState.ballY;
         this.simulationState.ballSpeedX = serverState.ballSpeedX;
         this.simulationState.ballSpeedY = serverState.ballSpeedY;
         
-        // Reconcile player paddle if needed
-        this.reconcilePlayerPaddle(data);
+        // For the opponent paddle, use server position directly
+        if (this.playerNumber === 1) {
+            // We control player 1, update player 2 (opponent) from server
+            this.simulationState.player2Y = serverState.player2Y;
+            
+            // For our own paddle, use smart reconciliation
+            this.reconcilePlayerPaddle(data);
+        } else if (this.playerNumber === 2) {
+            // We control player 2, update player 1 (opponent) from server
+            this.simulationState.player1Y = serverState.player1Y;
+            
+            // For our own paddle, use smart reconciliation
+            this.reconcilePlayerPaddle(data);
+        } else {
+            // Spectator mode, update both paddles from server
+            this.simulationState.player1Y = serverState.player1Y;
+            this.simulationState.player2Y = serverState.player2Y;
+        }
     }
     
     reconcilePlayerPaddle(serverState) {
@@ -1068,5 +972,193 @@ export default class OnlineGame extends Game {
 
     showGameOverPopup(winner) {
         // Existing implementation
+    }
+
+    // New method to reapply pending inputs after server update
+    reapplyPendingInputs() {
+        if (!this.playerNumber || this._pendingInputs.length === 0) return;
+        
+        // Sort inputs by sequence to apply in correct order
+        const sortedInputs = [...this._pendingInputs].sort((a, b) => a.sequence - b.sequence);
+        
+        for (const input of sortedInputs) {
+            // Only apply if it's a key event or paddle position update
+            if (input.type === 'key_event') {
+                this.applyInput(input);
+            } else if (input.type === 'paddle_position') {
+                if (this.playerNumber === 1) {
+                    this.simulationState.player1Y = input.position;
+                } else if (this.playerNumber === 2) {
+                    this.simulationState.player2Y = input.position;
+                }
+            }
+        }
+    }
+
+    // Main game loop with fixed physics timestep
+    gameLoop(timestamp) {
+        requestAnimationFrame(this.gameLoop);
+        
+        if (this.gameOver) return;
+        
+        const now = timestamp || performance.now();
+        const deltaTime = this.lastFrameTime ? (now - this.lastFrameTime) / 1000 : 0.016;
+        this.lastFrameTime = now;
+        
+        // Cap delta time to avoid spiral of death during lag
+        const cappedDelta = Math.min(deltaTime, 0.1);
+        
+        // Accumulate time for fixed timestep physics
+        this.accumulator += cappedDelta;
+        
+        // Run simulation steps
+        while (this.accumulator >= this.physicsStep) {
+            this.updateSimulation(this.physicsStep);
+            this.accumulator -= this.physicsStep;
+        }
+        
+        // Interpolate game state for rendering
+        this.interpolateState();
+        
+        // Render the game
+        this.render();
+    }
+
+    updateSimulation(deltaTime) {
+        // Only update our own paddle based on input
+        if (this.playerNumber) {
+            const paddleSpeed = this.paddleSpeed * deltaTime;
+            
+            if (this.playerNumber === 1) {
+                if (this.upPressed) {
+                    this.simulationState.player1Y = Math.max(0, this.simulationState.player1Y - paddleSpeed);
+                }
+                if (this.downPressed) {
+                    this.simulationState.player1Y = Math.min(
+                        this.canvas.height - this.paddleHeight, 
+                        this.simulationState.player1Y + paddleSpeed
+                    );
+                }
+            } else if (this.playerNumber === 2) {
+                if (this.upPressed) {
+                    this.simulationState.player2Y = Math.max(0, this.simulationState.player2Y - paddleSpeed);
+                }
+                if (this.downPressed) {
+                    this.simulationState.player2Y = Math.min(
+                        this.canvas.height - this.paddleHeight, 
+                        this.simulationState.player2Y + paddleSpeed
+                    );
+                }
+            }
+            
+            // Send paddle position updates to server at appropriate rate
+            this.sendPaddlePosition();
+        }
+    }
+
+    interpolateState() {
+        // If buffer is empty, return
+        if (this.stateBuffer.length < 2) return;
+        
+        // Calculate render time (current time minus renderDelay)
+        const renderTime = Date.now() - this.renderDelay;
+        
+        // Find the two states to interpolate between
+        let beforeState = this.stateBuffer[0];
+        let afterState = this.stateBuffer[1];
+        
+        // Find the two states that surround our render time
+        for (let i = 0; i < this.stateBuffer.length - 1; i++) {
+            if (this.stateBuffer[i].timestamp <= renderTime && 
+                this.stateBuffer[i + 1].timestamp >= renderTime) {
+                beforeState = this.stateBuffer[i];
+                afterState = this.stateBuffer[i + 1];
+                break;
+            }
+        }
+        
+        // If render time is beyond the newest state, use the most recent state
+        if (renderTime > afterState.timestamp) {
+            this.renderState = { ...afterState };
+            return;
+        }
+        
+        // If render time is before the oldest state, use the oldest state
+        if (renderTime < beforeState.timestamp) {
+            this.renderState = { ...beforeState };
+            return;
+        }
+        
+        // Calculate interpolation factor
+        const t = (renderTime - beforeState.timestamp) / 
+                (afterState.timestamp - beforeState.timestamp);
+        
+        // Check if ball is near collision for potential extrapolation
+        const isNearPaddle1 = this.isCollisionImminent(1);
+        const isNearPaddle2 = this.isCollisionImminent(2);
+        const isNearCollision = isNearPaddle1 || isNearPaddle2;
+        
+        // Interpolate paddle positions
+        this.renderState.player1Y = this.lerp(beforeState.player1Y, afterState.player1Y, t);
+        this.renderState.player2Y = this.lerp(beforeState.player2Y, afterState.player2Y, t);
+        
+        // Ball position - either interpolate or extrapolate based on collision proximity
+        if (isNearCollision && !this.paused && (this.simulationState.ballSpeedX !== 0 || this.simulationState.ballSpeedY !== 0)) {
+            // Use extrapolation based on current velocity for smoother collision visuals
+            const extrapolationTime = 16; // Look 16ms into the future
+            const ballX = this.simulationState.ballX;
+            const ballY = this.simulationState.ballY;
+            const ballSpeedX = this.simulationState.ballSpeedX;
+            const ballSpeedY = this.simulationState.ballSpeedY;
+            
+            this.renderState.ballX = ballX + ballSpeedX * (extrapolationTime / 1000);
+            this.renderState.ballY = ballY + ballSpeedY * (extrapolationTime / 1000);
+        } else {
+            // Normal interpolation for non-collision scenarios
+            this.renderState.ballX = this.lerp(beforeState.ballX, afterState.ballX, t);
+            this.renderState.ballY = this.lerp(beforeState.ballY, afterState.ballY, t);
+        }
+        
+        // For the local player's paddle, use the simulation state directly for responsiveness
+        if (this.playerNumber === 1) {
+            this.renderState.player1Y = this.simulationState.player1Y;
+        } else if (this.playerNumber === 2) {
+            this.renderState.player2Y = this.simulationState.player2Y;
+        }
+    }
+
+    lerp(start, end, t) {
+        return start + (end - start) * Math.min(Math.max(t, 0), 1);
+    }
+
+    render() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Draw center line
+        this.ctx.fillStyle = "white";
+        this.ctx.fillRect(this.canvas.width / 2 - 2, 0, 4, this.canvas.height);
+        
+        // Draw paddles
+        this.ctx.fillStyle = "white";
+        this.ctx.fillRect(0, this.renderState.player1Y, this.paddleWidth, this.paddleHeight);
+        this.ctx.fillRect(
+            this.canvas.width - this.paddleWidth, 
+            this.renderState.player2Y, 
+            this.paddleWidth, 
+            this.paddleHeight
+        );
+        
+        // Draw ball
+        this.ctx.beginPath();
+        this.ctx.arc(
+            this.renderState.ballX, 
+            this.renderState.ballY, 
+            this.ballSize / 2, 
+            0, 
+            Math.PI * 2
+        );
+        this.ctx.fillStyle = "#f39c12";
+        this.ctx.fill();
+        this.ctx.closePath();
     }
 }
