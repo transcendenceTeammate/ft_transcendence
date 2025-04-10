@@ -298,23 +298,30 @@ class GameConsumer(AsyncWebsocketConsumer):
         if self.player_number == 1:
             if key in ('w', 'arrowup'):
                 updates['player_1_moving_up'] = is_down
+                logger.info(f"Player 1 moving up: {is_down}")
             elif key in ('s', 'arrowdown'):
                 updates['player_1_moving_down'] = is_down
+                logger.info(f"Player 1 moving down: {is_down}")
         elif self.player_number == 2:
             if key in ('w', 'arrowup'):
                 updates['player_2_moving_up'] = is_down
+                logger.info(f"Player 2 moving up: {is_down}")
             elif key in ('s', 'arrowdown'):
                 updates['player_2_moving_down'] = is_down
+                logger.info(f"Player 2 moving down: {is_down}")
 
         if updates:
-            update_game_state(self.room_code, updates)
+            success = update_game_state(self.room_code, updates)
+            logger.info(f"Updated movement flags: {updates}, success: {success}")
 
-        # Acknowledge the input
+        # Acknowledge the input with more information
         if sequence > 0:
             await self.send(text_data=json.dumps({
                 'type': 'input_ack',
                 'sequence': sequence,
-                'server_time': time.time() * 1000
+                'server_time': time.time() * 1000,
+                'key': key,
+                'is_down': is_down
             }))
 
     async def handle_paddle_position(self, data):
@@ -364,16 +371,19 @@ class GameConsumer(AsyncWebsocketConsumer):
             force_reconcile = True
 
         # Update the position in game state
+        updates = {}
         if player_number == 1:
-            update_game_state(self.room_code, {
-                'player_1_paddle_y': position,
-                'force_reconcile_p1': force_reconcile
-            })
+            updates['player_1_paddle_y'] = position
+            updates['force_reconcile_p1'] = force_reconcile
         elif player_number == 2:
-            update_game_state(self.room_code, {
-                'player_2_paddle_y': position,
-                'force_reconcile_p2': force_reconcile
-            })
+            updates['player_2_paddle_y'] = position
+            updates['force_reconcile_p2'] = force_reconcile
+            
+        # Make sure we're not overriding movement flags
+        if updates:
+            update_game_state(self.room_code, updates)
+            # Log successful update for debugging
+            logger.info(f"Updated paddle position for player {player_number} to {position}")
 
         # Always send acknowledgment to client
         if sequence > 0:

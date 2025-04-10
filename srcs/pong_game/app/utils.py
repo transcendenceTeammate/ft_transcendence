@@ -530,6 +530,23 @@ def update_game_physics(room_code):
     if not game or game['is_paused']:
         return 0
     
+    # Update paddle positions based on movement flags
+    paddle_speed = 12  # Use the same value as in constants.py
+    
+    # Player 1 paddle movement
+    if game['player_1_moving_up']:
+        game['player_1_paddle_y'] = max(0, game['player_1_paddle_y'] - paddle_speed)
+    if game['player_1_moving_down']:
+        game['player_1_paddle_y'] = min(game['canvas_height'] - game['paddle_height'], 
+                                     game['player_1_paddle_y'] + paddle_speed)
+    
+    # Player 2 paddle movement
+    if game['player_2_moving_up']:
+        game['player_2_paddle_y'] = max(0, game['player_2_paddle_y'] - paddle_speed)
+    if game['player_2_moving_down']:
+        game['player_2_paddle_y'] = min(game['canvas_height'] - game['paddle_height'], 
+                                     game['player_2_paddle_y'] + paddle_speed)
+    
     # Ball position update
     game['ball_x'] += game['ball_speed_x']
     game['ball_y'] += game['ball_speed_y']
