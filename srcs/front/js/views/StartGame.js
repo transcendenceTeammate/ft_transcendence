@@ -23,7 +23,7 @@ export default class StartGame extends AbstractView {
 			this.roomCodeDisplay = await super.loadElement("roomCodeDisplay");
 			this.closeWaitingModal = await super.loadElement("closeWaitingModal");
 		} catch (e) {
-			console.error("Error loading elements:", e);
+			// Error handling silently
 		}
 	}
 
@@ -59,7 +59,6 @@ export default class StartGame extends AbstractView {
 				try {
 					await this.createRoom();
 				} catch (error) {
-					console.error("Error creating room:", error);
 					alert("Failed to create room: " + error.message);
 
 					this.createGameButton.disabled = false;
@@ -78,7 +77,6 @@ export default class StartGame extends AbstractView {
 				try {
 					await this.joinRoom();
 				} catch (error) {
-					console.error("Error joining room:", error);
 					alert("Failed to join room. Please check the code and try again.");
 
 					// Reset button state
@@ -103,16 +101,12 @@ export default class StartGame extends AbstractView {
 					clearInterval(this.pollingInterval);
 					this.pollingInterval = null;
 				}
-
-				console.log("Waiting modal closed by user");
 			});
 		}
 	}
 
 	async createRoom() {
         try {
-            console.log("Creating room...");
-            
             // Button state is already set in the event handler, don't set it again here
             const authToken = this.getAuthToken();
 
@@ -131,32 +125,24 @@ export default class StartGame extends AbstractView {
                 mode: 'cors'
             });
 
-            console.log("Response status:", response.status);
-
             if (!response.ok) {
-                console.error("Error response:", response.status, response.statusText);
-
                 let errorDetails = "";
                 try {
                     const errorData = await response.text();
                     errorDetails = errorData;
-                    console.error("Error details:", errorDetails);
                 } catch (e) {
-                    console.error("Could not parse error details");
+                    // Couldn't parse error details
                 }
 
                 throw new Error(`HTTP error ${response.status}: ${errorDetails}`);
             }
 
             const data = await response.json();
-            console.log("Room created successfully:", data);
 
             if(data.success) {
                 if (!data.room_code) {
                     throw new Error("Server response missing room code");
                 }
-
-                console.log(`Room code created: ${data.room_code}`);
 
                 localStorage.setItem('current_player_number', '1');
                 localStorage.setItem('current_room_code', data.room_code);
@@ -187,7 +173,6 @@ export default class StartGame extends AbstractView {
                                 }, 2000);
                             })
                             .catch(err => {
-                                console.error("Error copying room code: ", err);
                                 const tempInput = document.createElement('input');
                                 tempInput.value = data.room_code;
                                 document.body.appendChild(tempInput);
@@ -209,7 +194,6 @@ export default class StartGame extends AbstractView {
 
                 this.pollForSecondPlayer(data.room_code);
             } else {
-                console.error("Error creating room:", data.error);
                 alert(`Error creating room: ${data.error}`);
 
                 if (this.createGameButton) {
@@ -218,8 +202,6 @@ export default class StartGame extends AbstractView {
                 }
             }
         } catch (error) {
-            console.error("Error creating room:", error);
-
             alert(`Failed to create game room. Please try again. (${error.message})`);
 
             if (this.createGameButton) {
@@ -231,7 +213,7 @@ export default class StartGame extends AbstractView {
 
 	async joinRoom() {
         if(!this.roomCodeInput) {
-            console.error("Room code input not found");
+            alert("Room code input not found");
             return;
         }
 
@@ -298,7 +280,6 @@ export default class StartGame extends AbstractView {
                     throw new Error("This game has already ended");
                 }
             } catch (error) {
-                console.error("Error checking room:", error);
                 alert(`Error checking room: ${error.message}`);
 
                 if (this.joinGameButton) {
@@ -351,9 +332,6 @@ export default class StartGame extends AbstractView {
 
                 setTimeout(() => {
                     this.cleanupModalsBeforeNavigation();
-
-                    console.log("Joining room successful, navigating to game");
-
                     takeMeThere(location.origin + '/online-game?room=' + roomCode);
                 }, 1000);
             } else {
@@ -365,7 +343,6 @@ export default class StartGame extends AbstractView {
                 }
             }
         } catch (error) {
-            console.error("Error joining room:", error);
             alert(`Failed to join room: ${error.message}`);
 
             if (this.joinGameButton) {
@@ -385,7 +362,7 @@ export default class StartGame extends AbstractView {
 					modalInstance.hide();
 				}
 			} catch (e) {
-				console.error("Error closing modal via Bootstrap API:", e);
+				// Error handling silently
 			}
 		});
 
@@ -401,8 +378,6 @@ export default class StartGame extends AbstractView {
 	}
 
 	pollForSecondPlayer(roomCode) {
-        console.log("Starting to poll for second player for room:", roomCode);
-
         if(this.pollingInterval) {
             clearInterval(this.pollingInterval);
         }
@@ -478,8 +453,6 @@ export default class StartGame extends AbstractView {
                         clearInterval(waitingTimer);
                         this.pollingInterval = null;
 
-                        console.log("🎮 Player 2 has joined! Player IDs:", data.player_1_id, data.player_2_id);
-
                         const waitingText = document.querySelector('#waiting_modal .fw-bold:not(.modal-title)');
                         if (waitingText) {
                             waitingText.innerHTML = '<i class="bi bi-controller"></i> Player found! Starting game...';
@@ -494,16 +467,11 @@ export default class StartGame extends AbstractView {
                         }
 
                         setTimeout(() => {
-                            console.log("Redirecting to game room:", roomCode);
-
                             this.cleanupModalsBeforeNavigation();
-
                             window.location.href = location.origin + '/online-game?room=' + roomCode;
                         }, 800);
                     }
                 } else {
-                    console.error("Error checking room status:", data.error);
-
                     if (data.error && data.error.includes("not found")) {
                         clearInterval(this.pollingInterval);
                         clearInterval(waitingTimer);
@@ -517,16 +485,14 @@ export default class StartGame extends AbstractView {
                                 modalInstance.hide();
                             }
                         } catch (e) {
-                            console.error("Error closing modal:", e);
+                            // Error handling silently
                         }
                     }
                 }
             } catch (error) {
-                console.error("Error polling for second player:", error);
                 errorCount++;
 
                 if (errorCount > 3) {
-                    console.log("Multiple errors detected, slowing down polling");
                     clearInterval(this.pollingInterval);
                     pollInterval = 5000;
 

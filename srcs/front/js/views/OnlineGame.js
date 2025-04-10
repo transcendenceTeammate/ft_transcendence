@@ -8,7 +8,6 @@ class EnhancedWebSocket {
         this.options = {
             reconnectInterval: 1000,
             maxReconnectAttempts: 5,
-            debug: false,
             ...options
         };
 
@@ -17,9 +16,6 @@ class EnhancedWebSocket {
         this.isConnecting = false;
         this.eventHandlers = {};
         this.lastConnectionState = WebSocket.CLOSED;
-        this.latencyMeasurements = [];
-        this.lastPingSent = 0;
-        this.avgLatency = 50;
         this.messageQueue = [];
         this.sequenceNumber = 0;
         this.lastAcknowledgedSequence = 0;
@@ -126,23 +122,12 @@ class EnhancedWebSocket {
         try {
             const data = JSON.parse(event.data);
 
-            if (data.type === 'ping') {
-                console.log("Ping received, sending pong with time:", data.time);
-                this.send('pong', { time: data.time });
-                return;
-            }
-
             if (data.type === 'input_ack' && data.sequence) {
-                const rtt = Date.now() - data.server_time;
-                console.log("Input ACK received, RTT:", rtt, "ms");
-                this.updateLatencyMeasurement(rtt);
                 this.lastAcknowledgedSequence = Math.max(this.lastAcknowledgedSequence, data.sequence);
                 return;
             }
 
             if (data.type === 'prediction_ack' && data.sequence) {
-                const rtt = Date.now() - data.server_time;
-                this.updateLatencyMeasurement(rtt);
                 this.emit('prediction_ack', data);
                 return;
             }
@@ -152,35 +137,8 @@ class EnhancedWebSocket {
             }
 
         } catch (error) {
-            if (this.options.debug) {
-                console.log('Error parsing WebSocket message:', error);
-            }
+            // Error handling silently
         }
-    }
-
-    updateLatencyMeasurement(rtt) {
-        const latency = rtt / 2;
-        console.log(`RTT: ${rtt}ms, Calculated latency: ${latency}ms`);
-        
-        this.latencyMeasurements.push(latency);
-        if (this.latencyMeasurements.length > 10) {
-            this.latencyMeasurements.shift();
-        }
-        
-        // Calculate average with outlier rejection
-        if (this.latencyMeasurements.length > 3) {
-            const sorted = [...this.latencyMeasurements].sort((a, b) => a - b);
-            const withoutExtremes = sorted.slice(1, -1);
-            this.avgLatency = withoutExtremes.reduce((sum, val) => sum + val, 0) / withoutExtremes.length || 50;
-        } else {
-            this.avgLatency = this.latencyMeasurements.reduce((sum, val) => sum + val, 0) / this.latencyMeasurements.length || 50;
-        }
-        
-        console.log("New average latency:", this.avgLatency, "ms");
-    }
-
-    getLatency() {
-        return this.avgLatency;
     }
 
     on(event, callback) {
@@ -207,12 +165,6 @@ class EnhancedWebSocket {
             callback(data);
         }
     }
-
-    log(...args) {
-        if (this.options.debug) {
-            console.log('[WebSocket]', ...args);
-        }
-    }
 }
 
 export default class OnlineGame extends Game {
@@ -224,7 +176,6 @@ export default class OnlineGame extends Game {
         this.roomCode = urlParams.get('room');
 
         if (!this.roomCode) {
-            console.error("No room code provided");
             window.location.href = '/start-game';
             return;
         }
@@ -241,14 +192,11 @@ export default class OnlineGame extends Game {
         this.pendingInputs = [];
 
         this._lastSentPosition = null;
-        this._lastStatusUpdate = 0;
-        this._lastDebugUpdate = 0;
         this._lastMessageTime = 0;
         this.lastPaddleUpdate = 0;
 
         this.networkStatus = {
-            connected: false,
-            latency: 0
+            connected: false
         };
 
         window.addEventListener('keydown', (e) => {
@@ -281,83 +229,13 @@ export default class OnlineGame extends Game {
         }
 
         let html = await response.text();
-
-        html = html.replace(
-            '<div id="scoreContainer">',
-            `<div id="networkStatus" class="network-status">
-                <div id="connectionIndicator" class="indicator disconnected"></div>
-                <span id="pingDisplay">--</span>
-            </div>
-            <div id="debugOverlay" class="debug-overlay">
-                <div id="debugInfo"></div>
-            </div>
-            <div id="scoreContainer">`
-        );
-
-        html += `
-        <style>
-            .network-status {
-                position: absolute;
-                top: 10px;
-                left: 10px;
-                background: rgba(0, 0, 0, 0.7);
-                color: white;
-                padding: 5px 10px;
-                border-radius: 4px;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                font-family: monospace;
-                font-size: 12px;
-                z-index: 100;
-            }
-
-            .indicator {
-                width: 10px;
-                height: 10px;
-                border-radius: 50%;
-                transition: background-color 0.3s;
-            }
-
-            .connected { background-color: #2ecc71; }
-            .connecting { background-color: #f39c12; }
-            .disconnected { background-color: #e74c3c; }
-
-            .debug-overlay {
-                position: absolute;
-                top: 10px;
-                right: 10px;
-                background: rgba(0, 0, 0, 0.7);
-                color: white;
-                padding: 10px;
-                border-radius: 4px;
-                font-family: monospace;
-                font-size: 12px;
-                z-index: 100;
-                display: none;
-            }
-        </style>
-        `;
-
         return html;
     }
 
     async onLoaded() {
         this.initGame();
-
         this.initializeSocket();
-
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'F10') {
-                const debugOverlay = document.getElementById('debugOverlay');
-                if (debugOverlay) {
-                    debugOverlay.style.display = debugOverlay.style.display === 'none' ? 'block' : 'none';
-                }
-            }
-        });
-
         this.gameLoop = this.gameLoop.bind(this);
-
         requestAnimationFrame(this.gameLoop);
     }
 
@@ -405,8 +283,7 @@ export default class OnlineGame extends Game {
 
         this.socket = new EnhancedWebSocket(wsUrl, {
             reconnectInterval: 1000,
-            maxReconnectAttempts: 5,
-            debug: true // Enable debugging
+            maxReconnectAttempts: 5
         });
 
         this.socket.on('connect', this.handleConnect.bind(this));
@@ -516,19 +393,6 @@ export default class OnlineGame extends Game {
         this.processPlayerInput(cappedDelta);
         this.updateWithPrediction(cappedDelta);
         this.draw();
-
-        if (!this._lastStatusUpdate || now - this._lastStatusUpdate > 500) {
-            this.updateConnectionStatus();
-            this._lastStatusUpdate = now;
-        }
-
-        const debugOverlay = document.getElementById('debugOverlay');
-        if (debugOverlay && debugOverlay.style.display === 'block') {
-            if (!this._lastDebugUpdate || now - this._lastDebugUpdate > 500) {
-                this.updateDebugInfo();
-                this._lastDebugUpdate = now;
-            }
-        }
     }
 
     processPlayerInput(deltaTime) {
@@ -604,21 +468,14 @@ export default class OnlineGame extends Game {
         this.player1Score = data.player_1_score;
         this.player2Score = data.player_2_score;
 
-        // Debug the paddle positions
-        console.log(`Received paddle positions - P1: ${data.player_1_paddle_y}, P2: ${data.player_2_paddle_y}`);
-        console.log(`Current player number: ${this.playerNumber}`);
-
         if (this.playerNumber === 1) {
             this.opponentPaddleTarget = data.player_2_paddle_y;
-            console.log(`Player 1: Setting opponent (P2) paddle target to ${this.opponentPaddleTarget}`);
         } else if (this.playerNumber === 2) {
             this.opponentPaddleTarget = data.player_1_paddle_y;
-            console.log(`Player 2: Setting opponent (P1) paddle target to ${this.opponentPaddleTarget}`);
         } else {
             // Spectator mode
             this.player1Y = data.player_1_paddle_y;
             this.player2Y = data.player_2_paddle_y;
-            console.log(`Spectator: Setting both paddles directly - P1: ${this.player1Y}, P2: ${this.player2Y}`);
         }
 
         this.ballX = data.ball_x;
@@ -688,14 +545,7 @@ export default class OnlineGame extends Game {
     }
 
     handleConnect() {
-        const indicator = document.getElementById('connectionIndicator');
-        if (indicator) {
-            indicator.classList.remove('disconnected', 'connecting');
-            indicator.classList.add('connected');
-        }
-
         this.networkStatus.connected = true;
-
         this.showMessage(`Connected! You are Player ${this.playerNumber}`);
 
         this.socket.send('join_game', {
@@ -705,14 +555,7 @@ export default class OnlineGame extends Game {
     }
 
     handleDisconnect() {
-        const indicator = document.getElementById('connectionIndicator');
-        if (indicator) {
-            indicator.classList.remove('connected', 'connecting');
-            indicator.classList.add('disconnected');
-        }
-
         this.networkStatus.connected = false;
-
         this.showMessage("Connection lost. Attempting to reconnect...");
     }
 
@@ -760,13 +603,11 @@ export default class OnlineGame extends Game {
 
     handleGameOver(data) {
         this.gameOver = true;
-
         this.showGameOverPopup(data.winner === 1 ? "Player 1" : "Player 2");
     }
 
     handleGamePaused(data) {
         this.paused = true;
-
         this.showMessage(`Game paused by Player ${data.player_number}`);
     }
 
@@ -799,7 +640,6 @@ export default class OnlineGame extends Game {
             });
 
             this.showMessage(`Starting the ball...`);
-
             this.flashBall();
         }
     }
@@ -816,7 +656,6 @@ export default class OnlineGame extends Game {
         
         this._lastSentPosition = position;
         
-        console.log(`Sending paddle position: ${position} for player ${this.playerNumber}`);
         this.socket.send('paddle_position', {
             player_number: this.playerNumber,
             position: position
@@ -870,52 +709,5 @@ export default class OnlineGame extends Game {
                 }
             }, 500);
         }, duration);
-    }
-
-    updateConnectionStatus() {
-        const indicator = document.getElementById('connectionIndicator');
-        const pingDisplay = document.getElementById('pingDisplay');
-
-        if (!indicator || !pingDisplay) return;
-
-        if (this.networkStatus.connected) {
-            indicator.classList.remove('disconnected', 'connecting');
-            indicator.classList.add('connected');
-        } else {
-            indicator.classList.remove('connected', 'connecting');
-            indicator.classList.add('disconnected');
-        }
-
-        if (this.socket) {
-            const latency = Math.round(this.socket.getLatency() || 0);
-            pingDisplay.textContent = `${latency}ms`;
-
-            if (latency < 50) {
-                pingDisplay.style.color = '#2ecc71';
-            } else if (latency < 100) {
-                pingDisplay.style.color = '#f39c12';
-            } else {
-                pingDisplay.style.color = '#e74c3c';
-            }
-        }
-    }
-
-    updateDebugInfo() {
-        const debugInfo = document.getElementById('debugInfo');
-        if (!debugInfo) return;
-
-        const info = {
-            'Player': this.playerNumber || 'Spectator',
-            'Connected': this.networkStatus.connected ? 'Yes' : 'No',
-            'Ping': `${Math.round(this.socket?.getLatency() || 0)} ms`,
-            'Ball Speed': `${Math.round(this.ballSpeedX)}, ${Math.round(this.ballSpeedY)}`
-        };
-
-        let html = '';
-        for (const [key, value] of Object.entries(info)) {
-            html += `<div><strong>${key}:</strong> ${value}</div>`;
-        }
-
-        debugInfo.innerHTML = html;
     }
 }

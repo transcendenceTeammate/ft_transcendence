@@ -1,10 +1,10 @@
-Django>=4.2.16
-daphne
-channels
-channels_redis
-websockets
-django-cors-headers
-pyjwt
+django==4.2.7
+channels==4.0.0
+channels-redis==4.1.0
+django-cors-headers==4.3.1
+requests==2.31.0
+django-environ==0.11.2
+pyjwt==2.8.0
 redis>=4.5.1
 django-redis>=5.2.0
 dotenv
