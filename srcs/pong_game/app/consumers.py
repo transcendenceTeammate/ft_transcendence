@@ -217,11 +217,9 @@ class GameConsumer(AsyncWebsocketConsumer):
                 logger.info(f"Found existing session for {player_id} in room {self.room_code} with player number {session.player_number}")
                 self.player_number = session.player_number
                 
-                # Update connection status AND token
-                if self.token:
-                    session.token = self.token
-                    await self.sync_to_async(session.save)(update_fields=['connected', 'token'])
-                else:
+                # Update connection status
+                if session:
+                    session.connected = True
                     await self.sync_to_async(session.save)(update_fields=['connected'])
                 
             except Exception as e:
@@ -230,10 +228,9 @@ class GameConsumer(AsyncWebsocketConsumer):
                 # Use the assign_player_number function
                 self.player_number = assign_player_number(self.room_code, player_id, username)
                 
-                # Store the token explicitly here too
+                # Remove token storage from update_player_session
                 if self.token and self.player_number:
                     update_player_session(self.room_code, player_id, {
-                        'token': self.token,
                         'connected': True
                     })
             

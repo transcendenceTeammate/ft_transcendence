@@ -619,30 +619,31 @@ def record_game_history(room_code, api_url=None):
         return False
     
     try:
-        # Get access token from player sessions
-        p1_session = get_player_session(room_code, game['player_1_id'])
-        p2_session = get_player_session(room_code, game['player_2_id'])
+        # We don't need to fetch tokens from player sessions anymore
+        p1_id = game['player_1_id']
+        p2_id = game['player_2_id']
         
-        if not p1_session or not p2_session:
-            logger.error(f"Cannot record game history: missing player session")
+        if not p1_id or not p2_id:
+            logger.error(f"Cannot record game history: missing player IDs")
             return False
         
         if api_url is None:
             # Default to the standard API URL
             api_url = "https://api.app.10.24.108.2.nip.io:8443/api/game/create/"
         
-        # Call the API to record game history
+        # We can't use a token here since we don't store them anymore
+        # This function would need to be called with a valid token if needed
         headers = {'Content-Type': 'application/json'}
-        if 'token' in p1_session:
-            headers['Authorization'] = f"Bearer {p1_session['token']}"
         
         data = {
-            "player_1": game['player_1_id'],
-            "player_2": game['player_2_id'],
+            "player_1": p1_id,
+            "player_2": p2_id,
             "score_1": game['player_1_score'],
             "score_2": game['player_2_score']
         }
         
+        # This call may not work without proper authentication
+        # This needs to be handled at a higher level
         response = requests.post(api_url, json=data, headers=headers)
         if response.status_code == 201:
             logger.info(f"Game history recorded for room {room_code}")

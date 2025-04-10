@@ -66,8 +66,7 @@ def create_room(request):
             player_id=user_id,
             player_number=1,
             username=username,
-            connected=True,
-            token=auth_token
+            connected=True
         )
 
         game_state.refresh_from_db()
@@ -159,12 +158,10 @@ def join_room(request):
             ).first()
 
             if existing_session:
-                # Player is rejoining - update their session
+                # Player is rejoining - update only connection status
                 existing_session.connected = True
-                # IMPORTANT: Always update token to prevent token swapping
-                if auth_token:
-                    existing_session.token = auth_token
-                existing_session.save(update_fields=['connected', 'token'])
+                # DON'T update token
+                existing_session.save(update_fields=['connected'])
                 
                 logger.info(f"Player {user_id} rejoining as player {existing_session.player_number}")
                 
@@ -226,19 +223,16 @@ def join_room(request):
                 defaults={
                     'player_number': player_number,
                     'username': username,
-                    'connected': True,
-                    'token': auth_token
+                    'connected': True
                 }
             )
 
-            # If the session already existed (shouldn't happen, but just in case)
+            # If the session already existed, only update necessary fields:
             if not created:
-                # Update the session with new information
+                # Update only what's needed
                 player_session.player_number = player_number
                 player_session.connected = True
-                if auth_token:
-                    player_session.token = auth_token
-                player_session.save()
+                player_session.save(update_fields=['player_number', 'connected'])
             
             logger.info(f"Player {user_id} joined as player {player_number}")
 
