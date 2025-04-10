@@ -217,15 +217,25 @@ class GameConsumer(AsyncWebsocketConsumer):
                 logger.info(f"Found existing session for {player_id} in room {self.room_code} with player number {session.player_number}")
                 self.player_number = session.player_number
                 
-                # Update connection status
-                await self.sync_to_async(session.save)(update_fields=['connected'])
+                # Update connection status AND token
+                if self.token:
+                    session.token = self.token
+                    await self.sync_to_async(session.save)(update_fields=['connected', 'token'])
+                else:
+                    await self.sync_to_async(session.save)(update_fields=['connected'])
                 
-            except Exception:
+            except Exception as e:
                 # No existing session, assign new player number
                 logger.info(f"No existing session for {player_id} in room {self.room_code}, assigning new player number")
                 # Use the assign_player_number function
                 self.player_number = assign_player_number(self.room_code, player_id, username)
-                logger.info(f"Assigned player number {self.player_number} to {player_id} in room {self.room_code}")
+                
+                # Store the token explicitly here too
+                if self.token and self.player_number:
+                    update_player_session(self.room_code, player_id, {
+                        'token': self.token,
+                        'connected': True
+                    })
             
             # Verify that the assignment is consistent
             if self.player_number == 1 and game.get('player_1_id') != player_id:
@@ -238,12 +248,6 @@ class GameConsumer(AsyncWebsocketConsumer):
                 save_game_state(game)
             
             if self.player_number is not None:
-                # Store the token for API calls
-                if self.token:
-                    update_player_session(self.room_code, player_id, {'token': self.token})
-                
-                logger.info(f"Player {player_id} joined as player {self.player_number} in room {self.room_code}")
-                
                 # Notify others about the player joining
                 await self.channel_layer.group_send(
                     self.room_group_name,

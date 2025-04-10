@@ -390,13 +390,18 @@ def assign_player_number(room_code, player_id, username):
                 game_state.player_1_id = player_id
                 game_state.save(update_fields=['player_1_id'])
                 
-                PlayerSession.objects.create(
+                player_session, created = PlayerSession.objects.get_or_create(
                     room_code=room_code,
                     player_id=player_id,
-                    player_number=1,
-                    username=username,
-                    connected=True
+                    defaults={
+                        'player_number': 1,
+                        'username': username,
+                        'connected': True
+                    }
                 )
+                if not created:
+                    player_session.connected = True
+                    player_session.save(update_fields=['connected'])
                 
                 logger.info(f"Assigned player {player_id} as player 1")
                 return 1
@@ -406,49 +411,69 @@ def assign_player_number(room_code, player_id, username):
                 game_state.player_2_id = player_id
                 game_state.save(update_fields=['player_2_id'])
                 
-                PlayerSession.objects.create(
+                player_session, created = PlayerSession.objects.get_or_create(
                     room_code=room_code,
                     player_id=player_id,
-                    player_number=2,
-                    username=username,
-                    connected=True
+                    defaults={
+                        'player_number': 2,
+                        'username': username,
+                        'connected': True
+                    }
                 )
+                if not created:
+                    player_session.connected = True
+                    player_session.save(update_fields=['connected'])
                 
                 logger.info(f"Assigned player {player_id} as player 2")
                 return 2
                 
             elif game_state.player_1_id == player_id:
                 # Safety check: player is actually player 1 but session was lost
-                PlayerSession.objects.create(
+                player_session, created = PlayerSession.objects.get_or_create(
                     room_code=room_code,
                     player_id=player_id,
-                    player_number=1,
-                    username=username,
-                    connected=True
+                    defaults={
+                        'player_number': 1,
+                        'username': username,
+                        'connected': True
+                    }
                 )
+                if not created:
+                    player_session.connected = True
+                    player_session.save(update_fields=['connected'])
                 logger.info(f"Re-assigned player {player_id} as player 1 (missing session)")
                 return 1
                 
             elif game_state.player_2_id == player_id:
                 # Safety check: player is actually player 2 but session was lost
-                PlayerSession.objects.create(
+                player_session, created = PlayerSession.objects.get_or_create(
                     room_code=room_code,
                     player_id=player_id,
-                    player_number=2,
-                    username=username,
-                    connected=True
+                    defaults={
+                        'player_number': 2,
+                        'username': username,
+                        'connected': True
+                    }
                 )
+                if not created:
+                    player_session.connected = True
+                    player_session.save(update_fields=['connected'])
                 logger.info(f"Re-assigned player {player_id} as player 2 (missing session)")
                 return 2
             
             # Game is full, assign as spectator
-            PlayerSession.objects.create(
+            player_session, created = PlayerSession.objects.get_or_create(
                 room_code=room_code,
                 player_id=player_id,
-                player_number=0,
-                username=username,
-                connected=True
+                defaults={
+                    'player_number': 0,
+                    'username': username,
+                    'connected': True
+                }
             )
+            if not created:
+                player_session.connected = True
+                player_session.save(update_fields=['connected'])
             logger.info(f"Assigned player {player_id} as spectator (room full)")
             return 0
     except Exception as e:

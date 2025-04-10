@@ -161,7 +161,10 @@ def join_room(request):
             if existing_session:
                 # Player is rejoining - update their session
                 existing_session.connected = True
-                existing_session.save(update_fields=['connected'])
+                # IMPORTANT: Always update token to prevent token swapping
+                if auth_token:
+                    existing_session.token = auth_token
+                existing_session.save(update_fields=['connected', 'token'])
                 
                 logger.info(f"Player {user_id} rejoining as player {existing_session.player_number}")
                 
@@ -215,15 +218,27 @@ def join_room(request):
             
             game_state.save()
             
-            # Create player session
-            PlayerSession.objects.create(
+            # Instead of using PlayerSession.objects.create, use get_or_create
+            # This should prevent the uniqueness constraint error
+            player_session, created = PlayerSession.objects.get_or_create(
                 room_code=room_code,
                 player_id=user_id,
-                player_number=player_number,
-                username=username,
-                connected=True,
-                token=auth_token
+                defaults={
+                    'player_number': player_number,
+                    'username': username,
+                    'connected': True,
+                    'token': auth_token
+                }
             )
+
+            # If the session already existed (shouldn't happen, but just in case)
+            if not created:
+                # Update the session with new information
+                player_session.player_number = player_number
+                player_session.connected = True
+                if auth_token:
+                    player_session.token = auth_token
+                player_session.save()
             
             logger.info(f"Player {user_id} joined as player {player_number}")
 
