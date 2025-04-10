@@ -11,11 +11,12 @@ from .utils import (
     calculate_state_delta, update_player_session,
     get_player_session, assign_player_number,
     update_game_physics, check_for_winner,
-    record_game_history
+    record_game_history, get_username_from_api
 )
 from .constants import SERVER_UPDATE_RATE
 import jwt
 from django.conf import settings
+from .models import PlayerSession
 
 logger = logging.getLogger(__name__)
 
@@ -142,10 +143,14 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             if not user_id:
                 return None
+            
+            # If user_id exists but username doesn't, fetch it
+            if user_id and not username:
+                username = get_username_from_api(user_id, self.token)
 
             return {
                 'user_id': user_id,
-                'username': username or f"Player-{user_id}"
+                'username': username or f"Player-{user_id[:6]}"
             }
 
         except jwt.PyJWTError:
@@ -170,61 +175,105 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def handle_join_game(self, data):
         """Handle player joining the game"""
-        player_id = data.get('player_id')
-        username = data.get('username')
+        try:
+            player_id = data.get('player_id')
+            username = data.get('username')
 
-        if not player_id:
-            user_info = await self.authenticate_user()
-            if user_info:
-                player_id = user_info['user_id']
-                username = user_info['username']
-            else:
-                player_id = f"guest-{random.randint(1000, 9999)}"
-                username = f"Guest-{random.randint(1000, 9999)}"
+            logger.info(f"WebSocket join game request from player_id={player_id}, username={username}")
 
-        self.player_id = player_id
-        self.username = username
+            if not player_id:
+                user_info = await self.authenticate_user()
+                if user_info:
+                    player_id = user_info['user_id']
+                    username = user_info['username']
+                    logger.info(f"Got authenticated user: {player_id}, {username}")
+                else:
+                    player_id = f"guest-{random.randint(1000, 9999)}"
+                    username = f"Guest-{random.randint(1000, 9999)}"
+                    logger.info(f"Created guest user: {player_id}, {username}")
 
-        # Get or create game state
-        game = get_game_state(self.room_code)
-        if not game:
-            game = create_game_state(self.room_code)
+            self.player_id = player_id
+            self.username = username
+
+            # Get or create game state
+            game = get_game_state(self.room_code)
             if not game:
-                await self.send_error("Failed to create game")
-                return
+                logger.warning(f"Game state not found for room {self.room_code}, creating new one")
+                game = create_game_state(self.room_code)
+                if not game:
+                    logger.error(f"Failed to create game state for room {self.room_code}")
+                    await self.send_error("Failed to create game")
+                    return
 
-        # Assign player number
-        self.player_number = assign_player_number(self.room_code, player_id, username)
-        
-        if self.player_number:
-            # Store the token for API calls
-            if self.token:
-                update_player_session(self.room_code, player_id, {'token': self.token})
+            # First check if we already have a player session
+            session = None
             
-            # Notify others about the player joining
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'player_joined',
-                    'player_number': self.player_number,
-                    'player_id': self.player_id,
-                    'username': self.username
-                }
-            )
-
-            # Send full game state to the player
-            await self.send_full_game_state(game)
-
-            # Start game loop if both players are connected and game is not finished
-            if (game['player_1_id'] and game['player_2_id'] and 
-                game['status'] != 'FINISHED' and not self.game_loop_task):
+            try:
+                session = await self.sync_to_async(PlayerSession.objects.get)(
+                    room_code=self.room_code, 
+                    player_id=player_id
+                )
+                # We have an existing session, use that player number
+                logger.info(f"Found existing session for {player_id} in room {self.room_code} with player number {session.player_number}")
+                self.player_number = session.player_number
                 
-                # Update game status
-                game['status'] = 'ONGOING'
+                # Update connection status
+                await self.sync_to_async(session.save)(update_fields=['connected'])
+                
+            except Exception:
+                # No existing session, assign new player number
+                logger.info(f"No existing session for {player_id} in room {self.room_code}, assigning new player number")
+                # Use the assign_player_number function
+                self.player_number = assign_player_number(self.room_code, player_id, username)
+                logger.info(f"Assigned player number {self.player_number} to {player_id} in room {self.room_code}")
+            
+            # Verify that the assignment is consistent
+            if self.player_number == 1 and game.get('player_1_id') != player_id:
+                logger.warning(f"Inconsistency: player {player_id} assigned as player 1 but game state has player_1_id={game.get('player_1_id')}")
+                game['player_1_id'] = player_id
                 save_game_state(game)
+            elif self.player_number == 2 and game.get('player_2_id') != player_id:
+                logger.warning(f"Inconsistency: player {player_id} assigned as player 2 but game state has player_2_id={game.get('player_2_id')}")
+                game['player_2_id'] = player_id
+                save_game_state(game)
+            
+            if self.player_number is not None:
+                # Store the token for API calls
+                if self.token:
+                    update_player_session(self.room_code, player_id, {'token': self.token})
                 
-                # Start the game loop
-                self.game_loop_task = asyncio.create_task(self.game_loop())
+                logger.info(f"Player {player_id} joined as player {self.player_number} in room {self.room_code}")
+                
+                # Notify others about the player joining
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'player_joined',
+                        'player_number': self.player_number,
+                        'player_id': self.player_id,
+                        'username': self.username
+                    }
+                )
+
+                # Send full game state to the player
+                await self.send_full_game_state(game)
+
+                # Start game loop if both players are connected and game is not finished
+                if (game['player_1_id'] and game['player_2_id'] and 
+                    game['status'] != 'FINISHED' and not self.game_loop_task):
+                    
+                    # Update game status
+                    game['status'] = 'ONGOING'
+                    save_game_state(game)
+                    
+                    # Start the game loop
+                    self.game_loop_task = asyncio.create_task(self.game_loop())
+            else:
+                logger.error(f"Failed to assign player number for {player_id} in room {self.room_code}")
+                await self.send_error("Failed to join game: could not assign player number")
+        except Exception as e:
+            logger.exception(f"Error in handle_join_game: {str(e)}")
+            await self.send_error(f"Failed to join game: {str(e)}")
 
     async def handle_key_event(self, data):
         """Handle keyboard input from clients"""
@@ -509,6 +558,11 @@ class GameConsumer(AsyncWebsocketConsumer):
         """Send full game state to the client"""
         state_dict = game.copy()
         state_dict['type'] = 'game_state'
+        
+        # Include the player number in the game state for the client to update if needed
+        if self.player_number is not None:
+            state_dict['player_number'] = self.player_number
+        
         self.last_sent_state = state_dict
 
         await self.send(text_data=json.dumps({

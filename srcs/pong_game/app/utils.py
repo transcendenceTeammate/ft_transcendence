@@ -7,7 +7,7 @@ import time
 import redis
 from django.utils import timezone
 from django.conf import settings
-from .models import GameState
+from .models import GameState, PlayerSession
 from .constants import (
     CANVAS_WIDTH, CANVAS_HEIGHT,
     PADDLE_WIDTH, PADDLE_HEIGHT,
@@ -15,6 +15,7 @@ from .constants import (
     SPEED_INCREASE_FACTOR, RUBBER_BAND_FACTOR
 )
 import requests
+from django.db import transaction
 
 logger = logging.getLogger(__name__)
 
@@ -343,49 +344,160 @@ def get_player_session(room_code, player_id):
 
 def assign_player_number(room_code, player_id, username):
     """Assign a player number to a player"""
-    game_state = get_game_state(room_code)
-    if not game_state:
-        return None
-    
-    # Check if player already has a session
-    session = get_player_session(room_code, player_id)
-    if session:
-        # Player reconnecting
-        update_player_session(room_code, player_id, {'connected': True})
-        return session.get('player_number')
-    
-    # New player joining
-    if not game_state.get('player_1_id'):
-        # Assign as player 1
-        game_state['player_1_id'] = player_id
-        save_game_state(game_state)
+    try:
+        # Get latest game state (directly from DB if possible)
+        from .models import GameState, PlayerSession
+        from django.db import transaction
+        import logging
         
+        logger = logging.getLogger(__name__)
+        logger.info(f"Assigning player number for {player_id} in room {room_code}")
+        
+        # IMPORTANT: Use database transaction to prevent race conditions
+        with transaction.atomic():
+            # First check if player already has a session to prevent duplication
+            try:
+                existing_session = PlayerSession.objects.get(
+                    room_code=room_code, 
+                    player_id=player_id
+                )
+                # Player reconnecting - update status and return existing number
+                existing_session.connected = True
+                existing_session.save(update_fields=['connected'])
+                
+                logger.info(f"Player {player_id} reconnecting as player {existing_session.player_number}")
+                
+                # Also ensure game state is consistent with session
+                game_state = GameState.objects.get(room_code=room_code)
+                if existing_session.player_number == 1 and game_state.player_1_id != player_id:
+                    game_state.player_1_id = player_id
+                    game_state.save(update_fields=['player_1_id'])
+                elif existing_session.player_number == 2 and game_state.player_2_id != player_id:
+                    game_state.player_2_id = player_id
+                    game_state.save(update_fields=['player_2_id'])
+                
+                return existing_session.player_number
+            except PlayerSession.DoesNotExist:
+                # No existing session, proceed with assignment
+                pass
+        
+            # Get fresh game state from database
+            game_state = GameState.objects.select_for_update().get(room_code=room_code)
+            
+            # Assign player numbers based on game state
+            if not game_state.player_1_id:
+                # Assign as player 1
+                game_state.player_1_id = player_id
+                game_state.save(update_fields=['player_1_id'])
+                
+                PlayerSession.objects.create(
+                    room_code=room_code,
+                    player_id=player_id,
+                    player_number=1,
+                    username=username,
+                    connected=True
+                )
+                
+                logger.info(f"Assigned player {player_id} as player 1")
+                return 1
+                
+            elif not game_state.player_2_id and game_state.player_1_id != player_id:
+                # Assign as player 2, but only if they're not already player 1
+                game_state.player_2_id = player_id
+                game_state.save(update_fields=['player_2_id'])
+                
+                PlayerSession.objects.create(
+                    room_code=room_code,
+                    player_id=player_id,
+                    player_number=2,
+                    username=username,
+                    connected=True
+                )
+                
+                logger.info(f"Assigned player {player_id} as player 2")
+                return 2
+                
+            elif game_state.player_1_id == player_id:
+                # Safety check: player is actually player 1 but session was lost
+                PlayerSession.objects.create(
+                    room_code=room_code,
+                    player_id=player_id,
+                    player_number=1,
+                    username=username,
+                    connected=True
+                )
+                logger.info(f"Re-assigned player {player_id} as player 1 (missing session)")
+                return 1
+                
+            elif game_state.player_2_id == player_id:
+                # Safety check: player is actually player 2 but session was lost
+                PlayerSession.objects.create(
+                    room_code=room_code,
+                    player_id=player_id,
+                    player_number=2,
+                    username=username,
+                    connected=True
+                )
+                logger.info(f"Re-assigned player {player_id} as player 2 (missing session)")
+                return 2
+            
+            # Game is full, assign as spectator
+            PlayerSession.objects.create(
+                room_code=room_code,
+                player_id=player_id,
+                player_number=0,
+                username=username,
+                connected=True
+            )
+            logger.info(f"Assigned player {player_id} as spectator (room full)")
+            return 0
+    except Exception as e:
+        logger.error(f"Error assigning player number: {str(e)}")
+        
+        # Fallback to Redis-based implementation if DB operations fail
+        game_state = get_game_state(room_code)
+        if not game_state:
+            return None
+        
+        # Check if player already has a session
+        session = get_player_session(room_code, player_id)
+        if session:
+            # Player reconnecting
+            update_player_session(room_code, player_id, {'connected': True})
+            return session.get('player_number')
+        
+        # New player joining with redis fallback
+        if not game_state.get('player_1_id'):
+            # Assign as player 1
+            game_state['player_1_id'] = player_id
+            save_game_state(game_state)
+            
+            update_player_session(room_code, player_id, {
+                'player_number': 1,
+                'username': username,
+                'connected': True
+            })
+            return 1
+        
+        elif not game_state.get('player_2_id'):
+            # Assign as player 2
+            game_state['player_2_id'] = player_id
+            save_game_state(game_state)
+            
+            update_player_session(room_code, player_id, {
+                'player_number': 2,
+                'username': username,
+                'connected': True
+            })
+            return 2
+        
+        # Game is full, assign as spectator
         update_player_session(room_code, player_id, {
-            'player_number': 1,
+            'player_number': 0,
             'username': username,
             'connected': True
         })
-        return 1
-    
-    elif not game_state.get('player_2_id'):
-        # Assign as player 2
-        game_state['player_2_id'] = player_id
-        save_game_state(game_state)
-        
-        update_player_session(room_code, player_id, {
-            'player_number': 2,
-            'username': username,
-            'connected': True
-        })
-        return 2
-    
-    # Game is full, assign as spectator
-    update_player_session(room_code, player_id, {
-        'player_number': 0,
-        'username': username,
-        'connected': True
-    })
-    return 0
+        return 0
 
 def update_game_physics(room_code):
     """Update game physics and return scorer (if any)"""
@@ -517,3 +629,31 @@ def record_game_history(room_code, api_url=None):
     except Exception as e:
         logger.error(f"Error recording game history: {e}")
         return False
+
+def get_username_from_api(user_id, auth_token=None):
+    """Fetch username from user management API using user_id"""
+    if not user_id:
+        return None
+    
+    try:
+        headers = {}
+        if auth_token:
+            headers['Authorization'] = f'Bearer {auth_token}'
+        
+        # First try the user info endpoint
+        api_url = "https://api.app.10.24.108.2.nip.io:8443/api/user/info/"
+        response = requests.get(api_url, headers=headers, timeout=2)
+        
+        if response.status_code == 200:
+            data = response.json()
+            return data.get('nickname')
+        
+        # If that fails (e.g. token issue), try a direct lookup if available
+        # This would require a dedicated endpoint for user lookup by ID
+        # For now we'll return a fallback
+        
+        return f"Player-{user_id[:6]}"
+        
+    except Exception as e:
+        logger.error(f"Error fetching username from API: {e}")
+        return f"Player-{user_id[:6]}"

@@ -180,9 +180,26 @@ export default class OnlineGame extends Game {
             return;
         }
 
+        // Get player information from localStorage
         this.playerNumber = parseInt(localStorage.getItem('current_player_number') || '0', 10);
         this.playerId = localStorage.getItem('current_player_id');
         this.username = localStorage.getItem('current_username');
+
+        // Validate player information
+        if (!this.playerId) {
+            console.error("Missing player ID, generating a temporary one");
+            this.playerId = `guest-${Math.floor(Math.random() * 9000) + 1000}`;
+            localStorage.setItem('current_player_id', this.playerId);
+        }
+
+        if (!this.username) {
+            console.error("Missing username, generating a temporary one");
+            this.username = `Guest-${Math.floor(Math.random() * 9000) + 1000}`;
+            localStorage.setItem('current_username', this.username);
+        }
+
+        // The server will assign/verify the correct player number
+        console.log(`Starting game with: Player ${this.playerNumber}, ID: ${this.playerId}, Room: ${this.roomCode}`);
 
         this.socket = null;
         this.lastReceivedState = null;
@@ -465,6 +482,14 @@ export default class OnlineGame extends Game {
     handleGameState(data) {
         this.lastReceivedState = { ...data };
 
+        // Update player number if provided by server
+        if (data.player_number && data.player_number !== this.playerNumber) {
+            console.log(`Server assigned player number ${data.player_number} (was ${this.playerNumber})`);
+            this.playerNumber = data.player_number;
+            localStorage.setItem('current_player_number', this.playerNumber.toString());
+            this.showMessage(`You are Player ${this.playerNumber}`);
+        }
+
         this.player1Score = data.player_1_score;
         this.player2Score = data.player_2_score;
 
@@ -546,12 +571,14 @@ export default class OnlineGame extends Game {
 
     handleConnect() {
         this.networkStatus.connected = true;
-        this.showMessage(`Connected! You are Player ${this.playerNumber}`);
-
+        
+        // Send join game immediately after connection
         this.socket.send('join_game', {
             player_id: this.playerId,
             username: this.username
         });
+        
+        this.showMessage(`Connected to room ${this.roomCode}`);
     }
 
     handleDisconnect() {

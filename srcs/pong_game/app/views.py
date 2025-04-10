@@ -3,10 +3,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 import json
 from .models import GameState, PlayerSession
-from .utils import generate_room_code, game_state_to_dict
+from .utils import generate_room_code, game_state_to_dict, get_username_from_api
 import logging
 import jwt
 from django.conf import settings
+from django.db import transaction
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -22,17 +23,25 @@ def create_room(request):
     try:
         user_id = None
         username = None
+        auth_token = None
         auth_header = request.headers.get('Authorization')
 
         logger.info(f"Auth header: {auth_header}")
 
         if auth_header and auth_header.startswith('Bearer '):
             token = auth_header.split(' ')[1]
+            auth_token = token
             try:
                 payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
                 user_id = str(payload.get('user_id'))
                 logger.info(f"Decoded token payload: {payload}")
                 username = payload.get('username')
+                
+                # Fetch username from API if not in token
+                if user_id and not username:
+                    logger.info(f"Username not in token, fetching from API for user_id: {user_id}")
+                    username = get_username_from_api(user_id, auth_token)
+                    
                 logger.info(f"Extracted user_id from token: {user_id}, username: {username}")
             except Exception as e:
                 logger.error(f"Error decoding token: {str(e)}")
@@ -57,7 +66,8 @@ def create_room(request):
             player_id=user_id,
             player_number=1,
             username=username,
-            connected=True
+            connected=True,
+            token=auth_token
         )
 
         game_state.refresh_from_db()
@@ -98,18 +108,26 @@ def join_room(request):
 
         user_id = None
         username = None
+        auth_token = None
         auth_header = request.headers.get('Authorization')
 
-        logger.info(f"Auth header: {auth_header}")
+        logger.info(f"Join room request for {room_code}")
 
         if auth_header and auth_header.startswith('Bearer '):
             token = auth_header.split(' ')[1]
+            auth_token = token
             try:
                 payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
                 logger.info(f"Decoded token payload: {payload}")
                 user_id = str(payload.get('user_id'))
                 username = payload.get('username')
-                logger.info(f"Join room - extracted user_id from token: {user_id}")
+                
+                # Fetch username from API if not in token
+                if user_id and not username:
+                    logger.info(f"Username not in token, fetching from API for user_id: {user_id}")
+                    username = get_username_from_api(user_id, auth_token)
+                    
+                logger.info(f"Join room - extracted user_id from token: {user_id}, username: {username}")
             except Exception as e:
                 logger.error(f"Join room - error decoding token: {str(e)}")
 
@@ -118,80 +136,106 @@ def join_room(request):
             username = f"Guest-{user_id.split('-')[1]}"
             logger.warning(f"Join room - using default user_id: {user_id}")
 
-        try:
-            game_state = GameState.objects.get(room_code=room_code)
-        except GameState.DoesNotExist:
-            return JsonResponse({
-                'success': False,
-                'error': 'Room not found'
-            }, status=404)
+        # Use a database transaction to prevent race conditions
+        with transaction.atomic():
+            try:
+                game_state = GameState.objects.select_for_update().get(room_code=room_code)
+            except GameState.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Room not found'
+                }, status=404)
 
-        if game_state.status == 'FINISHED':
-            return JsonResponse({
-                'success': False,
-                'error': 'Game has already ended'
-            }, status=400)
+            if game_state.status == 'FINISHED':
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Game has already ended'
+                }, status=400)
 
-        if game_state.player_1_id and game_state.player_2_id:
-            if user_id in [game_state.player_1_id, game_state.player_2_id]:
-                player_number = 2 if user_id == game_state.player_2_id else 1
+            # Check for existing player session first
+            existing_session = PlayerSession.objects.filter(
+                room_code=room_code,
+                player_id=user_id
+            ).first()
 
-                player_session, created = PlayerSession.objects.get_or_create(
-                    room_code=room_code,
-                    player_id=user_id,
-                    defaults={
-                        'player_number': player_number,
-                        'username': username,
-                        'connected': True
-                    }
-                )
-
-                if not created:
-                    player_session.connected = True
-                    player_session.save()
-
+            if existing_session:
+                # Player is rejoining - update their session
+                existing_session.connected = True
+                existing_session.save(update_fields=['connected'])
+                
+                logger.info(f"Player {user_id} rejoining as player {existing_session.player_number}")
+                
+                # Ensure consistency between session and game state
+                if existing_session.player_number == 1 and game_state.player_1_id != user_id:
+                    game_state.player_1_id = user_id
+                    game_state.save(update_fields=['player_1_id'])
+                elif existing_session.player_number == 2 and game_state.player_2_id != user_id:
+                    game_state.player_2_id = user_id
+                    game_state.save(update_fields=['player_2_id'])
+                
                 return JsonResponse({
                     'success': True,
                     'room_code': room_code,
-                    'player_number': player_number,
+                    'player_number': existing_session.player_number,
                     'player_id': user_id,
-                    'username': username,
+                    'username': existing_session.username,
                     'reconnecting': True,
                     'game_state': game_state_to_dict(game_state)
                 })
-            else:
+
+            # Room has both players and this is a new player
+            if game_state.player_1_id and game_state.player_2_id and user_id not in [game_state.player_1_id, game_state.player_2_id]:
                 return JsonResponse({
                     'success': False,
                     'error': 'Room is full'
                 }, status=400)
 
-        player_number = 1 if not game_state.player_1_id else 2
-
-        if player_number == 1:
-            game_state.player_1_id = user_id
-        else:
-            game_state.player_2_id = user_id
-            if game_state.status == 'WAITING':
+            # Determine player number
+            player_number = None
+            
+            # If player is already in game_state but doesn't have a session
+            if user_id == game_state.player_1_id:
+                player_number = 1
+            elif user_id == game_state.player_2_id:
+                player_number = 2
+            # Assign new player number
+            elif not game_state.player_1_id:
+                player_number = 1
+                game_state.player_1_id = user_id
+            elif not game_state.player_2_id:
+                player_number = 2
+                game_state.player_2_id = user_id
+            else:
+                # This should not happen due to earlier check
+                player_number = 0  # Spectator
+            
+            # Update game status
+            if player_number == 2 and game_state.status == 'WAITING':
                 game_state.status = 'ONGOING'
+            
+            game_state.save()
+            
+            # Create player session
+            PlayerSession.objects.create(
+                room_code=room_code,
+                player_id=user_id,
+                player_number=player_number,
+                username=username,
+                connected=True,
+                token=auth_token
+            )
+            
+            logger.info(f"Player {user_id} joined as player {player_number}")
 
-        game_state.save()
-
-        PlayerSession.objects.create(
-            room_code=room_code,
-            player_id=user_id,
-            player_number=player_number,
-            username=username,
-            connected=True
-        )
-
-        return JsonResponse({
-            'success': True,
-            'room_code': room_code,
-            'player_number': player_number,
-            'player_id': user_id,
-            'username': username,
-            'game_state': game_state_to_dict(game_state)
-        })
+            return JsonResponse({
+                'success': True,
+                'room_code': room_code,
+                'player_number': player_number,
+                'player_id': user_id,
+                'username': username,
+                'game_state': game_state_to_dict(game_state)
+            })
+            
     except Exception as e:
         logger.exception(f"Error joining room: {str(e)}")
         return JsonResponse({
