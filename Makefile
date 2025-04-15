@@ -9,6 +9,9 @@ build:
 
 # Run the application
 run:
+	mkdir -p ./data/postgres
+	mkdir -p ./data/media
+	mkdir -p ./data/ssl
 	docker compose up -d
 
 # Stop the application
