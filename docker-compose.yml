@@ -31,9 +31,15 @@ services:
       - user-management
       - pong-game
     volumes:
-      - ./srcs/front:/etc/frontend
-      - ./srcs/nginx/ssl:/etc/nginx/ssl
+      - ssl_data:/etc/nginx/ssl
       - media_data:/app/media
+
+  front-static:
+    build:
+      context: ./srcs/front
+      dockerfile: Dockerfile
+    env_file:
+      - .env
 
   user-management:
     build:
@@ -46,7 +52,6 @@ services:
       - .env
     volumes:
       - media_data:/app/media
-      - ./srcs/nginx/ssl:/etc/ssl
     healthcheck:
       test: ["CMD", "curl", "-f", "https://localhost:8000"]
       interval: 30s
@@ -75,7 +80,23 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./data/postgres
+      o: bind
+  ssl_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./data/ssl
+      o: bind
   media_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./data/media
+      o: bind
 
 networks:
   default:
