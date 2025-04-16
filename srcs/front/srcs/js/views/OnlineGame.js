@@ -805,8 +805,7 @@ export default class OnlineGame extends Game {
                     </div>
                 </div>
                 <div class="game-recap-buttons">
-                    <button id="replayButton" class="recap-button replay-button">Play Again</button>
-                    <button id="quitButton" class="recap-button quit-button">Quit</button>
+                    <button id="quitButton" class="recap-button quit-button">Return to Menu</button>
                 </div>
             </div>
         `;
@@ -895,11 +894,11 @@ export default class OnlineGame extends Game {
             .game-recap-buttons {
                 display: flex;
                 justify-content: center;
-                gap: 20px;
+                margin-top: 20px;
             }
 
             .recap-button {
-                padding: 12px 24px;
+                padding: 12px 30px;
                 border: none;
                 border-radius: 4px;
                 font-size: 16px;
@@ -907,20 +906,10 @@ export default class OnlineGame extends Game {
                 cursor: pointer;
                 transition: all 0.2s;
                 text-transform: uppercase;
-            }
-
-            .replay-button {
-                background-color: #4caf50;
-                color: white;
-            }
-
-            .replay-button:hover {
-                background-color: #3d8b40;
-            }
-
-            .quit-button {
                 background-color: #e74c3c;
                 color: white;
+                width: 100%;
+                max-width: 250px;
             }
 
             .quit-button:hover {
@@ -932,28 +921,30 @@ export default class OnlineGame extends Game {
         document.head.appendChild(styles);
         document.body.appendChild(recapModal);
 
-        // Add event listeners to buttons
-        document.getElementById('replayButton').addEventListener('click', () => {
-            this.handleReplay();
-        });
-
+        // Add event listener to quit button
         document.getElementById('quitButton').addEventListener('click', () => {
-            this.handleQuit();
+            // Force cleanup of the modal
+            const modalEl = document.getElementById('gameRecapModal');
+            if (modalEl) {
+                document.body.removeChild(modalEl);
+            }
+            
+            // Clean up any other modal artifacts
+            document.querySelectorAll('.modal-backdrop').forEach(el => {
+                if (el.parentNode) el.parentNode.removeChild(el);
+            });
+            
+            // Reset body styles
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+            
+            // Use window.location for more reliable navigation
+            window.location.href = '/start-game';
         });
     }
 
-    handleReplay() {
-        // Create a new game in the same room
-        const currentRoom = this.roomCode;
-
-        // Reload the page with the same room code
-        RouterService.getInstance().navigateTo(`/game?room=${currentRoom}&replay=true`);
-    }
-
-    handleQuit() {
-        // Redirect to the start game page
-        RouterService.getInstance().navigateTo(`/start-game`);
-    }
+    // These functions have been replaced by inline code in showGameRecap
 
     handleGamePaused(data) {
         this.paused = true;
