@@ -39,13 +39,13 @@ cd ft_transcendence
 2. **Fill in the `.env` file using the values from env.template as a reference**.
 
 
-### 4️⃣ Launch the App  
+### 3️⃣ Launch the App  
 Build and start the project:  
 ```bash  
 make
 ```
 
-### 3️⃣ Access the Web Interface  
+### 4️⃣ Access the Web Interface  
 Open your browser and go to the URL:  
 🌐 [https://localhost:8443](https://localhost:8443)  
 
