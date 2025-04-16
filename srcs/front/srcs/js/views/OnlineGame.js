@@ -521,8 +521,8 @@ export default class OnlineGame extends Game {
     processPlayerInput(deltaTime) {
         if (!this.playerNumber) return;
         
-        // Skip input processing if game is paused, except for spectator mode
-        if (this.paused && this.player1Score + this.player2Score > 0) return;
+        // Always allow paddle movement, even when game is paused
+        // This allows players to position themselves while waiting for the ball to start
         
         // Calculate paddle movement speed adjusted for frame rate
         const actualPaddleSpeed = this.paddleSpeed * deltaTime * 60;
