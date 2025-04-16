@@ -192,6 +192,17 @@ class GameConsumer(AsyncWebsocketConsumer):
             }
         )
 
+        # Send the updated game state to all clients to ensure everyone has latest player usernames
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'game_state_update',
+                'delta': game.to_dict(),
+                'sequence': 0,
+                'is_full_state': True
+            }
+        )
+
         await self.send_full_game_state(game)
 
         if (game.player_1_id and game.player_2_id and

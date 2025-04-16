@@ -758,20 +758,26 @@ export default class OnlineGame extends Game {
         // Update player labels with usernames from game state
         if (document.getElementById('player1Label')) {
             const player1Name = data.player_1_username || `Player 1`;
+            // Log username changes for debugging
+            if (this.player1Username !== player1Name) {
+                console.log(`Player 1 username changed from [${this.player1Username}] to [${player1Name}]`);
+            }
             document.getElementById('player1Label').textContent = player1Name;
 
             // Store player 1 username for later use
             this.player1Username = player1Name;
-            console.log("Updated Player 1 label to:", player1Name);
         }
 
         if (document.getElementById('player2Label')) {
             const player2Name = data.player_2_username || `Player 2`;
+            // Log username changes for debugging
+            if (this.player2Username !== player2Name) {
+                console.log(`Player 2 username changed from [${this.player2Username}] to [${player2Name}]`);
+            }
             document.getElementById('player2Label').textContent = player2Name;
 
             // Store player 2 username for later use
             this.player2Username = player2Name;
-            console.log("Updated Player 2 label to:", player2Name);
         }
 
         // Use server's ball position directly (no prediction)
