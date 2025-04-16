@@ -3,6 +3,7 @@ A real-time multiplayer game built as part of 42's curriculum.
 
 ## 📝 Project Overview  
 **ft_transcendence** is a full-stack web application designed for real-time, interactive multiplayer gaming.  
+
 Developed using modern web technologies, it features:
 
 ✅ **Real-time Multiplayer Gameplay**  
