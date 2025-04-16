@@ -757,6 +757,7 @@ export default class OnlineGame extends Game {
 
         // Update player labels with usernames from game state
         if (document.getElementById('player1Label')) {
+            // Always use the username from the server if available
             const player1Name = data.player_1_username || `Player 1`;
             // Log username changes for debugging
             if (this.player1Username !== player1Name) {
@@ -769,6 +770,7 @@ export default class OnlineGame extends Game {
         }
 
         if (document.getElementById('player2Label')) {
+            // Always use the username from the server if available
             const player2Name = data.player_2_username || `Player 2`;
             // Log username changes for debugging
             if (this.player2Username !== player2Name) {
