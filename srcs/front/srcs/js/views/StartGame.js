@@ -124,7 +124,7 @@ export default class StartGame extends AbstractView {
                 headers['Authorization'] = `Bearer ${authToken}`;
             }
 
-            const response = await fetch("https://api.app.10.24.1.5.nip.io:8443/api/room/create/", {
+            const response = await fetch("https://api.app.10.24.1.3.nip.io:8443/api/room/create/", {
                 method: 'POST',
                 headers: headers,
                 credentials: 'include',
@@ -278,7 +278,7 @@ export default class StartGame extends AbstractView {
             }
 
             try {
-                const checkResponse = await fetch(`https://api.app.10.24.1.5.nip.io:8443/api/room/check/${roomCode}/`, {
+                const checkResponse = await fetch(`https://api.app.10.24.1.3.nip.io:8443/api/room/check/${roomCode}/`, {
                     method: 'GET',
                     headers: headers,
                     credentials: 'include'
@@ -308,7 +308,7 @@ export default class StartGame extends AbstractView {
                 return;
             }
 
-            const response = await fetch("https://api.app.10.24.1.5.nip.io:8443/api/room/join/", {
+            const response = await fetch("https://api.app.10.24.1.3.nip.io:8443/api/room/join/", {
                 method: 'POST',
                 headers: headers,
                 body: JSON.stringify({ room_code: roomCode }),
@@ -442,7 +442,7 @@ export default class StartGame extends AbstractView {
                     headers['Authorization'] = `Bearer ${authToken}`;
                 }
 
-                const response = await fetch(`https://api.app.10.24.1.5.nip.io:8443/api/room/check/${roomCode}/`, {
+                const response = await fetch(`https://api.app.10.24.1.3.nip.io:8443/api/room/check/${roomCode}/`, {
                     method: 'GET',
                     headers: headers,
                     credentials: 'include',

@@ -291,7 +291,7 @@ export default class OnlineGame extends Game {
                 z-index: 100;
                 display: block;
             }
-            
+
             .key-indicator {
                 display: inline-block;
                 width: 20px;
@@ -302,7 +302,7 @@ export default class OnlineGame extends Game {
                 text-align: center;
                 line-height: 20px;
             }
-            
+
             .key-active {
                 background-color: #2ecc71;
                 color: black;
@@ -370,7 +370,7 @@ export default class OnlineGame extends Game {
     initializeSocket() {
         const token = this.getAuthToken();
 
-        let wsUrl = `wss://app.127.0.0.1.nip.io:8443/ws/game/${this.roomCode}/`;
+        let wsUrl = `wss://app.10.24.1.3.nip.io:8443/ws/game/${this.roomCode}/`;
         if (token) {
             wsUrl += `?token=${encodeURIComponent(token)}`;
         }
@@ -420,7 +420,7 @@ export default class OnlineGame extends Game {
         // Define the key handlers
         this._keyDownHandler = (e) => {
             if (!this.playerNumber) return;
-            
+
             if (e.key === "w" || e.key === "ArrowUp") {
                 if (!this.upPressed) {
                     this.upPressed = true;
@@ -439,7 +439,7 @@ export default class OnlineGame extends Game {
 
         this._keyUpHandler = (e) => {
             if (!this.playerNumber) return;
-            
+
             if (e.key === "w" || e.key === "ArrowUp") {
                 if (this.upPressed) {
                     this.upPressed = false;
@@ -459,7 +459,7 @@ export default class OnlineGame extends Game {
         // Add the event listeners
         window.addEventListener('keydown', this._keyDownHandler);
         window.addEventListener('keyup', this._keyUpHandler);
-        
+
         console.log("Input handlers set up for player", this.playerNumber);
     }
 
@@ -520,18 +520,18 @@ export default class OnlineGame extends Game {
 
     processPlayerInput(deltaTime) {
         if (!this.playerNumber) return;
-        
+
         // Always allow paddle movement, even when game is paused
         // This allows players to position themselves while waiting for the ball to start
-        
+
         // Calculate paddle movement speed adjusted for frame rate
         const actualPaddleSpeed = this.paddleSpeed * deltaTime * 60;
-        
+
         // Debug input state
         if (this.upPressed || this.downPressed) {
             console.log("Processing input - Up:", this.upPressed, "Down:", this.downPressed);
         }
-        
+
         // Update local paddle position based on input
         if (this.playerNumber === 1) {
             if (this.upPressed) {
@@ -902,7 +902,7 @@ export default class OnlineGame extends Game {
             pingDisplay.textContent = "Disconnected";
             pingDisplay.style.color = '#e74c3c'; // Red
         }
-        
+
         // Add player number and input state to debug info
         const debugInfo = document.getElementById('debugInfo');
         if (debugInfo) {
@@ -910,7 +910,7 @@ export default class OnlineGame extends Game {
             const downState = this.downPressed ? "YES" : "no";
             const inputStateDiv = document.createElement('div');
             inputStateDiv.innerHTML = `<strong>Input:</strong> UP=${upState}, DOWN=${downState}`;
-            
+
             // Replace if exists, otherwise append
             const existingInputState = debugInfo.querySelector('[data-info="input-state"]');
             if (existingInputState) {
@@ -932,7 +932,7 @@ export default class OnlineGame extends Game {
             <div><strong>Connected:</strong> ${this.socket?.connected ? 'Yes' : 'No'}</div>
             <div><strong>Game Paused:</strong> ${this.paused ? 'Yes' : 'No'}</div>
             <div class="control-status">
-                <strong>Controls:</strong> 
+                <strong>Controls:</strong>
                 <span class="key-indicator ${this.upPressed ? 'key-active' : ''}">↑</span>
                 <span class="key-indicator ${this.downPressed ? 'key-active' : ''}">↓</span>
             </div>
@@ -942,11 +942,11 @@ export default class OnlineGame extends Game {
             <div><strong>Ball Speed:</strong> (${Math.round(this.ballSpeedX)}, ${Math.round(this.ballSpeedY)})</div>
             <div><strong>Update Rate:</strong> ${this.paddleUpdateRate}ms</div>
         `;
-        
+
         // Add key press event monitor
         if (!this._debugKeyMonitor) {
             this._debugKeyMonitor = true;
-            
+
             // Show key presses in console
             window.addEventListener('keydown', (e) => {
                 if (['w', 's', 'ArrowUp', 'ArrowDown'].includes(e.key)) {

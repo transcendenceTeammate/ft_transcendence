@@ -10,7 +10,7 @@ if [ ! -f "$CERT_PATH" ] || [ ! -f "$KEY_PATH" ]; then
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
       -keyout "$KEY_PATH" \
       -out "$CERT_PATH" \
-      -subj "/C=AT/ST=W/L=W/O=42/OU=42k/CN=10.24.1.5"
+      -subj "/C=AT/ST=W/L=W/O=42/OU=42k/CN=10.24.1.3"
 fi
 
 echo "Ready! Open: https://localhost:8443/"
