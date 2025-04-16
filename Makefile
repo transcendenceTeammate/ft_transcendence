@@ -53,3 +53,6 @@ dev: build run logs
 # CLI Game specific commands
 cli-game:
 	docker compose run --rm cli_game
+
+install-uv:
+	curl -LsSf https://astral.sh/uv/install.sh | sh
