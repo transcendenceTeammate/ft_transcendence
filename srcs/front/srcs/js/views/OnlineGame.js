@@ -173,6 +173,7 @@ export default class OnlineGame extends Game {
         super();
         this.setTitle("Online Pong");
 
+        // Get room code from URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         this.roomCode = urlParams.get('room');
 
@@ -182,29 +183,51 @@ export default class OnlineGame extends Game {
             return;
         }
 
+        // Player identification
         this.playerNumber = parseInt(localStorage.getItem('current_player_number') || '0', 10);
         this.playerId = localStorage.getItem('current_player_id');
-        this.username = localStorage.getItem('current_username');
+        
+        // Multiple sources for username in order of priority
+        const usernameSources = [
+            localStorage.getItem('current_username'),
+            localStorage.getItem('username'),
+            sessionStorage.getItem('username'),
+            localStorage.getItem('nickname')
+        ];
+        
+        // Use the first valid username
+        this.username = null;
+        for (const source of usernameSources) {
+            if (source && source !== "undefined" && source !== "null") {
+                this.username = source;
+                console.log("Constructor using username:", this.username);
+                break;
+            }
+        }
+        
+        // Initialize player username fields
+        this.player1Username = this.playerNumber === 1 ? this.username : null;
+        this.player2Username = this.playerNumber === 2 ? this.username : null;
 
+        // Game state
         this.socket = null;
         this.serverState = null;
-
         this.lastFrameTime = 0;
         this.fixedDeltaTime = 1000 / 60;
         this.accumulator = 0;
 
+        // Network state
         this._lastSentPosition = null;
         this._lastStatusUpdate = 0;
         this._lastDebugUpdate = 0;
         this._lastMessageTime = 0;
         this.lastPaddleUpdate = 0;
-
         this.paddleUpdateRate = 50;
-
         this.networkStatus = {
             connected: false
         };
 
+        // Setup space key handler for resuming game
         window.addEventListener('keydown', (e) => {
             if (e.key === ' ' && this.paused && this.playerNumber) {
                 this.resumeGame();
@@ -213,10 +236,21 @@ export default class OnlineGame extends Game {
 
         this.cleanupModals();
 
+        // Game constants
         this.paddleWidth = GameConstants.PADDLE_WIDTH;
         this.paddleHeight = GameConstants.PADDLE_HEIGHT;
         this.paddleSpeed = GameConstants.PADDLE_SPEED;
         this.ballSize = GameConstants.BALL_SIZE;
+        
+        // Log what we've initialized with
+        console.log("OnlineGame initialized with:", {
+            roomCode: this.roomCode,
+            playerNumber: this.playerNumber,
+            playerId: this.playerId,
+            username: this.username,
+            player1Username: this.player1Username,
+            player2Username: this.player2Username
+        });
     }
 
     cleanupModals() {
@@ -317,86 +351,101 @@ export default class OnlineGame extends Game {
     }
 
     async onLoaded() {
+        // Try to get the real username from MyProfileProvider
+        try {
+            const { MyProfileProvider } = await import("../data/providers/MyProfileProvider.js");
+            const myProfileProvider = MyProfileProvider.getInstance();
+            await myProfileProvider.updateProfile();
+            
+            const profile = await myProfileProvider.getUserProfile(true);
+            
+            if (profile && profile.username) {
+                console.log("Got authenticated username:", profile.username);
+                // Store the real username and override localStorage
+                this.username = profile.username;
+                localStorage.setItem('current_username', this.username);
+                
+                // Update player labels if we know our player number
+                if (this.playerNumber === 1 && document.getElementById('player1Label')) {
+                    document.getElementById('player1Label').textContent = this.username;
+                    this.player1Username = this.username;
+                } else if (this.playerNumber === 2 && document.getElementById('player2Label')) {
+                    document.getElementById('player2Label').textContent = this.username;
+                    this.player2Username = this.username;
+                }
+            }
+        } catch (error) {
+            console.warn("Could not get profile info:", error);
+        }
+        
         this.initGame();
-
         this.initializeSocket();
 
-        // Set up the close button handler with multiple approaches for reliability
-        const closeButton = document.getElementById('closeButton');
-        if (closeButton) {
-            console.log("Found close button, attaching event listener");
+        // Create a completely new close button with proper styling
+        const closeButton = document.createElement('div');
+        closeButton.id = 'customCloseButton'; // Use a different ID to avoid CSS conflicts
+        closeButton.innerHTML = '&times;';  
+
+        // Apply inline styles that override any CSS conflicts
+        Object.assign(closeButton.style, {
+            position: 'absolute',
+            top: '20px',
+            right: '20px',
+            width: '50px',
+            height: '50px',
+            backgroundColor: '#e74c3c',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '28px',
+            fontWeight: 'bold',
+            color: 'white',
+            cursor: 'pointer !important', // Force cursor
+            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
+            transition: 'all 0.3s ease',
+            zIndex: '10000'
+        });
+
+        // Add hover effect with inline handlers for maximum compatibility
+        closeButton.onmouseenter = function() {
+            this.style.backgroundColor = '#c0392b';
+            this.style.transform = 'scale(1.1)';
+            this.style.boxShadow = '0 6px 12px rgba(0, 0, 0, 0.4)';
+        };
+
+        closeButton.onmouseleave = function() {
+            this.style.backgroundColor = '#e74c3c';
+            this.style.transform = 'scale(1.0)';
+            this.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
+        };
+
+        // Add direct onclick function for maximum compatibility
+        const self = this; // Store reference to the class instance
+        closeButton.onclick = function() {
+            console.log("Close button clicked!");
             
-            // Remove any existing event listeners
-            closeButton.replaceWith(closeButton.cloneNode(true));
+            // Close socket
+            if (self.socket) {
+                self.socket.disconnect();
+            }
             
-            // Get the fresh reference
-            const refreshedCloseButton = document.getElementById('closeButton');
+            // Clean up modals
+            self.cleanupModals();
             
-            // Make the button more visible for debugging
-            refreshedCloseButton.style.cursor = 'pointer';
-            refreshedCloseButton.style.zIndex = '9999';
-            
-            // Use multiple event types for better reliability
-            const handleCloseClick = () => {
-                console.log("Close button clicked");
-                
-                // Close socket connections
-                if (this.socket) {
-                    this.socket.disconnect();
-                }
-                
-                // Clean up any modals that might be open
-                this.cleanupModals();
-                
-                // Try navigation via the router service first
-                try {
-                    RouterService.getInstance().navigateTo('/start-game');
-                } catch (error) {
-                    console.error("Router navigation failed, using direct navigation", error);
-                    // Fallback to direct navigation
-                    window.location.href = '/start-game';
-                }
-            };
-            
-            refreshedCloseButton.addEventListener('click', handleCloseClick);
-            refreshedCloseButton.addEventListener('mouseup', handleCloseClick);
-            
-            // Add touchend event for mobile support
-            refreshedCloseButton.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                handleCloseClick();
-            });
-        } else {
-            console.error("Close button not found");
-            
-            // Create a fallback close button if the original isn't found
-            const fallbackButton = document.createElement('div');
-            fallbackButton.id = 'fallbackCloseButton';
-            fallbackButton.innerHTML = '&times;';
-            fallbackButton.style.position = 'absolute';
-            fallbackButton.style.top = '10px';
-            fallbackButton.style.right = '10px';
-            fallbackButton.style.fontSize = '30px';
-            fallbackButton.style.color = 'white';
-            fallbackButton.style.backgroundColor = 'rgba(255, 0, 0, 0.7)';
-            fallbackButton.style.width = '40px';
-            fallbackButton.style.height = '40px';
-            fallbackButton.style.borderRadius = '50%';
-            fallbackButton.style.display = 'flex';
-            fallbackButton.style.justifyContent = 'center';
-            fallbackButton.style.alignItems = 'center';
-            fallbackButton.style.cursor = 'pointer';
-            fallbackButton.style.zIndex = '10000';
-            
-            fallbackButton.addEventListener('click', () => {
-                console.log("Fallback close button clicked");
-                if (this.socket) this.socket.disconnect();
-                this.cleanupModals();
-                window.location.href = '/start-game';
-            });
-            
-            document.body.appendChild(fallbackButton);
+            // Use direct navigation
+            window.location.href = '/start-game';
+            return false; // Prevent event bubbling
+        };
+
+        // Remove the original button to avoid duplicates
+        const oldCloseButton = document.getElementById('closeButton');
+        if (oldCloseButton && oldCloseButton.parentNode) {
+            oldCloseButton.parentNode.removeChild(oldCloseButton);
         }
+
+        // Add our new button to the body
+        document.body.appendChild(closeButton);
 
         window.addEventListener('keydown', (e) => {
             if (e.key === 'F10') {
@@ -416,7 +465,6 @@ export default class OnlineGame extends Game {
         });
 
         this.gameLoop = this.gameLoop.bind(this);
-
         requestAnimationFrame(this.gameLoop);
     }
 
@@ -707,19 +755,23 @@ export default class OnlineGame extends Game {
         this.score1.textContent = this.player1Score;
         this.score2.textContent = this.player2Score;
 
-        // Update player labels with usernames if available
-        if (data.player_1_username && document.getElementById('player1Label')) {
-            document.getElementById('player1Label').textContent = data.player_1_username;
+        // Update player labels with usernames from game state
+        if (document.getElementById('player1Label')) {
+            const player1Name = data.player_1_username || `Player 1`;
+            document.getElementById('player1Label').textContent = player1Name;
             
             // Store player 1 username for later use
-            this.player1Username = data.player_1_username;
+            this.player1Username = player1Name;
+            console.log("Updated Player 1 label to:", player1Name);
         }
         
-        if (data.player_2_username && document.getElementById('player2Label')) {
-            document.getElementById('player2Label').textContent = data.player_2_username;
+        if (document.getElementById('player2Label')) {
+            const player2Name = data.player_2_username || `Player 2`;
+            document.getElementById('player2Label').textContent = player2Name;
             
             // Store player 2 username for later use
-            this.player2Username = data.player_2_username;
+            this.player2Username = player2Name;
+            console.log("Updated Player 2 label to:", player2Name);
         }
 
         // Use server's ball position directly (no prediction)
@@ -797,18 +849,60 @@ export default class OnlineGame extends Game {
 
         this.networkStatus.connected = true;
 
-        // Make sure we have the username from localStorage
-        if (!this.username || this.username === "undefined" || this.username === "null") {
-            // Try to get it from sessionStorage or other source if available
-            this.username = localStorage.getItem('username') || 
-                           sessionStorage.getItem('username') || 
-                           `Player ${this.playerNumber || "Unknown"}`;
+        // Improved username handling
+        try {
+            // If username is not set or invalid, try multiple sources
+            if (!this.username || this.username === "undefined" || this.username === "null") {
+                // Try multiple sources in order of priority
+                const sources = [
+                    localStorage.getItem('current_username'),
+                    localStorage.getItem('username'),
+                    sessionStorage.getItem('username'),
+                    localStorage.getItem('nickname'),
+                    `Player ${this.playerNumber || "Unknown"}`
+                ];
+                
+                // Use the first valid value
+                for (const source of sources) {
+                    if (source && source !== "undefined" && source !== "null") {
+                        this.username = source;
+                        console.log("Using username from source:", this.username);
+                        break;
+                    }
+                }
+            }
             
-            console.log("Retrieved username from storage:", this.username);
+            // Double check we have something valid
+            if (!this.username || this.username === "undefined" || this.username === "null") {
+                this.username = `Player ${this.playerNumber || "Unknown"}`;
+                console.warn("Falling back to generic username:", this.username);
+            }
+            
+            console.log("Final username being sent to server:", this.username);
+        } catch (error) {
+            console.warn("Error handling username:", error);
+            this.username = `Player ${this.playerNumber || "Unknown"}`;
         }
 
         this.showMessage(`Connected! You are Player ${this.playerNumber}`);
 
+        // Update player label immediately based on our player number
+        if (this.playerNumber === 1 && document.getElementById('player1Label')) {
+            document.getElementById('player1Label').textContent = this.username;
+            this.player1Username = this.username;
+        } else if (this.playerNumber === 2 && document.getElementById('player2Label')) {
+            document.getElementById('player2Label').textContent = this.username;
+            this.player2Username = this.username;
+        }
+        
+        // Log what we're sending to server
+        console.log("Sending join_game with:", {
+            player_id: this.playerId,
+            username: this.username,
+            player_number: this.playerNumber
+        });
+
+        // Send join request to server
         this.socket.send('join_game', {
             player_id: this.playerId,
             username: this.username
@@ -848,20 +942,47 @@ export default class OnlineGame extends Game {
     }
 
     handlePlayerJoined(data) {
-        const username = data.username || 'Player ' + data.player_number;
+        const playerNumber = data.player_number;
+        let username = data.username || 'Player ' + playerNumber;
+        
+        // Log the player join event with details
+        console.log(`Player ${playerNumber} joined:`, {
+            username: username,
+            is_you: data.is_you,
+            my_player_number: this.playerNumber,
+            data: data
+        });
+        
         this.showMessage(`${username} joined the game`);
         
-        // Update player labels with username
-        if (data.player_number === 1 && document.getElementById('player1Label')) {
-            document.getElementById('player1Label').textContent = username;
+        // Always update player labels with the username from server
+        // This ensures consistency between what all players see
+        if (playerNumber === 1) {
+            if (document.getElementById('player1Label')) {
+                console.log(`Setting Player 1 label to: ${username}`);
+                document.getElementById('player1Label').textContent = username;
+            }
             this.player1Username = username;
-        } else if (data.player_number === 2 && document.getElementById('player2Label')) {
-            document.getElementById('player2Label').textContent = username;
+            
+            // Store in server state if it exists
+            if (this.serverState) {
+                this.serverState.player_1_username = username;
+            }
+        } else if (playerNumber === 2) {
+            if (document.getElementById('player2Label')) {
+                console.log(`Setting Player 2 label to: ${username}`);
+                document.getElementById('player2Label').textContent = username;
+            }
             this.player2Username = username;
+            
+            // Store in server state if it exists
+            if (this.serverState) {
+                this.serverState.player_2_username = username;
+            }
         }
         
-        // If this is you, update your username
-        if (data.is_you && this.playerNumber === data.player_number) {
+        // If this is you, make sure your username is consistent
+        if (data.is_you && this.playerNumber === playerNumber) {
             this.username = username;
         }
     }

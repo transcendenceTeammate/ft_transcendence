@@ -20,12 +20,23 @@ def create_room(request):
     logger.info("Create room request received")
 
     try:
+        # Check for explicit username in request body
+        requested_username = None
+        try:
+            data = json.loads(request.body)
+            requested_username = data.get('username')
+            if requested_username:
+                logger.info(f"Username provided in request body: {requested_username}")
+        except Exception as e:
+            logger.warning(f"Could not parse request body: {str(e)}")
+
         user_id = None
         username = None
         auth_header = request.headers.get('Authorization')
 
         logger.info(f"Auth header: {auth_header}")
 
+        # Try to get username from JWT token
         if auth_header and auth_header.startswith('Bearer '):
             token = auth_header.split(' ')[1]
             try:
@@ -37,10 +48,18 @@ def create_room(request):
             except Exception as e:
                 logger.error(f"Error decoding token: {str(e)}")
 
+        # If username was provided in request body, use it instead of JWT username
+        if requested_username:
+            username = requested_username
+            logger.info(f"Using username from request body: {username}")
+
+        # Fallback for guests
         if not user_id:
             user_id = f"guest-{random.randint(1000, 9999)}"
-            username = f"Guest-{user_id.split('-')[1]}"
-            logger.warning(f"Using default user_id: {user_id}, username: {username}")
+            # Only use default guest username if no username was provided
+            if not username:
+                username = f"Guest-{user_id.split('-')[1]}"
+            logger.warning(f"Using generated user_id: {user_id}, username: {username}")
 
         # Create new game with generated room code
         room_code = GameManager.generate_room_code()
@@ -48,12 +67,14 @@ def create_room(request):
 
         game = GameManager.create_game(room_code)
         game.player_1_id = user_id
+        # Store username in game state
+        game.player_1_username = username
         GameManager.save_game(game)
 
         # Add player session
         GameManager.add_player_session(room_code, user_id, 1, username)
 
-        logger.info(f"Created game room: {room_code}, player_1_id: {game.player_1_id}")
+        logger.info(f"Created game room: {room_code}, player_1_id: {game.player_1_id}, username: {username}")
 
         response_data = {
             'success': True,
@@ -88,12 +109,18 @@ def join_room(request):
                 'error': 'Room code is required'
             }, status=400)
 
+        # Check for explicit username in request body
+        requested_username = data.get('username')
+        if requested_username:
+            logger.info(f"Username provided in request body: {requested_username}")
+            
         user_id = None
         username = None
         auth_header = request.headers.get('Authorization')
 
         logger.info(f"Auth header: {auth_header}")
 
+        # Try to get username from JWT token
         if auth_header and auth_header.startswith('Bearer '):
             token = auth_header.split(' ')[1]
             try:
@@ -101,14 +128,22 @@ def join_room(request):
                 logger.info(f"Decoded token payload: {payload}")
                 user_id = str(payload.get('user_id'))
                 username = payload.get('username')
-                logger.info(f"Join room - extracted user_id from token: {user_id}")
+                logger.info(f"Join room - extracted user_id from token: {user_id}, username: {username}")
             except Exception as e:
                 logger.error(f"Join room - error decoding token: {str(e)}")
 
+        # If username was provided in request body, use it instead of JWT username
+        if requested_username:
+            username = requested_username
+            logger.info(f"Using username from request body: {username}")
+
+        # Fallback for guests
         if not user_id:
             user_id = f"guest-{random.randint(1000, 9999)}"
-            username = f"Guest-{user_id.split('-')[1]}"
-            logger.warning(f"Join room - using default user_id: {user_id}")
+            # Only use default guest username if no username was provided
+            if not username:
+                username = f"Guest-{user_id.split('-')[1]}"
+            logger.warning(f"Join room - using generated user_id: {user_id}, username: {username}")
 
         # Check if room exists
         game = GameManager.get_game(room_code)
@@ -128,6 +163,14 @@ def join_room(request):
         if game.player_1_id and game.player_2_id:
             if user_id in [game.player_1_id, game.player_2_id]:
                 player_number = 2 if user_id == game.player_2_id else 1
+
+                # Store the username in the game state for rejoining players
+                if player_number == 1:
+                    game.player_1_username = username
+                else:
+                    game.player_2_username = username
+                
+                GameManager.save_game(game)
 
                 # Update player session for reconnection
                 session = GameManager.get_player_session(room_code, user_id)
@@ -157,8 +200,10 @@ def join_room(request):
         # Update game state
         if player_number == 1:
             game.player_1_id = user_id
+            game.player_1_username = username
         else:
             game.player_2_id = user_id
+            game.player_2_username = username
             if game.status == 'WAITING':
                 game.status = 'ONGOING'
 
@@ -166,6 +211,8 @@ def join_room(request):
 
         # Add player session
         GameManager.add_player_session(room_code, user_id, player_number, username)
+
+        logger.info(f"Player {player_number} joined room {room_code}: {user_id}, username: {username}")
 
         return JsonResponse({
             'success': True,
