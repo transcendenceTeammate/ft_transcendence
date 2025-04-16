@@ -69,4 +69,4 @@ Made with ❤️ by 42 students :
 - [@ytaieb](https://github.com/jacobosss)  
 - [@olimarti](https://github.com/olimarmite)  
 - [@svydrina](https://github.com/nyagalen)  
-- [@hebernard](https://github.com/LilHenri75)  
+- [@hebernar](https://github.com/LilHenri75)  
