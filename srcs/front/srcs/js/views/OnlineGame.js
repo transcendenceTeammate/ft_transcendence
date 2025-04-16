@@ -289,7 +289,24 @@ export default class OnlineGame extends Game {
                 font-family: monospace;
                 font-size: 12px;
                 z-index: 100;
-                display: none;
+                display: block;
+            }
+            
+            .key-indicator {
+                display: inline-block;
+                width: 20px;
+                height: 20px;
+                margin: 0 5px;
+                border-radius: 3px;
+                background-color: #333;
+                text-align: center;
+                line-height: 20px;
+            }
+            
+            .key-active {
+                background-color: #2ecc71;
+                color: black;
+                font-weight: bold;
             }
         </style>
         `;
@@ -353,7 +370,7 @@ export default class OnlineGame extends Game {
     initializeSocket() {
         const token = this.getAuthToken();
 
-        let wsUrl = `wss://app.10.24.1.5.nip.io:8443/ws/game/${this.roomCode}/`;
+        let wsUrl = `wss://app.127.0.0.1.nip.io:8443/ws/game/${this.roomCode}/`;
         if (token) {
             wsUrl += `?token=${encodeURIComponent(token)}`;
         }
@@ -392,57 +409,58 @@ export default class OnlineGame extends Game {
     }
 
     setupNetworkedInput() {
-        window.removeEventListener('keydown', this._keyDownHandler);
-        window.removeEventListener('keyup', this._keyUpHandler);
+        // First, remove any existing event listeners
+        if (this._keyDownHandler) {
+            window.removeEventListener('keydown', this._keyDownHandler);
+        }
+        if (this._keyUpHandler) {
+            window.removeEventListener('keyup', this._keyUpHandler);
+        }
 
+        // Define the key handlers
         this._keyDownHandler = (e) => {
             if (!this.playerNumber) return;
-
-            let keyChanged = false;
-
-            if (this.playerNumber === 1 || this.playerNumber === 2) {
-                if (e.key === "w" || e.key === "ArrowUp") {
-                    if (!this.upPressed) {
-                        this.upPressed = true;
-                        keyChanged = true;
-                        this.sendInput("up", true);
-                    }
+            
+            if (e.key === "w" || e.key === "ArrowUp") {
+                if (!this.upPressed) {
+                    this.upPressed = true;
+                    this.sendInput("up", true);
+                    console.log("UP key pressed");
                 }
-                if (e.key === "s" || e.key === "ArrowDown") {
-                    if (!this.downPressed) {
-                        this.downPressed = true;
-                        keyChanged = true;
-                        this.sendInput("down", true);
-                    }
+            }
+            if (e.key === "s" || e.key === "ArrowDown") {
+                if (!this.downPressed) {
+                    this.downPressed = true;
+                    this.sendInput("down", true);
+                    console.log("DOWN key pressed");
                 }
             }
         };
 
         this._keyUpHandler = (e) => {
             if (!this.playerNumber) return;
-
-            let keyChanged = false;
-
-            if (this.playerNumber === 1 || this.playerNumber === 2) {
-                if (e.key === "w" || e.key === "ArrowUp") {
-                    if (this.upPressed) {
-                        this.upPressed = false;
-                        keyChanged = true;
-                        this.sendInput("up", false);
-                    }
+            
+            if (e.key === "w" || e.key === "ArrowUp") {
+                if (this.upPressed) {
+                    this.upPressed = false;
+                    this.sendInput("up", false);
+                    console.log("UP key released");
                 }
-                if (e.key === "s" || e.key === "ArrowDown") {
-                    if (this.downPressed) {
-                        this.downPressed = false;
-                        keyChanged = true;
-                        this.sendInput("down", false);
-                    }
+            }
+            if (e.key === "s" || e.key === "ArrowDown") {
+                if (this.downPressed) {
+                    this.downPressed = false;
+                    this.sendInput("down", false);
+                    console.log("DOWN key released");
                 }
             }
         };
 
+        // Add the event listeners
         window.addEventListener('keydown', this._keyDownHandler);
         window.addEventListener('keyup', this._keyUpHandler);
+        
+        console.log("Input handlers set up for player", this.playerNumber);
     }
 
     sendInput(key, isDown) {
@@ -501,25 +519,37 @@ export default class OnlineGame extends Game {
     }
 
     processPlayerInput(deltaTime) {
-        if (!this.playerNumber || this.paused) return;
-
+        if (!this.playerNumber) return;
+        
+        // Skip input processing if game is paused, except for spectator mode
+        if (this.paused && this.player1Score + this.player2Score > 0) return;
+        
         // Calculate paddle movement speed adjusted for frame rate
         const actualPaddleSpeed = this.paddleSpeed * deltaTime * 60;
-
+        
+        // Debug input state
+        if (this.upPressed || this.downPressed) {
+            console.log("Processing input - Up:", this.upPressed, "Down:", this.downPressed);
+        }
+        
         // Update local paddle position based on input
         if (this.playerNumber === 1) {
             if (this.upPressed) {
                 this.player1Y = Math.max(0, this.player1Y - actualPaddleSpeed);
+                console.log("Moving P1 paddle up, new position:", this.player1Y);
             }
             if (this.downPressed) {
                 this.player1Y = Math.min(this.canvas.height - this.paddleHeight, this.player1Y + actualPaddleSpeed);
+                console.log("Moving P1 paddle down, new position:", this.player1Y);
             }
         } else if (this.playerNumber === 2) {
             if (this.upPressed) {
                 this.player2Y = Math.max(0, this.player2Y - actualPaddleSpeed);
+                console.log("Moving P2 paddle up, new position:", this.player2Y);
             }
             if (this.downPressed) {
                 this.player2Y = Math.min(this.canvas.height - this.paddleHeight, this.player2Y + actualPaddleSpeed);
+                console.log("Moving P2 paddle down, new position:", this.player2Y);
             }
         }
     }
@@ -864,11 +894,31 @@ export default class OnlineGame extends Game {
         if (this.socket && this.socket.connected) {
             indicator.classList.remove('disconnected', 'connecting');
             indicator.classList.add('connected');
-            pingDisplay.textContent = "Connected";
+            pingDisplay.textContent = `P${this.playerNumber || "S"} Connected`;
+            pingDisplay.style.color = '#2ecc71'; // Green
         } else {
             indicator.classList.remove('connected', 'connecting');
             indicator.classList.add('disconnected');
             pingDisplay.textContent = "Disconnected";
+            pingDisplay.style.color = '#e74c3c'; // Red
+        }
+        
+        // Add player number and input state to debug info
+        const debugInfo = document.getElementById('debugInfo');
+        if (debugInfo) {
+            const upState = this.upPressed ? "YES" : "no";
+            const downState = this.downPressed ? "YES" : "no";
+            const inputStateDiv = document.createElement('div');
+            inputStateDiv.innerHTML = `<strong>Input:</strong> UP=${upState}, DOWN=${downState}`;
+            
+            // Replace if exists, otherwise append
+            const existingInputState = debugInfo.querySelector('[data-info="input-state"]');
+            if (existingInputState) {
+                existingInputState.replaceWith(inputStateDiv);
+            } else {
+                inputStateDiv.setAttribute('data-info', 'input-state');
+                debugInfo.appendChild(inputStateDiv);
+            }
         }
     }
 
@@ -876,23 +926,33 @@ export default class OnlineGame extends Game {
         const debugInfo = document.getElementById('debugInfo');
         if (!debugInfo) return;
 
-        // Show simplified debug info
-        const info = {
-            'Player': this.playerNumber || 'Spectator',
-            'Connected': this.socket?.connected ? 'Yes' : 'No',
-            'Ball Position': `(${Math.round(this.ballX)}, ${Math.round(this.ballY)})`,
-            'Ball Speed': `(${Math.round(this.ballSpeedX)}, ${Math.round(this.ballSpeedY)})`,
-            'P1 Position': Math.round(this.player1Y),
-            'P2 Position': Math.round(this.player2Y),
-            'Game Paused': this.paused ? 'Yes' : 'No',
-            'Update Rate': `${this.paddleUpdateRate}ms`
-        };
-
-        let html = '';
-        for (const [key, value] of Object.entries(info)) {
-            html += `<div><strong>${key}:</strong> ${value}</div>`;
+        // Create a more detailed debug display
+        debugInfo.innerHTML = `
+            <div><strong>Player:</strong> ${this.playerNumber || 'Spectator'}</div>
+            <div><strong>Connected:</strong> ${this.socket?.connected ? 'Yes' : 'No'}</div>
+            <div><strong>Game Paused:</strong> ${this.paused ? 'Yes' : 'No'}</div>
+            <div class="control-status">
+                <strong>Controls:</strong> 
+                <span class="key-indicator ${this.upPressed ? 'key-active' : ''}">↑</span>
+                <span class="key-indicator ${this.downPressed ? 'key-active' : ''}">↓</span>
+            </div>
+            <div><strong>P1 Position:</strong> ${Math.round(this.player1Y)}</div>
+            <div><strong>P2 Position:</strong> ${Math.round(this.player2Y)}</div>
+            <div><strong>Ball:</strong> (${Math.round(this.ballX)}, ${Math.round(this.ballY)})</div>
+            <div><strong>Ball Speed:</strong> (${Math.round(this.ballSpeedX)}, ${Math.round(this.ballSpeedY)})</div>
+            <div><strong>Update Rate:</strong> ${this.paddleUpdateRate}ms</div>
+        `;
+        
+        // Add key press event monitor
+        if (!this._debugKeyMonitor) {
+            this._debugKeyMonitor = true;
+            
+            // Show key presses in console
+            window.addEventListener('keydown', (e) => {
+                if (['w', 's', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+                    console.log(`Key pressed: ${e.key}`);
+                }
+            });
         }
-
-        debugInfo.innerHTML = html;
     }
 }
