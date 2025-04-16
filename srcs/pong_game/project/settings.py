@@ -141,8 +141,7 @@ CACHES = {
 }
 
 # Pong Game Service Settings
-USER_MANAGEMENT_URL = os.environ.get('USER_MANAGEMENT_URL', 'http://user_management:8000')
-API_KEY = os.environ.get('API_KEY', '')
+USER_MANAGEMENT_URL = os.getenv('API_URL')
 
 # Game cleanup settings
 FINISHED_GAME_TTL = 300  # Time to keep finished games (5 minutes)
