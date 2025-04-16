@@ -7,7 +7,7 @@ from rich.panel import Panel
 from rich.align import Align
 from textual.validation import Function, Number, ValidationResult, Validator
 
-from srcs.data.api import userManager
+# from srcs.data.api import userManager
 
 
 class SignUpScreen(Screen):
@@ -29,7 +29,7 @@ class SignUpScreen(Screen):
         password_input = self.query_one("#passwordInput", Input).value
         
         try:
-            userManager.signup(username_input, password_input)
+            # userManager.signup(username_input, password_input)
             self.notify(
                 f"Sign-up successful! Welcome, {username_input}!",
                 title="Sign-Up Success",
