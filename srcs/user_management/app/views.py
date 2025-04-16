@@ -306,11 +306,8 @@ def list_friends(request):
 	})
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def create_game(request):
-    api_key = request.headers.get('Authorization')
-    if not api_key or api_key != f"Api-Key {os.getenv('API_KEY')}":
-        return Response({"error": "Invalid or missing API key."}, status=status.HTTP_403_FORBIDDEN)
-
     player_1_id = request.data.get('player_1')
     player_2_id = request.data.get('player_2')
     score_1 = request.data.get('score_1')

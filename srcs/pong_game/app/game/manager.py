@@ -305,21 +305,16 @@ class GameManager:
 
         try:
             game_data = {
-                'room_code': game.room_code,
-                'player_1_id': game.player_1_id,
-                'player_2_id': game.player_2_id,
-                'player_1_score': game.player_1_score,
-                'player_2_score': game.player_2_score,
-                'winner_id': game.player_1_id if game.player_1_score > game.player_2_score else game.player_2_id,
-                'duration': (time.time() - game.created_at),
-                'finished_at': time.time()
+                'player_1': game.player_1_id,
+                'player_2': game.player_2_id,
+                'score_1': game.player_1_score,
+                'score_2': game.player_2_score,
             }
             api_key = os.getenv('API_KEY')
             async with aiohttp.ClientSession() as session:
-                url = f"{settings.USER_MANAGEMENT_URL}/api/games/add/"
+                url = f"{settings.USER_MANAGEMENT_URL}/api/game/add/"
                 headers = {'Content-Type': 'application/json'}
-                headers['Authorization'] = f"Api-Key {api_key}"
-
+                logger.info(f"POST Request to {url} with data: {game_data}")
                 async with session.post(url, json=game_data, headers=headers) as response:
                     if response.status != 201:
                         logger.error(f"Failed to record game result: {await response.text()}")
