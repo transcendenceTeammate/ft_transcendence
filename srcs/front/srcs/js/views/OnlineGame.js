@@ -43,7 +43,7 @@ class SimpleWebSocket {
             this.socket.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
-                    
+
                     // Simple ping handling
                     if (data.type === 'ping') {
                         this.socket.send(JSON.stringify({
@@ -53,7 +53,7 @@ class SimpleWebSocket {
                         }));
                         return;
                     }
-                    
+
                     if (data.type) {
                         this.emit(data.type, data);
                     }
@@ -85,7 +85,7 @@ class SimpleWebSocket {
             this.log('Failed to create WebSocket:', error);
             this.isConnecting = false;
             this.emit('error', error);
-            
+
             // Try to reconnect
             this.reconnectAttempts++;
             setTimeout(() => this.connect(), this.options.reconnectInterval);
@@ -186,19 +186,19 @@ export default class OnlineGame extends Game {
 
         this.socket = null;
         this.serverState = null;
-        
+
         // Timing variables for fixed timestep loop
         this.lastFrameTime = 0;
         this.fixedDeltaTime = 1000 / 60; // 60 FPS target
         this.accumulator = 0;
-        
+
         // Game state tracking
         this._lastSentPosition = null;
         this._lastStatusUpdate = 0;
         this._lastDebugUpdate = 0;
         this._lastMessageTime = 0;
         this.lastPaddleUpdate = 0;
-        
+
         // Position update rate (reduced from 16ms to 50ms = 20 updates/sec)
         this.paddleUpdateRate = 50;
 
@@ -353,7 +353,7 @@ export default class OnlineGame extends Game {
     initializeSocket() {
         const token = this.getAuthToken();
 
-        let wsUrl = `wss://app.127.0.0.1.nip.io:8443/ws/game/${this.roomCode}/`;
+        let wsUrl = `wss://app.10.24.1.5.nip.io:8443/ws/game/${this.roomCode}/`;
         if (token) {
             wsUrl += `?token=${encodeURIComponent(token)}`;
         }
@@ -464,48 +464,48 @@ export default class OnlineGame extends Game {
         const currentTime = timestamp || performance.now();
         let deltaTime = this.lastFrameTime ? currentTime - this.lastFrameTime : this.fixedDeltaTime;
         this.lastFrameTime = currentTime;
-        
+
         // Cap delta time to prevent spiraling with large gaps
         if (deltaTime > 100) deltaTime = 100;
-        
+
         // Fixed time step accumulation
         this.accumulator += deltaTime;
-        
+
         // Process input immediately for responsiveness
         this.processPlayerInput(deltaTime / 1000);
-        
+
         // Update with fixed time steps
         while (this.accumulator >= this.fixedDeltaTime) {
             this.update(this.fixedDeltaTime / 1000);
             this.accumulator -= this.fixedDeltaTime;
         }
-        
+
         // Render at display refresh rate
         this.draw();
-        
+
         // Update network status (rate limited)
         const now = currentTime;
         if (now - this._lastStatusUpdate > 500) {
             this.updateConnectionStatus();
             this._lastStatusUpdate = now;
-            
+
             // Update debug info if overlay is visible
             const debugOverlay = document.getElementById('debugOverlay');
             if (debugOverlay && debugOverlay.style.display === 'block') {
                 this.updateDebugInfo();
             }
         }
-        
+
         // Continue loop
         requestAnimationFrame(this.gameLoop);
     }
 
     processPlayerInput(deltaTime) {
         if (!this.playerNumber || this.paused) return;
-        
+
         // Calculate paddle movement speed adjusted for frame rate
         const actualPaddleSpeed = this.paddleSpeed * deltaTime * 60;
-        
+
         // Update local paddle position based on input
         if (this.playerNumber === 1) {
             if (this.upPressed) {
@@ -523,11 +523,11 @@ export default class OnlineGame extends Game {
             }
         }
     }
-    
+
     update(deltaTime) {
         // Interpolate opponent paddle position
         this.interpolateOpponentPaddle();
-        
+
         // Send paddle position updates (rate limited)
         const now = Date.now();
         if (now - this.lastPaddleUpdate > this.paddleUpdateRate) {
@@ -538,10 +538,10 @@ export default class OnlineGame extends Game {
 
     interpolateOpponentPaddle() {
         if (!this.serverState) return;
-        
+
         // Simple interpolation factor (lower = smoother but more lag)
         const factor = 0.15;
-        
+
         if (this.playerNumber === 1) {
             // Player 1's opponent is Player 2
             const targetY = this.serverState.player_2_paddle_y;
@@ -560,7 +560,7 @@ export default class OnlineGame extends Game {
             // Spectator mode - interpolate both paddles
             const target1Y = this.serverState.player_1_paddle_y;
             const target2Y = this.serverState.player_2_paddle_y;
-            
+
             this.player1Y += (target1Y - this.player1Y) * factor;
             this.player2Y += (target2Y - this.player2Y) * factor;
         }
@@ -598,7 +598,7 @@ export default class OnlineGame extends Game {
         this.ballY = data.ball_y;
         this.ballSpeedX = data.ball_speed_x;
         this.ballSpeedY = data.ball_speed_y;
-        
+
         // Update game state
         this.paused = data.is_paused;
         this.lastLoser = data.last_loser;
@@ -735,9 +735,9 @@ export default class OnlineGame extends Game {
     handleGameOver(data) {
         this.gameOver = true;
         const winner = data.winner === 1 ? "Player 1" : "Player 2";
-        
+
         this.showMessage(`Game Over! ${winner} wins!`, 10000);
-        
+
         // Show game over screen and redirect after a delay
         setTimeout(() => {
             if (this.playerNumber) {
@@ -792,13 +792,13 @@ export default class OnlineGame extends Game {
         const position = this.playerNumber === 1 ? this.player1Y : this.player2Y;
 
         // Only send if position has changed significantly
-        if (this._lastSentPosition !== null && 
+        if (this._lastSentPosition !== null &&
             Math.abs(this._lastSentPosition - position) <= 2) {
             return;
         }
-        
+
         this._lastSentPosition = position;
-        
+
         this.socket.send('paddle_position', {
             player_number: this.playerNumber,
             position: position

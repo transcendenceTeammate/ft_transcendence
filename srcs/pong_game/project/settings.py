@@ -65,7 +65,7 @@ WSGI_APPLICATION = 'project.wsgi.application'
 ASGI_APPLICATION = 'project.asgi.application'
 
 
-# Database 
+# Database
 # We're using in-memory storage for game state, but Django still requires a database configuration
 # This uses SQLite but the app doesn't actually use any database models
 
@@ -130,7 +130,7 @@ CHANNEL_LAYERS = {
 }
 
 ##CORS_ALLOWED_ORIGINS = [
-##    'https://app.127.0.0.1.nip.io:8443',
+##    'https://app.10.24.1.5.nip.io:8443',
 ##]
 
 ##CORS_ALLOW_CREDENTIALS = True
