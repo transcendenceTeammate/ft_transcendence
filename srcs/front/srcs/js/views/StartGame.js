@@ -2,6 +2,9 @@ import AbstractView from "./AbstractView.js";
 import User from "../user/User.js";
 import { Navbar } from "../components/Navbar.js";
 import { assignAvatar, assignUsername } from "../user/UserApiCalls.js";
+import CONFIG from "../config.js";
+import { RouterService } from "../services/router/RouterService.js";
+
 
 export default class StartGame extends AbstractView {
 	constructor() {
@@ -81,7 +84,6 @@ export default class StartGame extends AbstractView {
 					console.error("Error joining room:", error);
 					alert("Failed to join room. Please check the code and try again.");
 
-					// Reset button state
 					this.joinGameButton.disabled = false;
 					this.joinGameButton.textContent = "JOIN GAME";
 				}
@@ -497,8 +499,7 @@ export default class StartGame extends AbstractView {
                             console.log("Redirecting to game room:", roomCode);
 
                             this.cleanupModalsBeforeNavigation();
-
-                            window.location.href = location.origin + '/online-game?room=' + roomCode;
+                            RouterService.getInstance().navigateTo('/online-game?room=' + roomCode);
                         }, 800);
                     }
                 } else {

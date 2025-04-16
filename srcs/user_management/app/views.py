@@ -152,7 +152,7 @@ def get_access_token(request):
 	if request.method == "POST":
 		client_id = "VOTRE_CLIENT_ID"
 		client_secret = "VOTRE_CLIENT_SECRET"
-		redirect_uri = "http://10.24.1.3.nip.io:8000/auth42/"
+		redirect_uri = "http://10.24.1.3.nip.io:8443/auth42/"
 		code = request.POST.get("code")
 
 		url = "https://api.intra.42.fr/oauth/token"

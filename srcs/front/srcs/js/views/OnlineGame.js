@@ -1,6 +1,9 @@
 import AbstractView from "./AbstractView.js";
 import Game from "./Game.js";
 import GameConstants from "../core/GameConstants.js";
+import { RouterService } from "../services/router/RouterService.js";
+import CONFIG from "../config.js";
+
 
 class SimpleWebSocket {
     constructor(url, options = {}) {
@@ -175,7 +178,7 @@ export default class OnlineGame extends Game {
 
         if (!this.roomCode) {
             console.error("No room code provided");
-            window.location.href = '/start-game';
+            RouterService.getInstance().navigateTo(`/start-game`);
             return;
         }
 
@@ -366,7 +369,7 @@ export default class OnlineGame extends Game {
     initializeSocket() {
         const token = this.getAuthToken();
 
-        let wsUrl = new WebSocket(this._baseUrl.replace(/^http/, "ws") + "/ws/game");
+        let wsUrl = `${CONFIG.BASE_URL.replace(/^http/, "ws")}/ws/game/${this.roomCode}/`;
         if (token) {
             wsUrl += `?token=${encodeURIComponent(token)}`;
         }
@@ -944,12 +947,12 @@ export default class OnlineGame extends Game {
         const currentRoom = this.roomCode;
 
         // Reload the page with the same room code
-        window.location.href = `/game?room=${currentRoom}&replay=true`;
+        RouterService.getInstance().navigateTo(`/game?room=${currentRoom}&replay=true`);
     }
 
     handleQuit() {
         // Redirect to the start game page
-        window.location.href = '/start-game';
+        RouterService.getInstance().navigateTo(`/start-game`);
     }
 
     handleGamePaused(data) {
