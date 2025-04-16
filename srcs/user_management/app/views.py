@@ -20,7 +20,6 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth import login
 from rest_framework_simplejwt.tokens import AccessToken
 import os
-from dotenv import load_dotenv
 from urllib.parse import urlencode
 from rest_framework.exceptions import ValidationError
 
@@ -88,7 +87,6 @@ def signup(request):
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def oauth_redirect_uri(request):
-	load_dotenv()
 	client_id = os.getenv('CLIENT_ID')
 	redirect_uri = os.getenv('API_URL') + '/auth42/'
 	query = urlencode({
@@ -107,7 +105,6 @@ def auth42(request):
 	if not code:
 		return Response({'error': 'No authorization code provided'}, status=status.HTTP_400_BAD_REQUEST)
 
-	load_dotenv()
 	client_id = os.getenv('CLIENT_ID')
 	client_secret = os.getenv('CLIENT_SECRET')
 	redirect_uri = os.getenv('API_URL') + '/auth42/'
@@ -150,29 +147,9 @@ def auth42(request):
 	return response
 
 
-
-def get_access_token(request):
-	if request.method == "POST":
-		client_id = "VOTRE_CLIENT_ID"
-		client_secret = "VOTRE_CLIENT_SECRET"
-		redirect_uri = "http://10.24.1.5.nip.io:8000/auth42/"
-		code = request.POST.get("code")
-
-		url = "https://api.intra.42.fr/oauth/token"
-		data = {
-			"grant_type": "authorization_code",
-			"client_id": client_id,
-			"client_secret": client_secret,
-			"code": code,
-			"redirect_uri": redirect_uri,
-		}
-		response = requests.post(url, data=data)
-		return JsonResponse(response.json(), safe=False)
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_info(request):
-	load_dotenv()
 	API_URL = os.getenv('API_URL')
 	user = request.user
 	image_url = API_URL + user.profile.picture.url if user.profile.picture and user.profile.picture.url else None
@@ -185,7 +162,6 @@ def get_user_info(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def upload_profile_picture(request):
-	load_dotenv()
 	user = request.user
 	image_file = request.FILES.get('image')
 
