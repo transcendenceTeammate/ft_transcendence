@@ -27,7 +27,62 @@ git clone https://github.com/your-repo/ft_transcendence.git
 cd ft_transcendence  
 ```
 
-### 2️⃣ Launch the App  
+### 2️⃣ Create the Environment
+
+
+1. **Create the `.env` file** at the root of the project:
+
+   ```bash
+   touch .env
+   ```
+
+2. **Complete the `.env` file with the following information:**
+
+   ```env
+   # -------------------------
+   # 🔧 PostgreSQL Configuration
+   # -------------------------
+
+   POSTGRES_DB=postgres               # PostgreSQL database name
+   POSTGRES_USER=postgres             # PostgreSQL username
+   POSTGRES_PASSWORD=postgres         # PostgreSQL password
+
+   # -------------------------------
+   # 🗄 Application Database Access
+   # -------------------------------
+
+   DB_HOST=postgres                   # Hostname of the PostgreSQL container (if using Docker)
+   DB_PORT=5432                       # Default PostgreSQL port
+   DB_USER=$POSTGRES_USER             # Reuse the PostgreSQL username
+   DB_PASSWORD=$POSTGRES_PASSWORD     # Reuse the PostgreSQL password
+   DB_NAME=$POSTGRES_DB               # Reuse the PostgreSQL database name
+
+   # -------------------------
+   # 🌐 Django Configuration
+   # -------------------------
+
+   ALLOWED_HOSTS=localhost,app.192.168.1.25.nip.io   # Hosts allowed to access Django
+   JWT_SECRET_KEY=your-secret-key-here               # Secret key for JWT tokens (customize this)
+
+   # -------------------------
+   # 👤 Django Admin Configuration
+   # -------------------------
+
+   ADMIN_USERNAME=admin                # Django superuser username
+   ADMIN_EMAIL=admin@example.com       # Django superuser email
+   ADMIN_PASSWORD=admin                # Django superuser password
+
+   # -------------------------
+   # 🔐 42 API OAuth2 Configuration
+   # -------------------------
+
+   CLIENT_ID=your-client-id-42             # Client ID obtained from https://api.intra.42.fr
+   CLIENT_SECRET=your-client-secret-42     # Secret associated with the Client ID
+   API_URL=https://api.app.127.0.1.nip.io:8443    # Full API backend URL (use your IP)
+   BASE_URL=https://app.127.0.0.1.nip.io:8443       # Frontend URL (use your IP as well)
+   ```
+
+### 4️⃣ Launch the App  
 Build and start the project:  
 ```bash  
 make
@@ -37,12 +92,12 @@ make
 Open your browser and go to the URL:  
 🌐 [https://localhost:8443](https://localhost:8443)  
 
-### 4️⃣ Sign In 🔐  
+### 5️⃣ Sign In 🔐  
 Authenticate using:  
 - 42 Intra login (OAuth2)  
 - Or register a custom account  
 
-### 5️⃣ Play the Game 🎮  
+### 6️⃣ Play the Game 🎮  
 Choose from multiple game modes:  
 - 🧍‍♂️ **Local Game**: Play 1v1 on the same machine  
 - 🏆 **Local Tournament**: Set up a mini bracket with friends  
