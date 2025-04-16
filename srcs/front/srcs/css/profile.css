@@ -73,22 +73,24 @@ main {
 
 h3.text-center {
 	background-color: rgb(77, 77, 77);
+	width: 600px;
 	color: white;
 	padding: 15px;
 	border-radius: 5px;
 	margin-bottom: 0;
-	margin-left: 150px;
+	margin-left: 110px;
 	margin-top: -420px;
 	font-size: 1.5em;
 }
 
 .table-responsive {
 	max-height: 300px;
+	width: 600px;
 	overflow-y: auto;
 	margin-top: 0;
 	margin-bottom: 30px;
 	background-color: rgba(255, 255, 255, 0.9);
-	margin-left: 150px;
+	margin-left: 110px;
 	border-radius: 8px;
 	user-select: none;
 }
