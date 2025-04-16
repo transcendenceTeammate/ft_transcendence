@@ -391,6 +391,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                 'scorer': scorer,
                 'player_1_score': game.player_1_score,
                 'player_2_score': game.player_2_score,
+                'player_1_username': game.player_1_username,
+                'player_2_username': game.player_2_username,
                 'timestamp': time.time() * 1000
             }
         )
@@ -409,6 +411,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                 'winner': winner,
                 'player_1_score': game.player_1_score,
                 'player_2_score': game.player_2_score,
+                'player_1_username': game.player_1_username,
+                'player_2_username': game.player_2_username,
                 'timestamp': time.time() * 1000
             }
         )
@@ -498,6 +502,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             'scorer': event['scorer'],
             'player_1_score': event['player_1_score'],
             'player_2_score': event['player_2_score'],
+            'player_1_username': event.get('player_1_username'),
+            'player_2_username': event.get('player_2_username'),
             'timestamp': event['timestamp']
         }))
 
@@ -508,5 +514,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             'winner': event['winner'],
             'player_1_score': event['player_1_score'],
             'player_2_score': event['player_2_score'],
+            'player_1_username': event.get('player_1_username'),
+            'player_2_username': event.get('player_2_username'),
             'timestamp': event['timestamp']
         }))

@@ -23,6 +23,10 @@ class GameState:
         self.player_1_id = None
         self.player_2_id = None
         
+        # Add player usernames
+        self.player_1_username = None
+        self.player_2_username = None
+        
         self.player_1_score = 0
         self.player_2_score = 0
         
@@ -174,6 +178,8 @@ class GameState:
             'status': self.status,
             'player_1_id': self.player_1_id,
             'player_2_id': self.player_2_id,
+            'player_1_username': self.player_1_username,
+            'player_2_username': self.player_2_username,
             'player_1_score': self.player_1_score,
             'player_2_score': self.player_2_score,
             'player_1_paddle_y': self.player_1_paddle_y,

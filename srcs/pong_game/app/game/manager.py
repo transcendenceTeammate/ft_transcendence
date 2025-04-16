@@ -258,6 +258,7 @@ class GameManager:
         # Assign player 1 position if available
         if not game.player_1_id:
             game.player_1_id = player_id
+            game.player_1_username = username  # Store username in game state
             cls.save_game(game)
 
             cls.add_player_session(room_code, player_id, 1, username)
@@ -266,6 +267,7 @@ class GameManager:
         # Assign player 2 position if available
         elif not game.player_2_id:
             game.player_2_id = player_id
+            game.player_2_username = username  # Store username in game state
             cls.save_game(game)
 
             cls.add_player_session(room_code, player_id, 2, username)

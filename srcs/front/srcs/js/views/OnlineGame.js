@@ -321,11 +321,23 @@ export default class OnlineGame extends Game {
 
         this.initializeSocket();
 
-        // Set up the close button handler
+        // Set up the close button handler with multiple approaches for reliability
         const closeButton = document.getElementById('closeButton');
         if (closeButton) {
             console.log("Found close button, attaching event listener");
-            closeButton.addEventListener('click', () => {
+            
+            // Remove any existing event listeners
+            closeButton.replaceWith(closeButton.cloneNode(true));
+            
+            // Get the fresh reference
+            const refreshedCloseButton = document.getElementById('closeButton');
+            
+            // Make the button more visible for debugging
+            refreshedCloseButton.style.cursor = 'pointer';
+            refreshedCloseButton.style.zIndex = '9999';
+            
+            // Use multiple event types for better reliability
+            const handleCloseClick = () => {
                 console.log("Close button clicked");
                 
                 // Close socket connections
@@ -336,11 +348,54 @@ export default class OnlineGame extends Game {
                 // Clean up any modals that might be open
                 this.cleanupModals();
                 
-                // Redirect to start-game page
-                window.location.href = '/start-game';
+                // Try navigation via the router service first
+                try {
+                    RouterService.getInstance().navigateTo('/start-game');
+                } catch (error) {
+                    console.error("Router navigation failed, using direct navigation", error);
+                    // Fallback to direct navigation
+                    window.location.href = '/start-game';
+                }
+            };
+            
+            refreshedCloseButton.addEventListener('click', handleCloseClick);
+            refreshedCloseButton.addEventListener('mouseup', handleCloseClick);
+            
+            // Add touchend event for mobile support
+            refreshedCloseButton.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                handleCloseClick();
             });
         } else {
             console.error("Close button not found");
+            
+            // Create a fallback close button if the original isn't found
+            const fallbackButton = document.createElement('div');
+            fallbackButton.id = 'fallbackCloseButton';
+            fallbackButton.innerHTML = '&times;';
+            fallbackButton.style.position = 'absolute';
+            fallbackButton.style.top = '10px';
+            fallbackButton.style.right = '10px';
+            fallbackButton.style.fontSize = '30px';
+            fallbackButton.style.color = 'white';
+            fallbackButton.style.backgroundColor = 'rgba(255, 0, 0, 0.7)';
+            fallbackButton.style.width = '40px';
+            fallbackButton.style.height = '40px';
+            fallbackButton.style.borderRadius = '50%';
+            fallbackButton.style.display = 'flex';
+            fallbackButton.style.justifyContent = 'center';
+            fallbackButton.style.alignItems = 'center';
+            fallbackButton.style.cursor = 'pointer';
+            fallbackButton.style.zIndex = '10000';
+            
+            fallbackButton.addEventListener('click', () => {
+                console.log("Fallback close button clicked");
+                if (this.socket) this.socket.disconnect();
+                this.cleanupModals();
+                window.location.href = '/start-game';
+            });
+            
+            document.body.appendChild(fallbackButton);
         }
 
         window.addEventListener('keydown', (e) => {
@@ -349,6 +404,14 @@ export default class OnlineGame extends Game {
                 if (debugOverlay) {
                     debugOverlay.style.display = debugOverlay.style.display === 'none' ? 'block' : 'none';
                 }
+            }
+            
+            // Add Escape key as an alternative way to exit the game
+            if (e.key === 'Escape') {
+                console.log("Escape key pressed, exiting game");
+                if (this.socket) this.socket.disconnect();
+                this.cleanupModals();
+                window.location.href = '/start-game';
             }
         });
 
@@ -644,6 +707,21 @@ export default class OnlineGame extends Game {
         this.score1.textContent = this.player1Score;
         this.score2.textContent = this.player2Score;
 
+        // Update player labels with usernames if available
+        if (data.player_1_username && document.getElementById('player1Label')) {
+            document.getElementById('player1Label').textContent = data.player_1_username;
+            
+            // Store player 1 username for later use
+            this.player1Username = data.player_1_username;
+        }
+        
+        if (data.player_2_username && document.getElementById('player2Label')) {
+            document.getElementById('player2Label').textContent = data.player_2_username;
+            
+            // Store player 2 username for later use
+            this.player2Username = data.player_2_username;
+        }
+
         // Use server's ball position directly (no prediction)
         this.ballX = data.ball_x;
         this.ballY = data.ball_y;
@@ -719,6 +797,16 @@ export default class OnlineGame extends Game {
 
         this.networkStatus.connected = true;
 
+        // Make sure we have the username from localStorage
+        if (!this.username || this.username === "undefined" || this.username === "null") {
+            // Try to get it from sessionStorage or other source if available
+            this.username = localStorage.getItem('username') || 
+                           sessionStorage.getItem('username') || 
+                           `Player ${this.playerNumber || "Unknown"}`;
+            
+            console.log("Retrieved username from storage:", this.username);
+        }
+
         this.showMessage(`Connected! You are Player ${this.playerNumber}`);
 
         this.socket.send('join_game', {
@@ -760,7 +848,22 @@ export default class OnlineGame extends Game {
     }
 
     handlePlayerJoined(data) {
-        this.showMessage(`${data.username || 'Player ' + data.player_number} joined the game`);
+        const username = data.username || 'Player ' + data.player_number;
+        this.showMessage(`${username} joined the game`);
+        
+        // Update player labels with username
+        if (data.player_number === 1 && document.getElementById('player1Label')) {
+            document.getElementById('player1Label').textContent = username;
+            this.player1Username = username;
+        } else if (data.player_number === 2 && document.getElementById('player2Label')) {
+            document.getElementById('player2Label').textContent = username;
+            this.player2Username = username;
+        }
+        
+        // If this is you, update your username
+        if (data.is_you && this.playerNumber === data.player_number) {
+            this.username = username;
+        }
     }
 
     handlePlayerLeft(data) {
@@ -775,8 +878,12 @@ export default class OnlineGame extends Game {
 
         this.lastLoser = data.scorer === 1 ? 2 : 1;
 
-        const scorer = data.scorer === 1 ? "Player 1" : "Player 2";
-        this.showMessage(`Goal! ${scorer} scored`);
+        // Use username if available, otherwise use default "Player X"
+        const scorerUsername = data.scorer === 1 ? 
+            (this.player1Username || "Player 1") : 
+            (this.player2Username || "Player 2");
+            
+        this.showMessage(`Goal! ${scorerUsername} scored`);
 
         if (this.playerNumber === this.lastLoser) {
             this.showMessage("Press SPACE to start the ball", 5000);
@@ -790,31 +897,28 @@ export default class OnlineGame extends Game {
         const loserScore = data.winner === 1 ? data.player_2_score : data.player_1_score;
         const isWinner = (this.playerNumber === data.winner);
 
-        // Show a brief message
         this.showMessage(`Game Over! ${winner} wins!`, 3000);
 
-        // Show the game recap modal
         this.showGameRecap(winner, winnerScore, loserScore, isWinner);
     }
 
     showGameRecap(winner, winnerScore, loserScore, isWinner) {
-        // Remove any existing recap modal
         const existingModal = document.getElementById('gameRecapModal');
         if (existingModal) {
             document.body.removeChild(existingModal);
         }
 
-        // Create the game recap modal
         const recapModal = document.createElement('div');
         recapModal.id = 'gameRecapModal';
         recapModal.classList.add('game-recap-modal');
 
-        // Determine appropriate message based on win/loss
         const resultMessage = isWinner ?
             'Congratulations! You won!' :
             'Game over! Better luck next time!';
+            
+        const winnerName = winner === "Player 1" ? (this.player1Username || "Player 1") : 
+                                                 (this.player2Username || "Player 2");
 
-        // Build the modal content
         recapModal.innerHTML = `
             <div class="game-recap-content">
                 <h2 class="game-recap-title">${resultMessage}</h2>
@@ -826,11 +930,11 @@ export default class OnlineGame extends Game {
                             <span class="score-divider">-</span>
                             <span class="score-value">${loserScore}</span>
                         </div>
-                        <span class="winner-name">${winner} wins!</span>
+                        <span class="winner-name">${winnerName} wins!</span>
                     </div>
                 </div>
                 <div class="game-recap-buttons">
-                    <button id="quitButton" class="recap-button quit-button" onclick="window.location.href='/start-game'">Return to Menu</button>
+                    <button id="quitButton" class="recap-button quit-button">Return to Menu</button>
                 </div>
             </div>
         `;
@@ -856,10 +960,6 @@ export default class OnlineGame extends Game {
                 from { opacity: 0; }
                 to { opacity: 1; }
             }
-
-            /* Game recap content styling moved above */
-
-            /* Removing close button styles that were mistakenly added */
             
             .game-recap-title {
                 color: ${isWinner ? '#4caf50' : '#e74c3c'};
@@ -953,11 +1053,10 @@ export default class OnlineGame extends Game {
         document.head.appendChild(styles);
         document.body.appendChild(recapModal);
 
-        // Add event listener to quit button using direct onclick attribute
+        // Add event listener to quit button - using addEventListener instead of onclick
         const quitButton = document.getElementById('quitButton');
         if (quitButton) {
-            // Add direct onclick handler
-            quitButton.onclick = function() {
+            quitButton.addEventListener('click', () => {
                 console.log("Return to menu button clicked");
                 
                 try {
@@ -977,53 +1076,21 @@ export default class OnlineGame extends Game {
                     document.body.style.overflow = '';
                     document.body.style.paddingRight = '';
                     
-                    // Use direct window.location.href for more reliable navigation
-                    console.log("Navigating to start-game page");
-                    window.location.href = '/start-game';
+                    // First try RouterService, then direct navigation as fallback
+                    try {
+                        RouterService.getInstance().navigateTo('/start-game');
+                    } catch (error) {
+                        console.error("RouterService navigation failed, using direct navigation", error);
+                        window.location.href = '/start-game';
+                    }
                 } catch (error) {
                     console.error("Error in quit button handler:", error);
-                    // Fallback navigation
-                    window.location.href = '/start-game';
+                    // Final fallback navigation
+                    window.location.replace('/start-game');
                 }
-                
-                return false; // Prevent default behavior
-            };
+            });
         } else {
             console.error("Quit button not found in the DOM");
-        }
-        
-        // Add event handler for the close button
-        const closeButton = document.getElementById('closeRecapButton');
-        if (closeButton) {
-            closeButton.onclick = function() {
-                console.log("Close button clicked");
-                try {
-                    // Clean up modal
-                    const modalEl = document.getElementById('gameRecapModal');
-                    if (modalEl) {
-                        document.body.removeChild(modalEl);
-                    }
-                    
-                    // Clean up artifacts
-                    document.querySelectorAll('.modal-backdrop').forEach(el => {
-                        if (el.parentNode) el.parentNode.removeChild(el);
-                    });
-                    
-                    // Reset body styles
-                    document.body.classList.remove('modal-open');
-                    document.body.style.overflow = '';
-                    document.body.style.paddingRight = '';
-                    
-                    // Navigate to start page
-                    console.log("Navigating to start-game page from close button");
-                    window.location.href = '/start-game';
-                } catch (error) {
-                    console.error("Error in close button handler:", error);
-                    // Fallback navigation
-                    window.location.href = '/start-game';
-                }
-                return false;
-            };
         }
     }
 
