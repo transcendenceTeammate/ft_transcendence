@@ -8,6 +8,7 @@ setup-env:
 	@chmod +x setup_env.sh
 	@./setup_env.sh
 
+
 # Build all services
 build:
 	docker compose build

@@ -23,26 +23,38 @@ Developed using modern web technologies, it features:
 ### 1️⃣ Clone the Repository  
 Get the project on your machine:  
 ```bash  
-git clone https://github.com/your-repo/ft_transcendence.git  
+git clone https://github.com/transcendenceTeammate/ft_transcendence.git  
 cd ft_transcendence  
 ```
 
-### 2️⃣ Launch the App  
+### 2️⃣ Create the Environment
+
+
+1. **Create the `.env` file** at the root of the project:
+
+   ```bash
+   touch .env
+   ```
+
+2. **Fill in the `.env` file using the values from `env.template` as a reference**.
+
+
+### 3️⃣ Launch the App  
 Build and start the project:  
 ```bash  
-make
+make all
 ```
 
-### 3️⃣ Access the Web Interface  
+### 4️⃣ Access the Web Interface  
 Open your browser and go to the URL:  
 🌐 [https://localhost:8443](https://localhost:8443)  
 
-### 4️⃣ Sign In 🔐  
+### 5️⃣ Sign In 🔐  
 Authenticate using:  
 - 42 Intra login (OAuth2)  
 - Or register a custom account  
 
-### 5️⃣ Play the Game 🎮  
+### 6️⃣ Play the Game 🎮  
 Choose from multiple game modes:  
 - 🧍‍♂️ **Local Game**: Play 1v1 on the same machine  
 - 🏆 **Local Tournament**: Set up a mini bracket with friends  
@@ -57,4 +69,4 @@ Made with ❤️ by 42 students :
 - [@ytaieb](https://github.com/jacobosss)  
 - [@olimarti](https://github.com/olimarmite)  
 - [@svydrina](https://github.com/nyagalen)  
-- [@hebernard](https://github.com/LilHenri75)  
+- [@hebernar](https://github.com/LilHenri75)  
