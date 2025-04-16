@@ -235,6 +235,9 @@ export default class OnlineGame extends Game {
         }
 
         let html = await response.text();
+        
+        // Let's log the HTML to see what we're working with
+        console.log("Game HTML content:", html.substring(0, 500) + "...");
 
         html = html.replace(
             '<div id="scoreContainer">',
@@ -317,6 +320,28 @@ export default class OnlineGame extends Game {
         this.initGame();
 
         this.initializeSocket();
+
+        // Set up the close button handler
+        const closeButton = document.getElementById('closeButton');
+        if (closeButton) {
+            console.log("Found close button, attaching event listener");
+            closeButton.addEventListener('click', () => {
+                console.log("Close button clicked");
+                
+                // Close socket connections
+                if (this.socket) {
+                    this.socket.disconnect();
+                }
+                
+                // Clean up any modals that might be open
+                this.cleanupModals();
+                
+                // Redirect to start-game page
+                window.location.href = '/start-game';
+            });
+        } else {
+            console.error("Close button not found");
+        }
 
         window.addEventListener('keydown', (e) => {
             if (e.key === 'F10') {
@@ -805,7 +830,7 @@ export default class OnlineGame extends Game {
                     </div>
                 </div>
                 <div class="game-recap-buttons">
-                    <button id="quitButton" class="recap-button quit-button">Return to Menu</button>
+                    <button id="quitButton" class="recap-button quit-button" onclick="window.location.href='/start-game'">Return to Menu</button>
                 </div>
             </div>
         `;
@@ -823,7 +848,7 @@ export default class OnlineGame extends Game {
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                z-index: 1000;
+                z-index: 9999;
                 animation: fadeIn 0.3s ease-out;
             }
 
@@ -832,7 +857,19 @@ export default class OnlineGame extends Game {
                 to { opacity: 1; }
             }
 
+            /* Game recap content styling moved above */
+
+            /* Removing close button styles that were mistakenly added */
+            
+            .game-recap-title {
+                color: ${isWinner ? '#4caf50' : '#e74c3c'};
+                margin-top: 0;
+                font-size: 28px;
+                margin-bottom: 20px;
+            }
+            
             .game-recap-content {
+                position: relative;
                 background-color: #222;
                 border-radius: 8px;
                 padding: 30px;
@@ -841,13 +878,6 @@ export default class OnlineGame extends Game {
                 text-align: center;
                 box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
                 border: 2px solid #444;
-            }
-
-            .game-recap-title {
-                color: ${isWinner ? '#4caf50' : '#e74c3c'};
-                margin-top: 0;
-                font-size: 28px;
-                margin-bottom: 20px;
             }
 
             .game-recap-score {
@@ -898,10 +928,10 @@ export default class OnlineGame extends Game {
             }
 
             .recap-button {
-                padding: 12px 30px;
+                padding: 15px 30px;
                 border: none;
                 border-radius: 4px;
-                font-size: 16px;
+                font-size: 18px;
                 font-weight: bold;
                 cursor: pointer;
                 transition: all 0.2s;
@@ -910,6 +940,8 @@ export default class OnlineGame extends Game {
                 color: white;
                 width: 100%;
                 max-width: 250px;
+                position: relative;
+                z-index: 10000;
             }
 
             .quit-button:hover {
@@ -921,27 +953,78 @@ export default class OnlineGame extends Game {
         document.head.appendChild(styles);
         document.body.appendChild(recapModal);
 
-        // Add event listener to quit button
-        document.getElementById('quitButton').addEventListener('click', () => {
-            // Force cleanup of the modal
-            const modalEl = document.getElementById('gameRecapModal');
-            if (modalEl) {
-                document.body.removeChild(modalEl);
-            }
-            
-            // Clean up any other modal artifacts
-            document.querySelectorAll('.modal-backdrop').forEach(el => {
-                if (el.parentNode) el.parentNode.removeChild(el);
-            });
-            
-            // Reset body styles
-            document.body.classList.remove('modal-open');
-            document.body.style.overflow = '';
-            document.body.style.paddingRight = '';
-            
-            // Use window.location for more reliable navigation
-            window.location.href = '/start-game';
-        });
+        // Add event listener to quit button using direct onclick attribute
+        const quitButton = document.getElementById('quitButton');
+        if (quitButton) {
+            // Add direct onclick handler
+            quitButton.onclick = function() {
+                console.log("Return to menu button clicked");
+                
+                try {
+                    // Force cleanup of the modal
+                    const modalEl = document.getElementById('gameRecapModal');
+                    if (modalEl) {
+                        document.body.removeChild(modalEl);
+                    }
+                    
+                    // Clean up any other modal artifacts
+                    document.querySelectorAll('.modal-backdrop').forEach(el => {
+                        if (el.parentNode) el.parentNode.removeChild(el);
+                    });
+                    
+                    // Reset body styles
+                    document.body.classList.remove('modal-open');
+                    document.body.style.overflow = '';
+                    document.body.style.paddingRight = '';
+                    
+                    // Use direct window.location.href for more reliable navigation
+                    console.log("Navigating to start-game page");
+                    window.location.href = '/start-game';
+                } catch (error) {
+                    console.error("Error in quit button handler:", error);
+                    // Fallback navigation
+                    window.location.href = '/start-game';
+                }
+                
+                return false; // Prevent default behavior
+            };
+        } else {
+            console.error("Quit button not found in the DOM");
+        }
+        
+        // Add event handler for the close button
+        const closeButton = document.getElementById('closeRecapButton');
+        if (closeButton) {
+            closeButton.onclick = function() {
+                console.log("Close button clicked");
+                try {
+                    // Clean up modal
+                    const modalEl = document.getElementById('gameRecapModal');
+                    if (modalEl) {
+                        document.body.removeChild(modalEl);
+                    }
+                    
+                    // Clean up artifacts
+                    document.querySelectorAll('.modal-backdrop').forEach(el => {
+                        if (el.parentNode) el.parentNode.removeChild(el);
+                    });
+                    
+                    // Reset body styles
+                    document.body.classList.remove('modal-open');
+                    document.body.style.overflow = '';
+                    document.body.style.paddingRight = '';
+                    
+                    // Navigate to start page
+                    console.log("Navigating to start-game page from close button");
+                    window.location.href = '/start-game';
+                } catch (error) {
+                    console.error("Error in close button handler:", error);
+                    // Fallback navigation
+                    window.location.href = '/start-game';
+                }
+                return false;
+            };
+        }
     }
 
     // These functions have been replaced by inline code in showGameRecap
