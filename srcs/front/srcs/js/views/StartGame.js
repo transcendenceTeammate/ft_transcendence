@@ -292,6 +292,14 @@ export default class StartGame extends AbstractView {
 
                 // Start polling for second player
                 this.pollForSecondPlayer(data.room_code);
+                
+                setTimeout(() => {
+                    if (this.pollingInterval) {
+                        console.log("No player joined after timeout, navigating to game room directly");
+                        this.cleanupModalsBeforeNavigation();
+                        takeMeThere(location.origin + '/online-game?room=' + data.room_code);
+                    }
+                }, 60000); 
             } else {
                 console.error("Error creating room:", data.error);
                 alert(`Error creating room: ${data.error}`);
@@ -313,6 +321,13 @@ export default class StartGame extends AbstractView {
         } finally {
             // Reset the flag to allow future create room attempts
             this.isCreateRoomInProgress = false;
+            
+            setTimeout(() => {
+                if (this.createGameButton) {
+                    this.createGameButton.disabled = false;
+                    this.createGameButton.textContent = "CREATE GAME";
+                }
+            }, 500);
         }
     }
 
