@@ -298,8 +298,8 @@ def create_game(request):
 		return Response({"error": "All fields (player_1, player_2, score_1, score_2) are required."}, status=status.HTTP_400_BAD_REQUEST)
 
 	try:
-		player_1 = Profile.objects.get(id=player_1_id)
-		player_2 = Profile.objects.get(id=player_2_id)
+		player_1 = Profile.objects.get(user__id=player_1_id)
+		player_2 = Profile.objects.get(user__id=player_2_id)
 	except Profile.DoesNotExist:
 		return Response({"error": "One or both users not found."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -334,6 +334,7 @@ def get_game_history(request):
 
 		if opponent_game_data:
 			game_history.append({
+				"game_date": game_data.game.date,
 				"PlayerA_nickname": game_data.user.nickname,
 				"PlayerA_score": game_data.score,
 				"PlayerA_isWinner": game_data.is_winner,
