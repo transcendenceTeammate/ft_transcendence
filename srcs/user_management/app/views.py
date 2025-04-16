@@ -317,8 +317,8 @@ def create_game(request):
         return Response({"error": "All fields (player_1, player_2, score_1, score_2) are required."}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        player_1 = Profile.objects.get(id=player_1_id)
-        player_2 = Profile.objects.get(id=player_2_id)
+        player_1 = Profile.objects.get(id=player_1_id - 1)
+        player_2 = Profile.objects.get(id=player_2_id - 1)
     except Profile.DoesNotExist:
         return Response({"error": "One or both users not found."}, status=status.HTTP_404_NOT_FOUND)
 
