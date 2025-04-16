@@ -326,7 +326,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 
                 game = GameManager.get_game(self.room_code)
                 if not game or game.status == 'FINISHED':
-                    # If game is finished, send result to user_management service
                     if game and game.status == 'FINISHED':
                         await GameManager.record_game_result(game)
                     break
@@ -397,7 +396,12 @@ class GameConsumer(AsyncWebsocketConsumer):
         )
 
     async def handle_game_over(self, game, winner):
-        """Handle game over event"""
+        """Handle game over event and record game result"""
+        # Mark game as finished
+        game.status = 'FINISHED'
+        GameManager.save_game(game)
+        
+        # Send game over message to clients
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -408,6 +412,13 @@ class GameConsumer(AsyncWebsocketConsumer):
                 'timestamp': time.time() * 1000
             }
         )
+        
+        # Record game result to user_management service
+        try:
+            logger.info(f"Recording game result for room {self.room_code}")
+            await GameManager.record_game_result(game)
+        except Exception as e:
+            logger.error(f"Failed to record game result: {str(e)}")
 
     async def send_full_game_state(self, game):
         """Send full game state to the client"""

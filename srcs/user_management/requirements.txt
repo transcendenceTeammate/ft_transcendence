@@ -3,7 +3,6 @@ psycopg2-binary
 requests
 djangorestframework
 djangorestframework-simplejwt
-python-dotenv
 django-cors-headers
 django-extensions
 pyOpenSSL

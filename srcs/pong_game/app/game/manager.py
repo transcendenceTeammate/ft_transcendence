@@ -12,7 +12,6 @@ from .player import PlayerSession
 
 logger = logging.getLogger(__name__)
 
-# Initialize Redis connection for state caching and synchronization between instances
 try:
     redis_client = redis.Redis(
         host=settings.REDIS_HOST,
@@ -34,6 +33,10 @@ class GameManager:
     _games = {}  # room_code -> GameState
     _player_sessions = {}  # (room_code, player_id) -> PlayerSession
     _player_to_room = {}  # player_id -> room_code
+
+    _games = {}
+    _player_sessions = {}
+    _player_to_room = {}
     _cleanup_scheduled = False
 
     @classmethod
@@ -68,7 +71,7 @@ class GameManager:
 
     @classmethod
     def _schedule_cleanup(cls):
-        """Schedule periodic cleanup of finished games"""
+        """Schedule periodic cleanup of finished games and inactive sessions"""
         cls._cleanup_scheduled = True
 
         async def cleanup_job():
@@ -96,10 +99,10 @@ class GameManager:
 
         # Get or create event loop
         try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError as e:
-            logger.error(f"No running event loop: {str(e)}")
-            return
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
 
         # Schedule the cleanup task
         loop.create_task(cleanup_job())
@@ -107,7 +110,6 @@ class GameManager:
     @classmethod
     def get_game(cls, room_code):
         """Get a game by room code, first checking Redis then memory"""
-        # Try to get from memory first
         if room_code in cls._games:
             return cls._games[room_code]
 
@@ -204,12 +206,39 @@ class GameManager:
 
     @classmethod
     def update_player_session(cls, room_code, player_id, connected=True):
-        """Update a player session's connected status"""
+        """Update a player session's connected status with proper disconnect tracking"""
         key = (room_code, player_id)
         if key in cls._player_sessions:
-            cls._player_sessions[key].connected = connected
-            cls._player_sessions[key].last_active = time.time()
-            return cls._player_sessions[key]
+            session = cls._player_sessions[key]
+            if connected:
+                session.mark_connected()
+            else:
+                session.mark_disconnected()
+
+                # Log the disconnection for monitoring
+                game = cls.get_game(room_code)
+                if game:
+                    player_type = "Unknown"
+                    if game.player_1_id == player_id:
+                        player_type = "Player 1"
+                    elif game.player_2_id == player_id:
+                        player_type = "Player 2"
+
+                    logger.info(f"Player disconnected: {player_id} ({player_type}) from game {room_code}")
+
+                    # If game is waiting and this was the only player, mark for potential quick cleanup
+                    if game.status == 'WAITING' and (
+                        (game.player_1_id == player_id and not game.player_2_id) or
+                        (game.player_2_id == player_id and not game.player_1_id)
+                    ):
+                        logger.info(f"Solo player disconnected from waiting game {room_code}")
+
+            return session
+
+        # If we're marking a session as connected but it doesn't exist, create it
+        if connected and room_code and player_id:
+            logger.warning(f"Attempted to update non-existent player session: {player_id} in {room_code}")
+
         return None
 
     @classmethod
@@ -272,7 +301,6 @@ class GameManager:
             return
 
         try:
-            # Prepare game result data
             game_data = {
                 'room_code': game.room_code,
                 'player_1_id': game.player_1_id,

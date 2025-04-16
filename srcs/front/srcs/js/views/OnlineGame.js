@@ -2,7 +2,6 @@ import AbstractView from "./AbstractView.js";
 import Game from "./Game.js";
 import GameConstants from "../core/GameConstants.js";
 
-// Simplified WebSocket class with essential reconnection features
 class SimpleWebSocket {
     constructor(url, options = {}) {
         this.url = url;
@@ -187,19 +186,16 @@ export default class OnlineGame extends Game {
         this.socket = null;
         this.serverState = null;
 
-        // Timing variables for fixed timestep loop
         this.lastFrameTime = 0;
-        this.fixedDeltaTime = 1000 / 60; // 60 FPS target
+        this.fixedDeltaTime = 1000 / 60;
         this.accumulator = 0;
 
-        // Game state tracking
         this._lastSentPosition = null;
         this._lastStatusUpdate = 0;
         this._lastDebugUpdate = 0;
         this._lastMessageTime = 0;
         this.lastPaddleUpdate = 0;
 
-        // Position update rate (reduced from 16ms to 50ms = 20 updates/sec)
         this.paddleUpdateRate = 50;
 
         this.networkStatus = {
@@ -370,7 +366,7 @@ export default class OnlineGame extends Game {
     initializeSocket() {
         const token = this.getAuthToken();
 
-        let wsUrl = `wss://app.10.24.1.3.nip.io:8443/ws/game/${this.roomCode}/`;
+        let wsUrl = new WebSocket(this._baseUrl.replace(/^http/, "ws") + "/ws/game");
         if (token) {
             wsUrl += `?token=${encodeURIComponent(token)}`;
         }
@@ -378,7 +374,7 @@ export default class OnlineGame extends Game {
         this.socket = new SimpleWebSocket(wsUrl, {
             reconnectInterval: 1000,
             maxReconnectAttempts: 5,
-            debug: true // Enable debugging
+            debug: true
         });
 
         this.socket.on('connect', this.handleConnect.bind(this));
@@ -409,7 +405,6 @@ export default class OnlineGame extends Game {
     }
 
     setupNetworkedInput() {
-        // First, remove any existing event listeners
         if (this._keyDownHandler) {
             window.removeEventListener('keydown', this._keyDownHandler);
         }
@@ -417,7 +412,6 @@ export default class OnlineGame extends Game {
             window.removeEventListener('keyup', this._keyUpHandler);
         }
 
-        // Define the key handlers
         this._keyDownHandler = (e) => {
             if (!this.playerNumber) return;
 
@@ -456,7 +450,6 @@ export default class OnlineGame extends Game {
             }
         };
 
-        // Add the event listeners
         window.addEventListener('keydown', this._keyDownHandler);
         window.addEventListener('keyup', this._keyUpHandler);
 
@@ -765,15 +758,198 @@ export default class OnlineGame extends Game {
     handleGameOver(data) {
         this.gameOver = true;
         const winner = data.winner === 1 ? "Player 1" : "Player 2";
+        const winnerScore = data.winner === 1 ? data.player_1_score : data.player_2_score;
+        const loserScore = data.winner === 1 ? data.player_2_score : data.player_1_score;
+        const isWinner = (this.playerNumber === data.winner);
 
-        this.showMessage(`Game Over! ${winner} wins!`, 10000);
+        // Show a brief message
+        this.showMessage(`Game Over! ${winner} wins!`, 3000);
 
-        // Show game over screen and redirect after a delay
-        setTimeout(() => {
-            if (this.playerNumber) {
-                window.location.href = '/game-results?room=' + this.roomCode;
+        // Show the game recap modal
+        this.showGameRecap(winner, winnerScore, loserScore, isWinner);
+    }
+
+    showGameRecap(winner, winnerScore, loserScore, isWinner) {
+        // Remove any existing recap modal
+        const existingModal = document.getElementById('gameRecapModal');
+        if (existingModal) {
+            document.body.removeChild(existingModal);
+        }
+
+        // Create the game recap modal
+        const recapModal = document.createElement('div');
+        recapModal.id = 'gameRecapModal';
+        recapModal.classList.add('game-recap-modal');
+
+        // Determine appropriate message based on win/loss
+        const resultMessage = isWinner ?
+            'Congratulations! You won!' :
+            'Game over! Better luck next time!';
+
+        // Build the modal content
+        recapModal.innerHTML = `
+            <div class="game-recap-content">
+                <h2 class="game-recap-title">${resultMessage}</h2>
+                <div class="game-recap-score">
+                    <div class="score-display">
+                        <span class="score-label">Final Score</span>
+                        <div class="score-numbers">
+                            <span class="score-value">${winnerScore}</span>
+                            <span class="score-divider">-</span>
+                            <span class="score-value">${loserScore}</span>
+                        </div>
+                        <span class="winner-name">${winner} wins!</span>
+                    </div>
+                </div>
+                <div class="game-recap-buttons">
+                    <button id="replayButton" class="recap-button replay-button">Play Again</button>
+                    <button id="quitButton" class="recap-button quit-button">Quit</button>
+                </div>
+            </div>
+        `;
+
+        // Add styles to the modal
+        const styles = document.createElement('style');
+        styles.textContent = `
+            .game-recap-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.7);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+                animation: fadeIn 0.3s ease-out;
             }
-        }, 5000);
+
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+
+            .game-recap-content {
+                background-color: #222;
+                border-radius: 8px;
+                padding: 30px;
+                width: 80%;
+                max-width: 500px;
+                text-align: center;
+                box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+                border: 2px solid #444;
+            }
+
+            .game-recap-title {
+                color: ${isWinner ? '#4caf50' : '#e74c3c'};
+                margin-top: 0;
+                font-size: 28px;
+                margin-bottom: 20px;
+            }
+
+            .game-recap-score {
+                background-color: #333;
+                border-radius: 8px;
+                padding: 20px;
+                margin-bottom: 30px;
+            }
+
+            .score-label {
+                display: block;
+                color: #ccc;
+                font-size: 16px;
+                margin-bottom: 10px;
+            }
+
+            .score-numbers {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-bottom: 10px;
+            }
+
+            .score-value {
+                font-size: 48px;
+                font-weight: bold;
+                color: white;
+            }
+
+            .score-divider {
+                font-size: 36px;
+                margin: 0 15px;
+                color: #666;
+            }
+
+            .winner-name {
+                display: block;
+                color: ${isWinner ? '#4caf50' : '#e74c3c'};
+                font-size: 20px;
+                font-weight: bold;
+                margin-top: 10px;
+            }
+
+            .game-recap-buttons {
+                display: flex;
+                justify-content: center;
+                gap: 20px;
+            }
+
+            .recap-button {
+                padding: 12px 24px;
+                border: none;
+                border-radius: 4px;
+                font-size: 16px;
+                font-weight: bold;
+                cursor: pointer;
+                transition: all 0.2s;
+                text-transform: uppercase;
+            }
+
+            .replay-button {
+                background-color: #4caf50;
+                color: white;
+            }
+
+            .replay-button:hover {
+                background-color: #3d8b40;
+            }
+
+            .quit-button {
+                background-color: #e74c3c;
+                color: white;
+            }
+
+            .quit-button:hover {
+                background-color: #c0392b;
+            }
+        `;
+
+        // Add the modal and styles to the document
+        document.head.appendChild(styles);
+        document.body.appendChild(recapModal);
+
+        // Add event listeners to buttons
+        document.getElementById('replayButton').addEventListener('click', () => {
+            this.handleReplay();
+        });
+
+        document.getElementById('quitButton').addEventListener('click', () => {
+            this.handleQuit();
+        });
+    }
+
+    handleReplay() {
+        // Create a new game in the same room
+        const currentRoom = this.roomCode;
+
+        // Reload the page with the same room code
+        window.location.href = `/game?room=${currentRoom}&replay=true`;
+    }
+
+    handleQuit() {
+        // Redirect to the start game page
+        window.location.href = '/start-game';
     }
 
     handleGamePaused(data) {
