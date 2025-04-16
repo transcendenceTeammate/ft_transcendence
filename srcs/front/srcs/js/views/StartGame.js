@@ -11,8 +11,6 @@ export default class StartGame extends AbstractView {
 		super();
 		this.setTitle("StartGame");
 		this.pollingInterval = null;
-		this.username = null;
-		this.isCreateRoomInProgress = false; // Flag to prevent double API calls
 	}
 
 	async loadElements() {
@@ -36,11 +34,6 @@ export default class StartGame extends AbstractView {
 		await this.loadElements();
 
 		if(this.classicButton) {
-			// Clear any existing event listeners
-			const newClassicButton = this.classicButton.cloneNode(true);
-			this.classicButton.parentNode.replaceChild(newClassicButton, this.classicButton);
-			this.classicButton = newClassicButton;
-			
 			this.classicButton.addEventListener('click', (e) => {
 				e.preventDefault();
 				takeMeThere(location.origin + '/game');
@@ -48,11 +41,6 @@ export default class StartGame extends AbstractView {
 		}
 
 		if(this.tournamentButton) {
-			// Clear any existing event listeners
-			const newTournamentButton = this.tournamentButton.cloneNode(true);
-			this.tournamentButton.parentNode.replaceChild(newTournamentButton, this.tournamentButton);
-			this.tournamentButton = newTournamentButton;
-			
 			this.tournamentButton.addEventListener('click', (e) => {
 				e.preventDefault();
 				takeMeThere(location.origin + '/tournament');
@@ -60,37 +48,18 @@ export default class StartGame extends AbstractView {
 		}
 
 		if(this.createGameButton) {
-			// Clear any existing event listeners
-			const newCreateButton = this.createGameButton.cloneNode(true);
-			this.createGameButton.parentNode.replaceChild(newCreateButton, this.createGameButton);
-			this.createGameButton = newCreateButton;
-			
-			// Add new event listener with protection against double calls
 			this.createGameButton.addEventListener('click', async (e) => {
 				e.preventDefault();
-				console.log("Create game button clicked");
-				
-				// Check if already in progress
-				if (this.isCreateRoomInProgress) {
-					console.log("Creation already in progress, ignoring click");
-					return;
-				}
-				
-				// Set in-progress flag
-				this.isCreateRoomInProgress = true;
-				
-				// Hide the modal
+
 				const currentModal = bootstrap.Modal.getInstance(document.getElementById('create_join_div'));
 				if (currentModal) {
 					currentModal.hide();
 				}
 
-				// Update button UI
 				this.createGameButton.disabled = true;
 				this.createGameButton.textContent = "Creating...";
 
 				try {
-					// The createRoom method now handles the API call
 					await this.createRoom();
 				} catch (error) {
 					console.error("Error creating room:", error);
@@ -98,21 +67,11 @@ export default class StartGame extends AbstractView {
 
 					this.createGameButton.disabled = false;
 					this.createGameButton.textContent = "CREATE GAME";
-				} finally {
-					// Reset the flag regardless of outcome
-					setTimeout(() => {
-						this.isCreateRoomInProgress = false;
-					}, 1000); // Add a small delay to prevent rapid re-clicks
 				}
 			});
 		}
 
 		if(this.joinGameButton) {
-			// Clear any existing event listeners
-			const newJoinButton = this.joinGameButton.cloneNode(true);
-			this.joinGameButton.parentNode.replaceChild(newJoinButton, this.joinGameButton);
-			this.joinGameButton = newJoinButton;
-			
 			this.joinGameButton.addEventListener('click', async (e) => {
 				e.preventDefault();
 
@@ -131,11 +90,6 @@ export default class StartGame extends AbstractView {
 			});
 
 			if(this.roomCodeInput) {
-				// Reset event listeners for room code input
-				const newRoomCodeInput = this.roomCodeInput.cloneNode(true);
-				this.roomCodeInput.parentNode.replaceChild(newRoomCodeInput, this.roomCodeInput);
-				this.roomCodeInput = newRoomCodeInput;
-				
 				this.roomCodeInput.addEventListener('keyup', (e) => {
 					if (e.key === 'Enter') {
 						e.preventDefault();
@@ -146,11 +100,6 @@ export default class StartGame extends AbstractView {
 		}
 
 		if(this.closeWaitingModal) {
-			// Clear any existing event listeners
-			const newCloseButton = this.closeWaitingModal.cloneNode(true);
-			this.closeWaitingModal.parentNode.replaceChild(newCloseButton, this.closeWaitingModal);
-			this.closeWaitingModal = newCloseButton;
-			
 			this.closeWaitingModal.addEventListener('click', () => {
 				if (this.pollingInterval) {
 					clearInterval(this.pollingInterval);
@@ -160,28 +109,15 @@ export default class StartGame extends AbstractView {
 				console.log("Waiting modal closed by user");
 			});
 		}
-		
-		console.log("All JS attached with event listener cleanup");
 	}
 
 	async createRoom() {
-        // Prevent double API calls
-        if (this.isCreateRoomInProgress) {
-            console.log("Create room already in progress, ignoring duplicate call");
-            return;
-        }
-        
-        this.isCreateRoomInProgress = true;
-        
         try {
             console.log("Creating room...");
 
-            // Get the username from various sources in order of priority
-            const username = this.getUsernameFromSources();
-            console.log("Using username for room creation:", username);
-
-            // Prepare request headers with auth token
+            // Button state is already set in the event handler, don't set it again here
             const authToken = this.getAuthToken();
+
             const headers = {
                 'Content-Type': 'application/json',
             };
@@ -189,15 +125,10 @@ export default class StartGame extends AbstractView {
             if (authToken) {
                 headers['Authorization'] = `Bearer ${authToken}`;
             }
-            
-            // Add username to the request body
-            const requestBody = username ? JSON.stringify({ username: username }) : null;
 
-            // Send API request with username in the body if available
             const response = await fetch(`${CONFIG.API_URL}/api/room/create/`, {
                 method: 'POST',
                 headers: headers,
-                body: requestBody, // Send username in the request body
                 credentials: 'include',
                 mode: 'cors'
             });
@@ -229,35 +160,24 @@ export default class StartGame extends AbstractView {
 
                 console.log(`Room code created: ${data.room_code}`);
 
-                // Store game information in localStorage
                 localStorage.setItem('current_player_number', '1');
                 localStorage.setItem('current_room_code', data.room_code);
 
                 if (data.player_id) {
                     localStorage.setItem('current_player_id', data.player_id);
                 }
-                
-                // Make sure we store the username that the server knows us by
                 if (data.username) {
                     localStorage.setItem('current_username', data.username);
-                    this.username = data.username;
-                    console.log("Server recognized us as:", data.username);
-                } else if (username) {
-                    // If server didn't return a username but we sent one, store what we sent
-                    localStorage.setItem('current_username', username);
                 }
 
-                // Show waiting modal
                 const waitingModal = new bootstrap.Modal(document.getElementById('waiting_modal'));
                 waitingModal.show();
 
-                // Update room code display
                 const roomCodeValue = document.querySelector('#roomCodeDisplay .room-code-value');
                 if (roomCodeValue) {
                     roomCodeValue.textContent = data.room_code;
                 }
 
-                // Set up copy button functionality
                 const copyButton = document.getElementById('copyRoomCode');
                 if (copyButton) {
                     copyButton.onclick = () => {
@@ -284,13 +204,11 @@ export default class StartGame extends AbstractView {
                     };
                 }
 
-                // Update modal text
                 const modalSubtext = document.querySelector('#waiting_modal .text-muted');
                 if (modalSubtext) {
                     modalSubtext.innerHTML = `Share this code with your opponent: <strong>${data.room_code}</strong>`;
                 }
 
-                // Start polling for second player
                 this.pollForSecondPlayer(data.room_code);
             } else {
                 console.error("Error creating room:", data.error);
@@ -310,9 +228,6 @@ export default class StartGame extends AbstractView {
                 this.createGameButton.disabled = false;
                 this.createGameButton.textContent = "CREATE GAME";
             }
-        } finally {
-            // Reset the flag to allow future create room attempts
-            this.isCreateRoomInProgress = false;
         }
     }
 
@@ -354,10 +269,6 @@ export default class StartGame extends AbstractView {
             this.joinGameButton.disabled = true;
             this.joinGameButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Joining...';
 
-            // Get username from sources
-            const username = this.getUsernameFromSources();
-            console.log("Using username for joining room:", username);
-
             const authToken = this.getAuthToken();
 
             const headers = {
@@ -368,7 +279,6 @@ export default class StartGame extends AbstractView {
                 headers['Authorization'] = `Bearer ${authToken}`;
             }
 
-            // First check if the room exists and is joinable
             try {
                 const checkResponse = await fetch(`${CONFIG.API_URL}/api/room/check/${roomCode}/`, {
                     method: 'GET',
@@ -400,28 +310,16 @@ export default class StartGame extends AbstractView {
                 return;
             }
 
-            // Create request body with room code AND username
-            const requestBody = {
-                room_code: roomCode
-            };
-            
-            // Add username if available
-            if (username) {
-                requestBody.username = username;
-            }
-
-            // Send join request with username
             const response = await fetch(`${CONFIG.API_URL}/api/room/join/`, {
                 method: 'POST',
                 headers: headers,
-                body: JSON.stringify(requestBody),
+                body: JSON.stringify({ room_code: roomCode }),
                 credentials: 'include'
             });
 
             const data = await response.json();
 
             if(data.success) {
-                // Show joining modal
                 const joinModal = document.createElement('div');
                 joinModal.className = 'modal fade';
                 joinModal.id = 'joiningModal';
@@ -443,25 +341,16 @@ export default class StartGame extends AbstractView {
                 const bsJoinModal = new bootstrap.Modal(joinModal);
                 bsJoinModal.show();
 
-                // Store game information in localStorage
                 localStorage.setItem('current_room_code', data.room_code);
                 localStorage.setItem('current_player_number', data.player_number.toString());
 
                 if (data.player_id) {
                     localStorage.setItem('current_player_id', data.player_id);
                 }
-                
-                // Make sure we store the username that the server knows us by
                 if (data.username) {
                     localStorage.setItem('current_username', data.username);
-                    this.username = data.username;
-                    console.log("Server recognized us as:", data.username);
-                } else if (username) {
-                    // If server didn't return a username but we sent one, store what we sent
-                    localStorage.setItem('current_username', username);
                 }
 
-                // Navigate to game after a short delay
                 setTimeout(() => {
                     this.cleanupModalsBeforeNavigation();
 
@@ -655,48 +544,6 @@ export default class StartGame extends AbstractView {
         }, pollInterval);
     }
 
-	// Helper method to get username from various sources (same approach as Navbar)
-	getUsernameFromSources() {
-		// If we already have a username from MyProfileProvider (highest priority)
-		if (this.username) {
-			console.log("Using cached username:", this.username);
-			return this.username;
-		}
-		
-		// Try to get username from various storage locations
-		const sources = [
-			localStorage.getItem('current_username'),
-			localStorage.getItem('username'),
-			sessionStorage.getItem('username'),
-			document.querySelector('.navbar-nav .nav-link span')?.textContent
-		];
-		
-		// Use the first valid value
-		for (const source of sources) {
-			if (source && source !== "undefined" && source !== "null" && source !== "username") {
-				console.log("Found username in source:", source);
-				return source;
-			}
-		}
-		
-		// If all else fails, try to get it from the MyProfileProvider again
-		try {
-			const myProfileProvider = window.myProfileProvider;
-			if (myProfileProvider && myProfileProvider.usernameStream && 
-				myProfileProvider.usernameStream.value && 
-				myProfileProvider.usernameStream.value !== "username") {
-				
-				console.log("Getting username from global MyProfileProvider:", myProfileProvider.usernameStream.value);
-				return myProfileProvider.usernameStream.value;
-			}
-		} catch (error) {
-			console.warn("Error accessing global MyProfileProvider:", error);
-		}
-		
-		console.warn("Could not find a valid username, returning null");
-		return null;
-	}
-
 	getAuthToken() {
 		function getCookie(name) {
 			let cookieValue = null;
@@ -856,32 +703,6 @@ export default class StartGame extends AbstractView {
 
 	async onLoaded() {
 		super.onLoaded && super.onLoaded();
-
-		// Get username from MyProfileProvider (same way Navbar does it)
-		try {
-			const { MyProfileProvider } = await import("../data/providers/MyProfileProvider.js");
-			const myProfileProvider = MyProfileProvider.getInstance();
-			
-			// First try to update the profile to ensure we have the latest data
-			await myProfileProvider.updateProfile();
-			
-			// Set up listener for username changes
-			myProfileProvider.usernameStream.listen((username) => {
-				if (username && username !== "username") {
-					console.log("Received username from MyProfileProvider:", username);
-					this.username = username;
-				}
-			});
-			
-			// Initial value
-			if (myProfileProvider.usernameStream.value && 
-				myProfileProvider.usernameStream.value !== "username") {
-				this.username = myProfileProvider.usernameStream.value;
-				console.log("Initial username from MyProfileProvider:", this.username);
-			}
-		} catch (error) {
-			console.warn("Could not get profile info:", error);
-		}
 
 		this.attachAllJs();
 	}
