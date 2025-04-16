@@ -9,6 +9,7 @@ import asyncio
 from django.conf import settings
 from .state import GameState
 from .player import PlayerSession
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -313,14 +314,11 @@ class GameManager:
                 'duration': (time.time() - game.created_at),
                 'finished_at': time.time()
             }
-
-            # Send to user_management API
+            api_key = os.getenv('API_KEY')
             async with aiohttp.ClientSession() as session:
-                url = f"{settings.USER_MANAGEMENT_URL}/api/games/"
+                url = f"{settings.USER_MANAGEMENT_URL}/api/games/add/"
                 headers = {'Content-Type': 'application/json'}
-
-                if hasattr(settings, 'API_KEY') and settings.API_KEY:
-                    headers['Authorization'] = f"Api-Key {settings.API_KEY}"
+                headers['Authorization'] = f"Api-Key {api_key}"
 
                 async with session.post(url, json=game_data, headers=headers) as response:
                     if response.status != 201:

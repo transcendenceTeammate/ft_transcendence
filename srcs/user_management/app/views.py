@@ -22,6 +22,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 import os
 from urllib.parse import urlencode
 from rest_framework.exceptions import ValidationError
+from .middleware.permissions import HasValidApiKey
 
 from .serializers import UserSerializer
 
@@ -306,7 +307,7 @@ def list_friends(request):
 	})
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([HasValidApiKey])
 def create_game(request):
 	player_1_id = request.data.get('player_1')
 	player_2_id = request.data.get('player_2')
@@ -315,6 +316,7 @@ def create_game(request):
 
 	if not all([player_1_id, player_2_id, score_1, score_2]):
 		return Response({"error": "All fields (player_1, player_2, score_1, score_2) are required."}, status=status.HTTP_400_BAD_REQUEST)
+
 
 	try:
 		player_1 = Profile.objects.get(id=player_1_id)

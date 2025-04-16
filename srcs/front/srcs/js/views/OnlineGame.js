@@ -186,7 +186,7 @@ export default class OnlineGame extends Game {
         // Player identification
         this.playerNumber = parseInt(localStorage.getItem('current_player_number') || '0', 10);
         this.playerId = localStorage.getItem('current_player_id');
-        
+
         // Multiple sources for username in order of priority
         const usernameSources = [
             localStorage.getItem('current_username'),
@@ -194,7 +194,7 @@ export default class OnlineGame extends Game {
             sessionStorage.getItem('username'),
             localStorage.getItem('nickname')
         ];
-        
+
         // Use the first valid username
         this.username = null;
         for (const source of usernameSources) {
@@ -204,7 +204,7 @@ export default class OnlineGame extends Game {
                 break;
             }
         }
-        
+
         // Initialize player username fields
         this.player1Username = this.playerNumber === 1 ? this.username : null;
         this.player2Username = this.playerNumber === 2 ? this.username : null;
@@ -241,7 +241,7 @@ export default class OnlineGame extends Game {
         this.paddleHeight = GameConstants.PADDLE_HEIGHT;
         this.paddleSpeed = GameConstants.PADDLE_SPEED;
         this.ballSize = GameConstants.BALL_SIZE;
-        
+
         // Log what we've initialized with
         console.log("OnlineGame initialized with:", {
             roomCode: this.roomCode,
@@ -269,7 +269,7 @@ export default class OnlineGame extends Game {
         }
 
         let html = await response.text();
-        
+
         // Let's log the HTML to see what we're working with
         console.log("Game HTML content:", html.substring(0, 500) + "...");
 
@@ -356,15 +356,15 @@ export default class OnlineGame extends Game {
             const { MyProfileProvider } = await import("../data/providers/MyProfileProvider.js");
             const myProfileProvider = MyProfileProvider.getInstance();
             await myProfileProvider.updateProfile();
-            
+
             const profile = await myProfileProvider.getUserProfile(true);
-            
+
             if (profile && profile.username) {
                 console.log("Got authenticated username:", profile.username);
                 // Store the real username and override localStorage
                 this.username = profile.username;
                 localStorage.setItem('current_username', this.username);
-                
+
                 // Update player labels if we know our player number
                 if (this.playerNumber === 1 && document.getElementById('player1Label')) {
                     document.getElementById('player1Label').textContent = this.username;
@@ -377,14 +377,14 @@ export default class OnlineGame extends Game {
         } catch (error) {
             console.warn("Could not get profile info:", error);
         }
-        
+
         this.initGame();
         this.initializeSocket();
 
         // Create a completely new close button with proper styling
         const closeButton = document.createElement('div');
         closeButton.id = 'customCloseButton'; // Use a different ID to avoid CSS conflicts
-        closeButton.innerHTML = '&times;';  
+        closeButton.innerHTML = '&times;';
 
         // Apply inline styles that override any CSS conflicts
         Object.assign(closeButton.style, {
@@ -424,15 +424,15 @@ export default class OnlineGame extends Game {
         const self = this; // Store reference to the class instance
         closeButton.onclick = function() {
             console.log("Close button clicked!");
-            
+
             // Close socket
             if (self.socket) {
                 self.socket.disconnect();
             }
-            
+
             // Clean up modals
             self.cleanupModals();
-            
+
             // Use direct navigation
             window.location.href = '/start-game';
             return false; // Prevent event bubbling
@@ -454,7 +454,7 @@ export default class OnlineGame extends Game {
                     debugOverlay.style.display = debugOverlay.style.display === 'none' ? 'block' : 'none';
                 }
             }
-            
+
             // Add Escape key as an alternative way to exit the game
             if (e.key === 'Escape') {
                 console.log("Escape key pressed, exiting game");
@@ -759,16 +759,16 @@ export default class OnlineGame extends Game {
         if (document.getElementById('player1Label')) {
             const player1Name = data.player_1_username || `Player 1`;
             document.getElementById('player1Label').textContent = player1Name;
-            
+
             // Store player 1 username for later use
             this.player1Username = player1Name;
             console.log("Updated Player 1 label to:", player1Name);
         }
-        
+
         if (document.getElementById('player2Label')) {
             const player2Name = data.player_2_username || `Player 2`;
             document.getElementById('player2Label').textContent = player2Name;
-            
+
             // Store player 2 username for later use
             this.player2Username = player2Name;
             console.log("Updated Player 2 label to:", player2Name);
@@ -861,7 +861,7 @@ export default class OnlineGame extends Game {
                     localStorage.getItem('nickname'),
                     `Player ${this.playerNumber || "Unknown"}`
                 ];
-                
+
                 // Use the first valid value
                 for (const source of sources) {
                     if (source && source !== "undefined" && source !== "null") {
@@ -871,13 +871,13 @@ export default class OnlineGame extends Game {
                     }
                 }
             }
-            
+
             // Double check we have something valid
             if (!this.username || this.username === "undefined" || this.username === "null") {
                 this.username = `Player ${this.playerNumber || "Unknown"}`;
                 console.warn("Falling back to generic username:", this.username);
             }
-            
+
             console.log("Final username being sent to server:", this.username);
         } catch (error) {
             console.warn("Error handling username:", error);
@@ -894,7 +894,7 @@ export default class OnlineGame extends Game {
             document.getElementById('player2Label').textContent = this.username;
             this.player2Username = this.username;
         }
-        
+
         // Log what we're sending to server
         console.log("Sending join_game with:", {
             player_id: this.playerId,
@@ -944,7 +944,7 @@ export default class OnlineGame extends Game {
     handlePlayerJoined(data) {
         const playerNumber = data.player_number;
         let username = data.username || 'Player ' + playerNumber;
-        
+
         // Log the player join event with details
         console.log(`Player ${playerNumber} joined:`, {
             username: username,
@@ -952,9 +952,9 @@ export default class OnlineGame extends Game {
             my_player_number: this.playerNumber,
             data: data
         });
-        
+
         this.showMessage(`${username} joined the game`);
-        
+
         // Always update player labels with the username from server
         // This ensures consistency between what all players see
         if (playerNumber === 1) {
@@ -963,7 +963,7 @@ export default class OnlineGame extends Game {
                 document.getElementById('player1Label').textContent = username;
             }
             this.player1Username = username;
-            
+
             // Store in server state if it exists
             if (this.serverState) {
                 this.serverState.player_1_username = username;
@@ -974,14 +974,13 @@ export default class OnlineGame extends Game {
                 document.getElementById('player2Label').textContent = username;
             }
             this.player2Username = username;
-            
+
             // Store in server state if it exists
             if (this.serverState) {
                 this.serverState.player_2_username = username;
             }
         }
-        
-        // If this is you, make sure your username is consistent
+
         if (data.is_you && this.playerNumber === playerNumber) {
             this.username = username;
         }
@@ -999,11 +998,10 @@ export default class OnlineGame extends Game {
 
         this.lastLoser = data.scorer === 1 ? 2 : 1;
 
-        // Use username if available, otherwise use default "Player X"
-        const scorerUsername = data.scorer === 1 ? 
-            (this.player1Username || "Player 1") : 
+        const scorerUsername = data.scorer === 1 ?
+            (this.player1Username || "Player 1") :
             (this.player2Username || "Player 2");
-            
+
         this.showMessage(`Goal! ${scorerUsername} scored`);
 
         if (this.playerNumber === this.lastLoser) {
@@ -1036,8 +1034,8 @@ export default class OnlineGame extends Game {
         const resultMessage = isWinner ?
             'Congratulations! You won!' :
             'Game over! Better luck next time!';
-            
-        const winnerName = winner === "Player 1" ? (this.player1Username || "Player 1") : 
+
+        const winnerName = winner === "Player 1" ? (this.player1Username || "Player 1") :
                                                  (this.player2Username || "Player 2");
 
         recapModal.innerHTML = `
@@ -1053,9 +1051,6 @@ export default class OnlineGame extends Game {
                         </div>
                         <span class="winner-name">${winnerName} wins!</span>
                     </div>
-                </div>
-                <div class="game-recap-buttons">
-                    <button id="quitButton" class="recap-button quit-button">Return to Menu</button>
                 </div>
             </div>
         `;
@@ -1081,14 +1076,14 @@ export default class OnlineGame extends Game {
                 from { opacity: 0; }
                 to { opacity: 1; }
             }
-            
+
             .game-recap-title {
                 color: ${isWinner ? '#4caf50' : '#e74c3c'};
                 margin-top: 0;
                 font-size: 28px;
                 margin-bottom: 20px;
             }
-            
+
             .game-recap-content {
                 position: relative;
                 background-color: #222;
@@ -1142,12 +1137,6 @@ export default class OnlineGame extends Game {
                 margin-top: 10px;
             }
 
-            .game-recap-buttons {
-                display: flex;
-                justify-content: center;
-                margin-top: 20px;
-            }
-
             .recap-button {
                 padding: 15px 30px;
                 border: none;
@@ -1179,24 +1168,24 @@ export default class OnlineGame extends Game {
         if (quitButton) {
             quitButton.addEventListener('click', () => {
                 console.log("Return to menu button clicked");
-                
+
                 try {
                     // Force cleanup of the modal
                     const modalEl = document.getElementById('gameRecapModal');
                     if (modalEl) {
                         document.body.removeChild(modalEl);
                     }
-                    
+
                     // Clean up any other modal artifacts
                     document.querySelectorAll('.modal-backdrop').forEach(el => {
                         if (el.parentNode) el.parentNode.removeChild(el);
                     });
-                    
+
                     // Reset body styles
                     document.body.classList.remove('modal-open');
                     document.body.style.overflow = '';
                     document.body.style.paddingRight = '';
-                    
+
                     // First try RouterService, then direct navigation as fallback
                     try {
                         RouterService.getInstance().navigateTo('/start-game');
