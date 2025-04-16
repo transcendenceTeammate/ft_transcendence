@@ -76,13 +76,15 @@ export default class StartGame extends AbstractView {
 					return;
 				}
 				
-				// Set in-progress flag
+				// Set in-progress flag immediately
 				this.isCreateRoomInProgress = true;
 				
-				// Hide the modal
+				// Hide the initial modal
 				const currentModal = bootstrap.Modal.getInstance(document.getElementById('create_join_div'));
 				if (currentModal) {
 					currentModal.hide();
+				} else {
+					console.error("Could not find create_join_div modal instance");
 				}
 
 				// Update button UI
@@ -98,11 +100,7 @@ export default class StartGame extends AbstractView {
 
 					this.createGameButton.disabled = false;
 					this.createGameButton.textContent = "CREATE GAME";
-				} finally {
-					// Reset the flag regardless of outcome
-					setTimeout(() => {
-						this.isCreateRoomInProgress = false;
-					}, 1000); // Add a small delay to prevent rapid re-clicks
+					this.isCreateRoomInProgress = false;
 				}
 			});
 		}
@@ -247,14 +245,24 @@ export default class StartGame extends AbstractView {
                     localStorage.setItem('current_username', username);
                 }
 
-                // Show waiting modal
-                const waitingModal = new bootstrap.Modal(document.getElementById('waiting_modal'));
+                // Show waiting modal - Using document.getElementById to ensure we get the right element
+                const waitingModalElement = document.getElementById('waiting_modal');
+                if (!waitingModalElement) {
+                    console.error("Waiting modal element not found!");
+                    throw new Error("Waiting modal element not found");
+                }
+                
+                const waitingModal = new bootstrap.Modal(waitingModalElement);
+                console.log("Showing waiting modal");
                 waitingModal.show();
 
                 // Update room code display
                 const roomCodeValue = document.querySelector('#roomCodeDisplay .room-code-value');
                 if (roomCodeValue) {
                     roomCodeValue.textContent = data.room_code;
+                    console.log("Room code display updated with:", data.room_code);
+                } else {
+                    console.error("Room code display element not found!");
                 }
 
                 // Set up copy button functionality
@@ -282,12 +290,16 @@ export default class StartGame extends AbstractView {
                                 }, 2000);
                             });
                     };
+                } else {
+                    console.error("Copy button not found!");
                 }
 
                 // Update modal text
                 const modalSubtext = document.querySelector('#waiting_modal .text-muted');
                 if (modalSubtext) {
                     modalSubtext.innerHTML = `Share this code with your opponent: <strong>${data.room_code}</strong>`;
+                } else {
+                    console.error("Modal subtext element not found!");
                 }
 
                 // Start polling for second player
@@ -297,7 +309,7 @@ export default class StartGame extends AbstractView {
                     if (this.pollingInterval) {
                         console.log("No player joined after timeout, navigating to game room directly");
                         this.cleanupModalsBeforeNavigation();
-                        takeMeThere(location.origin + '/online-game?room=' + data.room_code);
+                        window.location.href = location.origin + '/online-game?room=' + data.room_code;
                     }
                 }, 60000); 
             } else {
@@ -319,15 +331,17 @@ export default class StartGame extends AbstractView {
                 this.createGameButton.textContent = "CREATE GAME";
             }
         } finally {
-            // Reset the flag to allow future create room attempts
-            this.isCreateRoomInProgress = false;
-            
+            // Reset the flag to allow future create room attempts, but with a slight delay to prevent rapid double-clicks
             setTimeout(() => {
+                this.isCreateRoomInProgress = false;
+                console.log("Reset create room progress flag");
+                
+                // Re-enable button
                 if (this.createGameButton) {
                     this.createGameButton.disabled = false;
                     this.createGameButton.textContent = "CREATE GAME";
                 }
-            }, 500);
+            }, 1000);
         }
     }
 
@@ -385,6 +399,7 @@ export default class StartGame extends AbstractView {
 
             // First check if the room exists and is joinable
             try {
+                console.log(`Checking if room ${roomCode} exists and is joinable...`);
                 const checkResponse = await fetch(`${CONFIG.API_URL}/api/room/check/${roomCode}/`, {
                     method: 'GET',
                     headers: headers,
@@ -392,6 +407,7 @@ export default class StartGame extends AbstractView {
                 });
 
                 const checkData = await checkResponse.json();
+                console.log("Room check response:", checkData);
 
                 if (!checkResponse.ok || !checkData.success) {
                     throw new Error(checkData.error || "Room not found");
@@ -425,6 +441,7 @@ export default class StartGame extends AbstractView {
                 requestBody.username = username;
             }
 
+            console.log("Sending join request with data:", requestBody);
             // Send join request with username
             const response = await fetch(`${CONFIG.API_URL}/api/room/join/`, {
                 method: 'POST',
@@ -434,6 +451,7 @@ export default class StartGame extends AbstractView {
             });
 
             const data = await response.json();
+            console.log("Join room response:", data);
 
             if(data.success) {
                 // Show joining modal
@@ -478,11 +496,10 @@ export default class StartGame extends AbstractView {
 
                 // Navigate to game after a short delay
                 setTimeout(() => {
-                    this.cleanupModalsBeforeNavigation();
-
                     console.log("Joining room successful, navigating to game");
-
-                    takeMeThere(location.origin + '/online-game?room=' + roomCode);
+                    this.cleanupModalsBeforeNavigation();
+                    // Use direct location change for more reliable navigation
+                    window.location.href = location.origin + '/online-game?room=' + roomCode;
                 }, 1000);
             } else {
                 alert(`Error joining room: ${data.error || "Unknown error"}`);
@@ -500,8 +517,6 @@ export default class StartGame extends AbstractView {
                 this.joinGameButton.disabled = false;
                 this.joinGameButton.textContent = "JOIN GAME";
             }
-
-            throw error;
         }
     }
 
@@ -533,6 +548,7 @@ export default class StartGame extends AbstractView {
 
         if(this.pollingInterval) {
             clearInterval(this.pollingInterval);
+            this.pollingInterval = null;
         }
 
         let pollCount = 0;
@@ -564,6 +580,7 @@ export default class StartGame extends AbstractView {
         this.pollingInterval = setInterval(async () => {
             try {
                 pollCount++;
+                console.log(`Polling for second player (attempt ${pollCount})`);
 
                 const headers = {};
                 if (authToken) {
@@ -582,11 +599,13 @@ export default class StartGame extends AbstractView {
                 }
 
                 const data = await response.json();
+                console.log("Room check response:", data);
 
                 if(data.success) {
                     errorCount = 0;
 
                     if (data.player_count > lastPlayerCount) {
+                        console.log("Player count increased:", data.player_count);
                         const waitingText = document.querySelector('#waiting_modal .fw-bold:not(.modal-title)');
                         if (waitingText) {
                             waitingText.innerHTML = '<i class="bi bi-person-check"></i> Player found! Starting game...';
@@ -602,11 +621,12 @@ export default class StartGame extends AbstractView {
                     lastPlayerCount = data.player_count;
 
                     if(data.player_2_id) {
+                        console.log("🎮 Player 2 has joined! Player IDs:", data.player_1_id, data.player_2_id);
+                        
+                        // Stop polling and timers
                         clearInterval(this.pollingInterval);
                         clearInterval(waitingTimer);
                         this.pollingInterval = null;
-
-                        console.log("🎮 Player 2 has joined! Player IDs:", data.player_1_id, data.player_2_id);
 
                         const waitingText = document.querySelector('#waiting_modal .fw-bold:not(.modal-title)');
                         if (waitingText) {
@@ -623,9 +643,9 @@ export default class StartGame extends AbstractView {
 
                         setTimeout(() => {
                             console.log("Redirecting to game room:", roomCode);
-
                             this.cleanupModalsBeforeNavigation();
-                            RouterService.getInstance().navigateTo('/online-game?room=' + roomCode);
+                            // Use window.location.href for more reliable navigation
+                            window.location.href = location.origin + '/online-game?room=' + roomCode;
                         }, 800);
                     }
                 } else {
