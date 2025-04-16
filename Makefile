@@ -5,8 +5,8 @@ all: setup-env build run
 
 # Update .env with local IP
 setup-env:
-	@chmod +x set_local_ip.sh
-	@./set_local_ip.sh
+	@chmod +x setup_env.sh
+	@./setup_env.sh
 
 # Build all services
 build:
