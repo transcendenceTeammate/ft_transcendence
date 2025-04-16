@@ -2,11 +2,11 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 import json
-from .models import GameState, PlayerSession
-from .utils import generate_room_code, game_state_to_dict
+from .game.manager import GameManager
 import logging
 import jwt
 from django.conf import settings
+import random
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -38,30 +38,22 @@ def create_room(request):
                 logger.error(f"Error decoding token: {str(e)}")
 
         if not user_id:
-            user_id = f"guest-{generate_room_code(4)}"
+            user_id = f"guest-{random.randint(1000, 9999)}"
             username = f"Guest-{user_id.split('-')[1]}"
             logger.warning(f"Using default user_id: {user_id}, username: {username}")
 
-        room_code = generate_room_code()
+        # Create new game with generated room code
+        room_code = GameManager.generate_room_code()
         logger.info(f"Generated room code: {room_code}")
 
-        game_state = GameState.objects.create(
-            room_code=room_code,
-            status='WAITING',
-            is_paused=True,
-            player_1_id=user_id
-        )
+        game = GameManager.create_game(room_code)
+        game.player_1_id = user_id
+        GameManager.save_game(game)
 
-        PlayerSession.objects.create(
-            room_code=room_code,
-            player_id=user_id,
-            player_number=1,
-            username=username,
-            connected=True
-        )
+        # Add player session
+        GameManager.add_player_session(room_code, user_id, 1, username)
 
-        game_state.refresh_from_db()
-        logger.info(f"Created game state with ID: {game_state.id}, player_1_id: {game_state.player_1_id}")
+        logger.info(f"Created game room: {room_code}, player_1_id: {game.player_1_id}")
 
         response_data = {
             'success': True,
@@ -69,7 +61,7 @@ def create_room(request):
             'player_number': 1,
             'player_id': user_id,
             'username': username,
-            'game_state': game_state_to_dict(game_state)
+            'game_state': game.to_dict()
         }
 
         return JsonResponse(response_data)
@@ -114,41 +106,35 @@ def join_room(request):
                 logger.error(f"Join room - error decoding token: {str(e)}")
 
         if not user_id:
-            user_id = f"guest-{generate_room_code(4)}"
+            user_id = f"guest-{random.randint(1000, 9999)}"
             username = f"Guest-{user_id.split('-')[1]}"
             logger.warning(f"Join room - using default user_id: {user_id}")
 
-        try:
-            game_state = GameState.objects.get(room_code=room_code)
-        except GameState.DoesNotExist:
+        # Check if room exists
+        game = GameManager.get_game(room_code)
+        if not game:
             return JsonResponse({
                 'success': False,
                 'error': 'Room not found'
             }, status=404)
 
-        if game_state.status == 'FINISHED':
+        if game.status == 'FINISHED':
             return JsonResponse({
                 'success': False,
                 'error': 'Game has already ended'
             }, status=400)
 
-        if game_state.player_1_id and game_state.player_2_id:
-            if user_id in [game_state.player_1_id, game_state.player_2_id]:
-                player_number = 2 if user_id == game_state.player_2_id else 1
+        # Check if room is full or player is rejoining
+        if game.player_1_id and game.player_2_id:
+            if user_id in [game.player_1_id, game.player_2_id]:
+                player_number = 2 if user_id == game.player_2_id else 1
 
-                player_session, created = PlayerSession.objects.get_or_create(
-                    room_code=room_code,
-                    player_id=user_id,
-                    defaults={
-                        'player_number': player_number,
-                        'username': username,
-                        'connected': True
-                    }
-                )
-
-                if not created:
-                    player_session.connected = True
-                    player_session.save()
+                # Update player session for reconnection
+                session = GameManager.get_player_session(room_code, user_id)
+                if session:
+                    GameManager.update_player_session(room_code, user_id, connected=True)
+                else:
+                    GameManager.add_player_session(room_code, user_id, player_number, username)
 
                 return JsonResponse({
                     'success': True,
@@ -157,7 +143,7 @@ def join_room(request):
                     'player_id': user_id,
                     'username': username,
                     'reconnecting': True,
-                    'game_state': game_state_to_dict(game_state)
+                    'game_state': game.to_dict()
                 })
             else:
                 return JsonResponse({
@@ -165,24 +151,21 @@ def join_room(request):
                     'error': 'Room is full'
                 }, status=400)
 
-        player_number = 1 if not game_state.player_1_id else 2
+        # Assign player number
+        player_number = 1 if not game.player_1_id else 2
 
+        # Update game state
         if player_number == 1:
-            game_state.player_1_id = user_id
+            game.player_1_id = user_id
         else:
-            game_state.player_2_id = user_id
-            if game_state.status == 'WAITING':
-                game_state.status = 'ONGOING'
+            game.player_2_id = user_id
+            if game.status == 'WAITING':
+                game.status = 'ONGOING'
 
-        game_state.save()
+        GameManager.save_game(game)
 
-        PlayerSession.objects.create(
-            room_code=room_code,
-            player_id=user_id,
-            player_number=player_number,
-            username=username,
-            connected=True
-        )
+        # Add player session
+        GameManager.add_player_session(room_code, user_id, player_number, username)
 
         return JsonResponse({
             'success': True,
@@ -190,7 +173,7 @@ def join_room(request):
             'player_number': player_number,
             'player_id': user_id,
             'username': username,
-            'game_state': game_state_to_dict(game_state)
+            'game_state': game.to_dict()
         })
     except Exception as e:
         logger.exception(f"Error joining room: {str(e)}")
@@ -208,38 +191,46 @@ def check_room(request, room_code):
     logger.info(f"Checking room {room_code}")
 
     try:
-        try:
-            game_state = GameState.objects.get(room_code=room_code)
-        except GameState.DoesNotExist:
+        # Get game from manager
+        game = GameManager.get_game(room_code)
+        if not game:
             logger.warning(f"Room {room_code} not found")
             return JsonResponse({
                 'success': False,
                 'error': 'Room not found'
             }, status=404)
 
+        # Count players
         player_count = (
-            (1 if game_state.player_1_id else 0) +
-            (1 if game_state.player_2_id else 0)
+            (1 if game.player_1_id else 0) +
+            (1 if game.player_2_id else 0)
         )
 
-        active_sessions = PlayerSession.objects.filter(
-            room_code=room_code,
-            connected=True
-        ).count()
+        # Count active sessions (connected players)
+        active_sessions = 0
+        if game.player_1_id:
+            session = GameManager.get_player_session(room_code, game.player_1_id)
+            if session and session.connected:
+                active_sessions += 1
+                
+        if game.player_2_id:
+            session = GameManager.get_player_session(room_code, game.player_2_id)
+            if session and session.connected:
+                active_sessions += 1
 
-        logger.info(f"Room {room_code} status: {game_state.status}, player_count: {player_count}, active_sessions: {active_sessions}")
-        logger.info(f"Player 1 ID: {game_state.player_1_id}, Player 2 ID: {game_state.player_2_id}")
+        logger.info(f"Room {room_code} status: {game.status}, player_count: {player_count}, active_sessions: {active_sessions}")
+        logger.info(f"Player 1 ID: {game.player_1_id}, Player 2 ID: {game.player_2_id}")
 
         return JsonResponse({
             'success': True,
             'room_code': room_code,
-            'status': game_state.status,
+            'status': game.status,
             'player_count': player_count,
             'active_sessions': active_sessions,
-            'player_1_id': game_state.player_1_id,
-            'player_2_id': game_state.player_2_id,
-            'is_paused': game_state.is_paused,
-            'created_at': game_state.created_at.isoformat()
+            'player_1_id': game.player_1_id,
+            'player_2_id': game.player_2_id,
+            'is_paused': game.is_paused,
+            'created_at': game.created_at
         })
     except Exception as e:
         logger.exception(f"Error checking room {room_code}: {str(e)}")

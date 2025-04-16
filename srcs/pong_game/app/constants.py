@@ -21,7 +21,7 @@ ANGLE_LIMIT = 0.75
 WINNING_SCORE = 10
 
 # Network settings
-SERVER_UPDATE_RATE = 120  # Updates per second
+SERVER_UPDATE_RATE = 30  # Updates per second - reduced from 120 for better performance
 SERVER_RECONCILIATION_THRESHOLD = 5  # Pixels
 
 VERSION = '1.0.0'

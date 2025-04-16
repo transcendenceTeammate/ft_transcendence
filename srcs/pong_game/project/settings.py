@@ -65,13 +65,14 @@ WSGI_APPLICATION = 'project.wsgi.application'
 ASGI_APPLICATION = 'project.asgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+# Database 
+# We're using in-memory storage for game state, but Django still requires a database configuration
+# This uses SQLite but the app doesn't actually use any database models
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': ':memory:',  # In-memory SQLite database that's never actually used
     }
 }
 
@@ -148,3 +149,8 @@ CACHES = {
         }
     }
 }
+
+# Pong Game Service Settings
+USER_MANAGEMENT_URL = os.environ.get('USER_MANAGEMENT_URL', 'http://user_management:8000')
+API_KEY = os.environ.get('API_KEY', '')
+GAME_CLEANUP_INTERVAL = 3600  # Cleanup interval for finished games (1 hour)

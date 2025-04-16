@@ -8,3 +8,4 @@ pyjwt
 redis>=4.5.1
 django-redis>=5.2.0
 dotenv
+aiohttp>=3.9.1
