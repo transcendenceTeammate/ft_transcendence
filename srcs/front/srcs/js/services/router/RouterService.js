@@ -56,6 +56,11 @@ export class RouterService {
     this.handleRouteChange();
   }
 
+  navigateToReplace(url) {
+    history.replaceState(null, null, url);
+    this.handleRouteChange();
+  }
+
   async handleRouteChange() {
     cleanupModals();
     const path = location.pathname;
