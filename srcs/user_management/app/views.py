@@ -22,7 +22,6 @@ from rest_framework_simplejwt.tokens import AccessToken
 import os
 from urllib.parse import urlencode
 from rest_framework.exceptions import ValidationError
-from .middleware.permissions import HasValidApiKey
 
 from .serializers import UserSerializer
 
@@ -307,38 +306,40 @@ def list_friends(request):
 	})
 
 @api_view(['POST'])
-@permission_classes([HasValidApiKey])
 def create_game(request):
-	player_1_id = request.data.get('player_1')
-	player_2_id = request.data.get('player_2')
-	score_1 = request.data.get('score_1')
-	score_2 = request.data.get('score_2')
+    api_key = request.headers.get('Authorization')
+    if not api_key or api_key != f"Api-Key {os.getenv('API_KEY')}":
+        return Response({"error": "Invalid or missing API key."}, status=status.HTTP_403_FORBIDDEN)
 
-	if not all([player_1_id, player_2_id, score_1, score_2]):
-		return Response({"error": "All fields (player_1, player_2, score_1, score_2) are required."}, status=status.HTTP_400_BAD_REQUEST)
+    player_1_id = request.data.get('player_1')
+    player_2_id = request.data.get('player_2')
+    score_1 = request.data.get('score_1')
+    score_2 = request.data.get('score_2')
 
+    if not all([player_1_id, player_2_id, score_1, score_2]):
+        return Response({"error": "All fields (player_1, player_2, score_1, score_2) are required."}, status=status.HTTP_400_BAD_REQUEST)
 
-	try:
-		player_1 = Profile.objects.get(id=player_1_id)
-		player_2 = Profile.objects.get(id=player_2_id)
-	except Profile.DoesNotExist:
-		return Response({"error": "One or both users not found."}, status=status.HTTP_404_NOT_FOUND)
+    try:
+        player_1 = Profile.objects.get(id=player_1_id)
+        player_2 = Profile.objects.get(id=player_2_id)
+    except Profile.DoesNotExist:
+        return Response({"error": "One or both users not found."}, status=status.HTTP_404_NOT_FOUND)
 
-	if player_1 == player_2:
-		return Response({"error": "A user cannot play against themselves."}, status=status.HTTP_400_BAD_REQUEST)
+    if player_1 == player_2:
+        return Response({"error": "A user cannot play against themselves."}, status=status.HTTP_400_BAD_REQUEST)
 
-	player_1_wins = int(score_1) > int(score_2)
-	player_2_wins = int(score_2) > int(score_1)
+    player_1_wins = int(score_1) > int(score_2)
+    player_2_wins = int(score_2) > int(score_1)
 
-	game_history = GameHistory.objects.create()
+    game_history = GameHistory.objects.create()
 
-	GameUserData.objects.create(game=game_history, user=player_1, score=score_1, is_winner=player_1_wins)
-	GameUserData.objects.create(game=game_history, user=player_2, score=score_2, is_winner=player_2_wins)
+    GameUserData.objects.create(game=game_history, user=player_1, score=score_1, is_winner=player_1_wins)
+    GameUserData.objects.create(game=game_history, user=player_2, score=score_2, is_winner=player_2_wins)
 
-	return Response({
-		"message": "Game recorded successfully.",
-		"game": GameHistorySerializer(game_history).data
-	}, status=status.HTTP_201_CREATED)
+    return Response({
+        "message": "Game recorded successfully.",
+        "game": GameHistorySerializer(game_history).data
+    }, status=status.HTTP_201_CREATED)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
