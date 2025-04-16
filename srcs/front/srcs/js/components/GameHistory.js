@@ -38,6 +38,7 @@ export class GameHistoryComponent extends Component {
 					<table class="table table-striped">
 						<thead>
 							<tr>
+								<th>Date</th>
 								<th>Player 1</th>
 								<th>Score</th>
 								<th>Player 2</th>
@@ -48,6 +49,7 @@ export class GameHistoryComponent extends Component {
 						<tbody>
 							${this.gameHistory.map(game => `
 								<tr>
+									<td>${game.date}</td>
 									<td>${game.player1}</td>
 									<td>${game.score1}</td>
 									<td>${game.player2}</td>
