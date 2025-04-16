@@ -101,6 +101,14 @@ export default class extends AbstractView {
     async checkLogin() {
         const login = this.logStruct;
 
+        login.field.addEventListener('blur', async () => {
+            if (login.regex.test(login.field.value)){
+                const validated = await checkUniqueUsername(login.field.value);
+                login.valid = validated;
+                this.signalInvalid(login, validated ? "Login: " : "Login already exists")
+            }
+        })
+
         login.field.addEventListener('input', async () => {
             this.clearField(login);
             login.label.innerText = login.guidance;
