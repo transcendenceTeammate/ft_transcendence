@@ -11,7 +11,6 @@ Developed using modern web technologies, it features:
 ✅ **CLI Integration**  
 ✅ **User Authentication & Management**  
 ✅ **API-Driven Architecture**  
-✅ **Microservices Architecture**  
 
 ## 🖥️ Game Preview  
 🏓 **PengPong** — a 1v1 online or local ping-pong match  
@@ -36,13 +35,13 @@ cd ft_transcendence
    touch .env
    ```
 
-2. **Fill in the `.env` file using the values from `env.template` as a reference**.
+2. **Fill in the `.env` file using the values from `.env.template` as a reference**.
 
 
 ### 3️⃣ Launch the App  
 Build and start the project:  
 ```bash  
-make all
+make
 ```
 
 ### 4️⃣ Access the Web Interface  
