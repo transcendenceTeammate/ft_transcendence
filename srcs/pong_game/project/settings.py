@@ -128,10 +128,6 @@ CHANNEL_LAYERS = {
     },
 }
 
-##CORS_ALLOWED_ORIGINS = [
-##    'https://app.127.0.0.1.nip.io:8443',
-##]
-
 ##CORS_ALLOW_CREDENTIALS = True
 
 REDIS_HOST = 'redis'
