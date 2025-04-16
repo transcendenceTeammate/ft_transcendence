@@ -1,18 +1,12 @@
 from pathlib import Path
 import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('JWT_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -95,10 +89,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/5.1/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
@@ -153,4 +143,9 @@ CACHES = {
 # Pong Game Service Settings
 USER_MANAGEMENT_URL = os.environ.get('USER_MANAGEMENT_URL', 'http://user_management:8000')
 API_KEY = os.environ.get('API_KEY', '')
-GAME_CLEANUP_INTERVAL = 3600  # Cleanup interval for finished games (1 hour)
+
+# Game cleanup settings
+FINISHED_GAME_TTL = 300  # Time to keep finished games (5 minutes)
+INACTIVE_GAME_TTL = 600  # Time to keep inactive games (10 minutes)
+DISCONNECTED_PLAYER_TTL = 120  # Time to keep disconnected player sessions (2 minutes)
+CLEANUP_INTERVAL = 60  # How often to run cleanup job (1 minute)

@@ -64,28 +64,105 @@ class GameManager:
     
     @classmethod
     def _schedule_cleanup(cls):
-        """Schedule periodic cleanup of finished games"""
+        """Schedule periodic cleanup of finished games and inactive sessions"""
         cls._cleanup_scheduled = True
+        
+        # Configuration
+        FINISHED_GAME_TTL = 600  # 10 minutes for finished games
+        INACTIVE_GAME_TTL = 3600  # 1 hour for inactive games
+        DISCONNECTED_PLAYER_TTL = 300  # 5 minutes for disconnected players
         
         async def cleanup_job():
             while True:
                 try:
-                    await asyncio.sleep(settings.GAME_CLEANUP_INTERVAL)
-                    logger.info("Running periodic game cleanup")
+                    await asyncio.sleep(60)  # Check every minute
                     
+                    current_time = time.time()
+                    logger.info("Running game cleanup job")
+                    
+                    # Get lists to avoid modification during iteration
                     rooms = list(cls._games.keys())
+                    player_sessions = list(cls._player_sessions.items())
                     
+                    # Track games to clean up
+                    games_to_clean = []
+                    
+                    # Check each game
                     for room_code in rooms:
                         game = cls._games.get(room_code)
                         if not game:
                             continue
-                            
-                        if game.status == 'FINISHED' and (time.time() - game.created_at > 3600):
+                        
+                        # Case 1: Finished games - clean up after a delay to allow viewing results
+                        if game.status == 'FINISHED' and (current_time - game.created_at > FINISHED_GAME_TTL):
                             logger.info(f"Cleaning up finished game: {room_code}")
-                            cls.delete_game(room_code)
+                            # Mark for cleanup after ensuring history was sent
+                            games_to_clean.append(room_code)
+                            continue
+                        
+                        # Case 2: Inactive games where neither player has been active
+                        p1_session = cls.get_player_session(room_code, game.player_1_id) if game.player_1_id else None
+                        p2_session = cls.get_player_session(room_code, game.player_2_id) if game.player_2_id else None
+                        
+                        p1_active = p1_session and p1_session.connected
+                        p2_active = p2_session and p2_session.connected
+                        
+                        # If neither player is connected and game is old enough
+                        if not (p1_active or p2_active) and (current_time - game.created_at > INACTIVE_GAME_TTL):
+                            logger.info(f"Cleaning up inactive game: {room_code}")
+                            games_to_clean.append(room_code)
+                            continue
+                    
+                    # Perform actual cleanup of marked games
+                    for room_code in games_to_clean:
+                        # For finished games, ensure the result was recorded
+                        game = cls._games.get(room_code)
+                        if game and game.status == 'FINISHED':
+                            await cls.record_game_result(game)
+                        
+                        # Delete the game and its associated sessions
+                        cls.delete_game(room_code)
+                    
+                    # Check for orphaned player sessions (player disconnected but game still exists)
+                    for (room_code, player_id), session in player_sessions:
+                        if not session.connected:
+                            time_disconnected = current_time - session.last_active
                             
+                            # If player has been disconnected too long
+                            if time_disconnected > DISCONNECTED_PLAYER_TTL:
+                                logger.info(f"Player {player_id} disconnected for too long, checking game {room_code}")
+                                
+                                # Check if game still exists
+                                game = cls._games.get(room_code)
+                                if game:
+                                    # If this is a waiting game with only this player, clean up
+                                    if game.status == 'WAITING' and (
+                                        (game.player_1_id == player_id and not game.player_2_id) or
+                                        (game.player_2_id == player_id and not game.player_1_id)
+                                    ):
+                                        logger.info(f"Cleaning up waiting game with disconnected player: {room_code}")
+                                        cls.delete_game(room_code)
+                                    # If both players are in the game, mark this player as left
+                                    elif game.player_1_id == player_id:
+                                        game.player_1_id = None
+                                        cls.save_game(game)
+                                    elif game.player_2_id == player_id:
+                                        game.player_2_id = None
+                                        cls.save_game(game)
+                                    
+                                # Clean up the player session
+                                key = (room_code, player_id)
+                                if key in cls._player_sessions:
+                                    logger.info(f"Cleaning up disconnected player session: {player_id} in {room_code}")
+                                    del cls._player_sessions[key]
+                                    if player_id in cls._player_to_room:
+                                        del cls._player_to_room[player_id]
+                    
+                    logger.info(f"Cleanup complete. Active games: {len(cls._games)}, Player sessions: {len(cls._player_sessions)}")
+                                
                 except Exception as e:
                     logger.error(f"Error in cleanup job: {str(e)}")
+                    logger.exception("Cleanup job exception details:")
         
         try:
             loop = asyncio.get_event_loop()
@@ -191,12 +268,39 @@ class GameManager:
     
     @classmethod
     def update_player_session(cls, room_code, player_id, connected=True):
-        """Update a player session's connected status"""
+        """Update a player session's connected status with proper disconnect tracking"""
         key = (room_code, player_id)
         if key in cls._player_sessions:
-            cls._player_sessions[key].connected = connected
-            cls._player_sessions[key].last_active = time.time()
-            return cls._player_sessions[key]
+            session = cls._player_sessions[key]
+            if connected:
+                session.mark_connected()
+            else:
+                session.mark_disconnected()
+                
+                # Log the disconnection for monitoring
+                game = cls.get_game(room_code)
+                if game:
+                    player_type = "Unknown"
+                    if game.player_1_id == player_id:
+                        player_type = "Player 1"
+                    elif game.player_2_id == player_id:
+                        player_type = "Player 2"
+                    
+                    logger.info(f"Player disconnected: {player_id} ({player_type}) from game {room_code}")
+                    
+                    # If game is waiting and this was the only player, mark for potential quick cleanup
+                    if game.status == 'WAITING' and (
+                        (game.player_1_id == player_id and not game.player_2_id) or
+                        (game.player_2_id == player_id and not game.player_1_id)
+                    ):
+                        logger.info(f"Solo player disconnected from waiting game {room_code}")
+            
+            return session
+        
+        # If we're marking a session as connected but it doesn't exist, create it
+        if connected and room_code and player_id:
+            logger.warning(f"Attempted to update non-existent player session: {player_id} in {room_code}")
+            
         return None
     
     @classmethod
