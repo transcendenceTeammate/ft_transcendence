@@ -140,10 +140,8 @@ CACHES = {
     }
 }
 
-# Pong Game Service Settings
-USER_MANAGEMENT_URL = os.getenv('API_URL')
+USER_MANAGEMENT_URL = 'http://user-management:8000'
 
-# Game cleanup settings
 FINISHED_GAME_TTL = 300  # Time to keep finished games (5 minutes)
 INACTIVE_GAME_TTL = 600  # Time to keep inactive games (10 minutes)
 DISCONNECTED_PLAYER_TTL = 120  # Time to keep disconnected player sessions (2 minutes)
