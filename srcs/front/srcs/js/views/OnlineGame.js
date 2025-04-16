@@ -370,7 +370,7 @@ export default class OnlineGame extends Game {
     initializeSocket() {
         const token = this.getAuthToken();
 
-        let wsUrl = `wss://app.127.0.0.1.nip.io:8443/ws/game/${this.roomCode}/`;
+        let wsUrl = new WebSocket(this._baseUrl.replace(/^http/, "ws") + "/ws/game");
         if (token) {
             wsUrl += `?token=${encodeURIComponent(token)}`;
         }
@@ -378,7 +378,7 @@ export default class OnlineGame extends Game {
         this.socket = new SimpleWebSocket(wsUrl, {
             reconnectInterval: 1000,
             maxReconnectAttempts: 5,
-            debug: true // Enable debugging
+            debug: true 
         });
 
         this.socket.on('connect', this.handleConnect.bind(this));

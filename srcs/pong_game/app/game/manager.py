@@ -12,7 +12,6 @@ from .player import PlayerSession
 
 logger = logging.getLogger(__name__)
 
-# Initialize Redis connection for state caching and synchronization between instances
 try:
     redis_client = redis.Redis(
         host=settings.REDIS_HOST,
@@ -30,10 +29,9 @@ except Exception as e:
 class GameManager:
     """Manages all game instances in memory"""
     
-    # Class variables for in-memory storage
-    _games = {}  # room_code -> GameState
-    _player_sessions = {}  # (room_code, player_id) -> PlayerSession
-    _player_to_room = {}  # player_id -> room_code
+    _games = {}
+    _player_sessions = {}
+    _player_to_room = {}
     _cleanup_scheduled = False
 
     @classmethod
@@ -56,11 +54,9 @@ class GameManager:
         game = GameState(room_code)
         cls._games[room_code] = game
         
-        # Cache the initial state if Redis is available
         if REDIS_AVAILABLE:
             cls.cache_game_state(game)
-            
-        # Schedule cleanup job if not already scheduled
+
         if not cls._cleanup_scheduled:
             cls._schedule_cleanup()
             
@@ -74,11 +70,9 @@ class GameManager:
         async def cleanup_job():
             while True:
                 try:
-                    # Sleep first to allow the server to start properly
                     await asyncio.sleep(settings.GAME_CLEANUP_INTERVAL)
                     logger.info("Running periodic game cleanup")
                     
-                    # Get list of rooms to avoid modification during iteration
                     rooms = list(cls._games.keys())
                     
                     for room_code in rooms:
@@ -86,7 +80,6 @@ class GameManager:
                         if not game:
                             continue
                             
-                        # Delete finished games older than 1 hour
                         if game.status == 'FINISHED' and (time.time() - game.created_at > 3600):
                             logger.info(f"Cleaning up finished game: {room_code}")
                             cls.delete_game(room_code)
@@ -94,24 +87,20 @@ class GameManager:
                 except Exception as e:
                     logger.error(f"Error in cleanup job: {str(e)}")
         
-        # Get or create event loop
         try:
             loop = asyncio.get_event_loop()
         except RuntimeError:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             
-        # Schedule the cleanup task
         loop.create_task(cleanup_job())
     
     @classmethod
     def get_game(cls, room_code):
         """Get a game by room code, first checking Redis then memory"""
-        # Try to get from memory first
         if room_code in cls._games:
             return cls._games[room_code]
             
-        # Try to get from Redis if not in memory
         if REDIS_AVAILABLE:
             state_json = redis_client.get(f"game:{room_code}")
             if state_json:
@@ -119,7 +108,6 @@ class GameManager:
                     state_dict = json.loads(state_json)
                     game = GameState(room_code)
                     
-                    # Populate the game state from the dictionary
                     for key, value in state_dict.items():
                         if key != 'timestamp' and hasattr(game, key):
                             setattr(game, key, value)
@@ -150,7 +138,6 @@ class GameManager:
         if REDIS_AVAILABLE:
             redis_client.delete(f"game:{room_code}")
             
-        # Remove associated player sessions
         keys_to_remove = []
         for key in cls._player_sessions:
             if key[0] == room_code:
@@ -173,7 +160,7 @@ class GameManager:
             state_dict = game.to_dict()
             state_json = json.dumps(state_dict)
             
-            redis_client.set(f"game:{game.room_code}", state_json, ex=300)  # 5 minute expiration
+            redis_client.set(f"game:{game.room_code}", state_json, ex=300)
             return True
         except Exception as e:
             logger.error(f"Redis caching error: {str(e)}")
@@ -219,14 +206,12 @@ class GameManager:
         if not game:
             return None, username
         
-        # Check if player already has a session
         session = cls.get_player_session(room_code, player_id)
         if session:
             session.connected = True
             session.last_active = time.time()
             return session.player_number, username
         
-        # Assign player 1 position if available
         if not game.player_1_id:
             game.player_1_id = player_id
             cls.save_game(game)
@@ -234,7 +219,6 @@ class GameManager:
             cls.add_player_session(room_code, player_id, 1, username)
             return 1, username
         
-        # Assign player 2 position if available
         elif not game.player_2_id:
             game.player_2_id = player_id
             cls.save_game(game)
@@ -242,7 +226,6 @@ class GameManager:
             cls.add_player_session(room_code, player_id, 2, username)
             return 2, username
         
-        # Spectator mode
         return None, username
         
     @classmethod
@@ -272,7 +255,6 @@ class GameManager:
             return
             
         try:
-            # Prepare game result data
             game_data = {
                 'room_code': game.room_code,
                 'player_1_id': game.player_1_id,
@@ -284,7 +266,6 @@ class GameManager:
                 'finished_at': time.time()
             }
             
-            # Send to user_management API
             async with aiohttp.ClientSession() as session:
                 url = f"{settings.USER_MANAGEMENT_URL}/api/games/"
                 headers = {'Content-Type': 'application/json'}

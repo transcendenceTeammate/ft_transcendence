@@ -16,7 +16,7 @@ class GameState:
     
     def __init__(self, room_code):
         self.room_code = room_code
-        self.status = 'WAITING'  # 'WAITING', 'ONGOING', 'FINISHED'
+        self.status = 'WAITING'
         self.created_at = time.time()
         self.is_paused = True
         
