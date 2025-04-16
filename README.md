@@ -23,7 +23,7 @@ Developed using modern web technologies, it features:
 ### 1️⃣ Clone the Repository  
 Get the project on your machine:  
 ```bash  
-git clone https://github.com/your-repo/ft_transcendence.git  
+git clone https://github.com/transcendenceTeammate/ft_transcendence.git  
 cd ft_transcendence  
 ```
 
