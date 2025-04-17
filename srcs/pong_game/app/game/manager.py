@@ -287,8 +287,8 @@ class GameManager:
 
         try:
             game_data = {
-                'player_1': int(game.player_1_id) - 1,
-                'player_2': int(game.player_2_id) - 1,
+                'player_1': int(game.player_1_id),
+                'player_2': int(game.player_2_id),
                 'score_1': game.player_1_score,
                 'score_2': game.player_2_score,
             }
