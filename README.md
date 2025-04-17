@@ -26,23 +26,16 @@ git clone https://github.com/transcendenceTeammate/ft_transcendence.git
 cd ft_transcendence  
 ```
 
-### 2️⃣ Create the Environment
-
-
-1. **Create the `.env` file** at the root of the project:
-
-   ```bash
-   touch .env
-   ```
-
-2. **Fill in the `.env` file using the values from `.env.template` as a reference**.
-
-
-### 3️⃣ Launch the App  
+### 2️⃣ Launch the App  
 Build and start the project:  
 ```bash  
 make
 ```
+
+### 3️⃣ Set Up the Environment
+
+**Fill in the `.env` file.**  
+Replace the values of `CLIENT_ID=` and `CLIENT_SECRET=` with your own.
 
 ### 4️⃣ Access the Web Interface  
 Open your browser and go to the URL:  
