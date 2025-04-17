@@ -295,7 +295,7 @@ class GameManager:
             api_key = os.getenv('API_KEY')
             async with aiohttp.ClientSession() as session:
                 url = f"{settings.USER_MANAGEMENT_URL}/api/game/add/"
-                headers = {'Content-Type': 'application/json'}
+                headers = {'Content-Type': 'application/json', 'X-API-Key': api_key}
                 logger.info(f"POST Request to {url} with data: {game_data}")
                 async with session.post(url, json=game_data, headers=headers) as response:
                     if response.status != 201:
