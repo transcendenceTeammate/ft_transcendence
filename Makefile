@@ -18,9 +18,6 @@ run:
 	mkdir -p ./data/postgres
 	mkdir -p ./data/media
 	mkdir -p ./data/ssl
-	chmod 777 ./data/postgres
-	chmod 777 ./data/media
-	chmod 777 ./data/ssl
 	docker compose up -d
 
 # Stop the application

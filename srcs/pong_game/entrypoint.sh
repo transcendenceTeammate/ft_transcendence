@@ -11,5 +11,4 @@ python manage.py makemigrations app
 echo "Applying migrations..."
 python manage.py migrate
 
-# Execute the main container command
 exec "$@"
