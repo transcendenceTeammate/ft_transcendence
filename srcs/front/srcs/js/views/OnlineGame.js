@@ -219,6 +219,19 @@ export default class OnlineGame extends Game {
         document.querySelectorAll('.modal-backdrop').forEach(el => {
             if (el.parentNode) el.parentNode.removeChild(el);
         });
+        
+        // Remove custom close button
+        const closeButton = document.getElementById('customCloseButton');
+        if (closeButton && closeButton.parentNode) {
+            closeButton.parentNode.removeChild(closeButton);
+        }
+        
+        // Remove game recap modal
+        const gameRecapModal = document.getElementById('gameRecapModal');
+        if (gameRecapModal && gameRecapModal.parentNode) {
+            gameRecapModal.parentNode.removeChild(gameRecapModal);
+        }
+        
         document.body.classList.remove('modal-open');
         document.body.style.overflow = '';
         document.body.style.paddingRight = '';

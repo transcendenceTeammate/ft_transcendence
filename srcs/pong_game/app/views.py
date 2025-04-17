@@ -33,28 +33,17 @@ def create_room(request):
         username = None
         auth_header = request.headers.get('Authorization')
 
-        logger.info(f"Auth header: {auth_header}")
-
         if auth_header and auth_header.startswith('Bearer '):
             token = auth_header.split(' ')[1]
             try:
                 payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
                 user_id = str(payload.get('user_id'))
-                logger.info(f"Decoded token payload: {payload}")
-                username = payload.get('username')
-                logger.info(f"Extracted user_id from token: {user_id}, username: {username}")
             except Exception as e:
                 logger.error(f"Error decoding token: {str(e)}")
 
         if requested_username:
             username = requested_username
             logger.info(f"Using username from request body: {username}")
-
-        if not user_id:
-            user_id = f"guest-{random.randint(1000, 9999)}"
-            if not username:
-                username = f"Guest-{user_id.split('-')[1]}"
-            logger.warning(f"Using generated user_id: {user_id}, username: {username}")
 
         room_code = GameManager.generate_room_code()
         logger.info(f"Generated room code: {room_code}")
@@ -116,24 +105,21 @@ def join_room(request):
             token = auth_header.split(' ')[1]
             try:
                 payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-                logger.info(f"Decoded token payload: {payload}")
                 user_id = str(payload.get('user_id'))
-                username = payload.get('username')
-                logger.info(f"Join room - extracted user_id from token: {user_id}, username: {username}")
             except Exception as e:
                 logger.error(f"Join room - error decoding token: {str(e)}")
 
         if requested_username:
             username = requested_username
-            logger.info(f"Using username from request body: {username}")
-
-        if not user_id:
-            user_id = f"guest-{random.randint(1000, 9999)}"
-            if not username:
-                username = f"Guest-{user_id.split('-')[1]}"
-            logger.warning(f"Join room - using generated user_id: {user_id}, username: {username}")
 
         game = GameManager.get_game(room_code)
+        
+        if user_id == game.player_1_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'You are already in this game'
+            }, status=400)  
+        
         if not game:
             return JsonResponse({
                 'success': False,
