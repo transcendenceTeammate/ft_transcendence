@@ -1,7 +1,7 @@
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
-    server_name ${BASE_URL};
+    server_name ${ip}.nip.io;
     server_name_in_redirect off;
 
     ssl_certificate /etc/nginx/ssl/localhost.crt;
@@ -17,7 +17,7 @@ server {
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
-    server_name ${API_URL};
+    server_name api.app.,${ip}.nip.io;
 
     ssl_certificate /etc/nginx/ssl/localhost.crt;
     ssl_certificate_key /etc/nginx/ssl/localhost.key;
@@ -63,7 +63,7 @@ server {
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
-    server_name ${BASE_URL};
+    server_name api.app.${ip}.nip.io;
 
     ssl_certificate /etc/nginx/ssl/localhost.crt;
     ssl_certificate_key /etc/nginx/ssl/localhost.key;
