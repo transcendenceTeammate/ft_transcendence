@@ -33,10 +33,6 @@ class GameManager:
     _games = {}
     _player_sessions = {}
     _player_to_room = {}
-
-    _games = {}
-    _player_sessions = {}
-    _player_to_room = {}
     _cleanup_scheduled = False
 
     @classmethod

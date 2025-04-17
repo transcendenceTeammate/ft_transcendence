@@ -21,7 +21,6 @@ class SimpleWebSocket {
         this.eventHandlers = {};
         this.messageQueue = [];
         this.connected = false;
-        this.avgLatency = 50;
     }
 
     connect() {
@@ -121,9 +120,7 @@ class SimpleWebSocket {
         }
     }
 
-    getLatency() {
-        return this.avgLatency;
-    }
+
 
     on(event, callback) {
         if (!this.eventHandlers[event]) {
@@ -193,8 +190,6 @@ export default class OnlineGame extends Game {
 
         this._lastSentPosition = null;
         this._lastStatusUpdate = 0;
-        this._lastDebugUpdate = 0;
-        this._lastMessageTime = 0;
         this.lastPaddleUpdate = 0;
         this.paddleUpdateRate = 50;
         this.networkStatus = {
@@ -382,10 +377,6 @@ export default class OnlineGame extends Game {
 
         this.paddleSpeed = GameConstants.PADDLE_SPEED * 1.2;
 
-        this.opponentPaddleTarget = this.playerNumber === 1 ? this.player2Y : this.player1Y;
-        this.opponentPaddleCurrent = this.opponentPaddleTarget;
-        this.interpolationSpeed = 0.3;
-
         this.ballSize = GameConstants.BALL_SIZE;
         this.ballX = this.canvas.width / 2;
         this.ballY = this.canvas.height / 2;
@@ -505,14 +496,13 @@ export default class OnlineGame extends Game {
         if (this.gameOver) return;
 
         const currentTime = timestamp || performance.now();
-        let deltaTime = this.lastFrameTime ? currentTime - this.lastFrameTime : this.fixedDeltaTime;
+        const frameDelta = this.lastFrameTime ? currentTime - this.lastFrameTime : this.fixedDeltaTime;
         this.lastFrameTime = currentTime;
 
-        if (deltaTime > 100) deltaTime = 100;
+        const cappedDelta = Math.min(frameDelta, 100);
+        this.accumulator += cappedDelta;
 
-        this.accumulator += deltaTime;
-
-        this.processPlayerInput(deltaTime / 1000);
+        this.processPlayerInput(this.fixedDeltaTime / 1000);
 
         while (this.accumulator >= this.fixedDeltaTime) {
             this.update(this.fixedDeltaTime / 1000);
@@ -552,7 +542,7 @@ export default class OnlineGame extends Game {
         }
     }
 
-    update(deltaTime) {
+    update() {
         this.interpolateOpponentPaddle();
 
         const now = Date.now();
@@ -684,6 +674,7 @@ export default class OnlineGame extends Game {
     }
 
     handleConnect() {
+        // Update UI connection status
         const indicator = document.getElementById('connectionIndicator');
         if (indicator) {
             indicator.classList.remove('disconnected', 'connecting');
@@ -692,14 +683,14 @@ export default class OnlineGame extends Game {
 
         this.networkStatus.connected = true;
 
-        try {
-            if (!this.username || this.username === "undefined" || this.username === "null") {
+        // Ensure we have a valid username
+        if (!this.username || this.username === "undefined" || this.username === "null") {
+            try {
                 const sources = [
                     localStorage.getItem('current_username'),
                     localStorage.getItem('username'),
                     sessionStorage.getItem('username'),
-                    localStorage.getItem('nickname'),
-                    `Player ${this.playerNumber || "Unknown"}`
+                    localStorage.getItem('nickname')
                 ];
 
                 for (const source of sources) {
@@ -708,15 +699,17 @@ export default class OnlineGame extends Game {
                         break;
                     }
                 }
+            } catch (error) {
+                // Fallback in case of error accessing storage
             }
 
+            // Use default if still not valid
             if (!this.username || this.username === "undefined" || this.username === "null") {
                 this.username = `Player ${this.playerNumber || "Unknown"}`;
             }
-        } catch (error) {
-            this.username = `Player ${this.playerNumber || "Unknown"}`;
         }
 
+        // Update UI with username
         if (this.playerNumber === 1 && document.getElementById('player1Label')) {
             document.getElementById('player1Label').textContent = this.username;
             this.player1Username = this.username;
@@ -725,6 +718,7 @@ export default class OnlineGame extends Game {
             this.player2Username = this.username;
         }
 
+        // Send join game message to server
         this.socket.send('join_game', {
             player_id: this.playerId,
             username: this.username

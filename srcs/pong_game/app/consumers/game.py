@@ -83,11 +83,13 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         """Handle incoming WebSocket messages"""
         try:
+            # Parse the JSON message
             data = json.loads(text_data)
             message_type = data.get('type')
 
             logger.debug(f"Received message of type {message_type}")
 
+            # Route to appropriate handler based on message type
             if message_type == 'join_game':
                 await self.handle_join_game(data)
             elif message_type == 'key_event':
@@ -99,15 +101,17 @@ class GameConsumer(AsyncWebsocketConsumer):
             elif message_type == 'resume_game':
                 await self.handle_resume_game(data)
             elif message_type == 'pong':
-                pass  # Simplified: ignore pong messages
+                pass  # Ignore ping/pong messages used for connection monitoring
             else:
                 await self.send_error(f"Unknown message type: {message_type}")
 
         except json.JSONDecodeError:
+            # Handle malformed JSON
             await self.send_error("Invalid JSON format")
         except Exception as e:
+            # Log unexpected errors but provide minimal details to client
             logger.exception("Error in receive")
-            await self.send_error(f"Server error: {str(e)}")
+            await self.send_error("Server error processing message")
 
     def get_token_from_scope(self):
         """Extract token from query string or cookies"""
@@ -349,32 +353,37 @@ class GameConsumer(AsyncWebsocketConsumer):
             while True:
                 loop_start = time.time()
 
+                # Get game state
                 game = GameManager.get_game(self.room_code)
                 if not game or game.status == 'FINISHED':
                     break
 
+                # Update game state if not paused
                 changed = False
                 if not game.is_paused:
                     scorer = game.update()
                     changed = True
 
+                    # Handle scoring events
                     if scorer > 0:
                         await self.handle_goal_scored(game, scorer)
 
+                    # Check for game end
                     winner = game.check_for_winner()
                     if winner > 0:
                         await self.handle_game_over(game, winner)
                         break
 
+                # Save any changes to the game state
                 if changed:
                     GameManager.save_game(game)
 
+                # Send updates to clients
                 new_state = game.to_dict()
-                
                 if self.last_sent_state:
+                    # Only send changed properties (delta)
                     delta = GameManager.calculate_state_delta(self.last_sent_state, new_state)
-                    
-                    if len(delta) > 2:
+                    if len(delta) > 2:  # If there are meaningful changes
                         await self.channel_layer.group_send(
                             self.room_group_name,
                             {
@@ -384,6 +393,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                         )
                         self.last_sent_state = new_state
                 else:
+                    # First update - send full state
                     await self.channel_layer.group_send(
                         self.room_group_name,
                         {
@@ -394,12 +404,14 @@ class GameConsumer(AsyncWebsocketConsumer):
                     )
                     self.last_sent_state = new_state
 
+                # Maintain consistent frame rate
                 elapsed = time.time() - loop_start
                 sleep_time = max(0, frame_duration - elapsed)
                 if sleep_time > 0:
                     await asyncio.sleep(sleep_time)
 
         except asyncio.CancelledError:
+            # Clean shutdown - no logging needed
             pass
         except Exception as e:
             logger.exception("Error in game loop")
