@@ -56,6 +56,17 @@ export default class StartGame extends AbstractView {
 					currentModal.hide();
 				}
 
+				// Clean up any existing room first
+				const existingRoomCode = localStorage.getItem('current_room_code');
+				if (existingRoomCode) {
+					await this.cancelRoom(existingRoomCode);
+				}
+
+				// Clear localStorage items related to previous games
+				localStorage.removeItem('current_room_code');
+				localStorage.removeItem('current_player_number');
+				localStorage.removeItem('current_player_id');
+
 				this.createGameButton.disabled = true;
 				this.createGameButton.textContent = "Creating...";
 
@@ -106,7 +117,18 @@ export default class StartGame extends AbstractView {
 					this.pollingInterval = null;
 				}
 
-				console.log("Waiting modal closed by user");
+				const roomCode = localStorage.getItem('current_room_code');
+				if (roomCode) {
+					this.cancelRoom(roomCode);
+				}
+
+				// Reset the create game button state
+				if (this.createGameButton) {
+					this.createGameButton.disabled = false;
+					this.createGameButton.textContent = "CREATE GAME";
+				}
+
+				this.cleanupModalsBeforeNavigation();
 			});
 		}
 	}
@@ -400,6 +422,17 @@ export default class StartGame extends AbstractView {
 		document.body.classList.remove('modal-open');
 		document.body.style.overflow = '';
 		document.body.style.paddingRight = '';
+		
+		// Reset button states
+		if (this.createGameButton) {
+			this.createGameButton.disabled = false;
+			this.createGameButton.textContent = "CREATE GAME";
+		}
+		
+		if (this.joinGameButton) {
+			this.joinGameButton.disabled = false;
+			this.joinGameButton.textContent = "JOIN GAME";
+		}
 	}
 
 	pollForSecondPlayer(roomCode) {
@@ -564,6 +597,65 @@ export default class StartGame extends AbstractView {
 		const accessToken = localStorage.getItem('access_token');
 
 		return cookieToken || accessToken || null;
+	}
+
+	async cancelRoom(roomCode) {
+		try {
+			if (!roomCode) {
+				console.warn("No room code provided for cancellation");
+				localStorage.removeItem('current_room_code');
+				localStorage.removeItem('current_player_number');
+				localStorage.removeItem('current_player_id');
+				return;
+			}
+			
+			const authToken = this.getAuthToken();
+			
+			const headers = {
+				'Content-Type': 'application/json'
+			};
+			
+			if (authToken) {
+				headers['Authorization'] = `Bearer ${authToken}`;
+			}
+			
+			const response = await fetch(`${CONFIG.API_URL}/api/room/cancel/`, {
+				method: 'POST',
+				headers: headers,
+				body: JSON.stringify({ room_code: roomCode }),
+				credentials: 'include',
+				mode: 'cors'
+			});
+			
+			if (!response.ok) {
+				if (response.status === 404) {
+					console.warn(`Room ${roomCode} not found on server, cleaning up local state anyway`);
+					localStorage.removeItem('current_room_code');
+					localStorage.removeItem('current_player_number');
+					localStorage.removeItem('current_player_id');
+					return;
+				}
+				
+				const errorText = await response.text();
+				console.error(`Error canceling room (${response.status}):`, errorText);
+				return;
+			}
+			
+			const data = await response.json();
+			
+			if (data.success) {
+				localStorage.removeItem('current_room_code');
+				localStorage.removeItem('current_player_number');
+				localStorage.removeItem('current_player_id');
+			} else {
+				console.error("Error canceling room:", data.error);
+			}
+		} catch (error) {
+			console.error("Error canceling room:", error);
+			localStorage.removeItem('current_room_code');
+			localStorage.removeItem('current_player_number');
+			localStorage.removeItem('current_player_id');
+		}
 	}
 
     async getHtml() {

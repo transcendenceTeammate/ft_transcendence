@@ -28,13 +28,10 @@ class SimpleWebSocket {
         if (this.isConnecting) return;
         this.isConnecting = true;
 
-        this.log('Connecting to', this.url);
-
         try {
             this.socket = new WebSocket(this.url);
 
             this.socket.onopen = (event) => {
-                this.log('Connection established');
                 this.isConnecting = false;
                 this.connected = true;
                 this.reconnectAttempts = 0;
@@ -46,7 +43,6 @@ class SimpleWebSocket {
                 try {
                     const data = JSON.parse(event.data);
 
-                    // Simple ping handling
                     if (data.type === 'ping') {
                         this.socket.send(JSON.stringify({
                             type: 'pong',
@@ -60,35 +56,30 @@ class SimpleWebSocket {
                         this.emit(data.type, data);
                     }
                 } catch (error) {
-                    this.log('Error parsing message:', error);
+                    // Error parsing message
                 }
             };
 
             this.socket.onclose = (event) => {
-                this.log('Connection closed', event.code, event.reason);
                 this.isConnecting = false;
                 this.connected = false;
                 this.emit('disconnect', event);
 
                 if (!event.wasClean && this.reconnectAttempts < this.options.maxReconnectAttempts) {
                     this.reconnectAttempts++;
-                    this.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.options.maxReconnectAttempts})`);
                     setTimeout(() => this.connect(), this.options.reconnectInterval);
                 }
             };
 
             this.socket.onerror = (error) => {
-                this.log('Connection error:', error);
                 this.isConnecting = false;
                 this.emit('error', error);
             };
 
         } catch (error) {
-            this.log('Failed to create WebSocket:', error);
             this.isConnecting = false;
             this.emit('error', error);
 
-            // Try to reconnect
             this.reconnectAttempts++;
             setTimeout(() => this.connect(), this.options.reconnectInterval);
         }
@@ -105,7 +96,6 @@ class SimpleWebSocket {
             this.socket.send(message);
             return true;
         } else {
-            this.log('Socket not ready, queuing message:', type);
             this.messageQueue.push(message);
             return false;
         }
@@ -113,7 +103,6 @@ class SimpleWebSocket {
 
     processQueue() {
         if (this.messageQueue.length === 0) return;
-        this.log(`Processing queued messages (${this.messageQueue.length})`);
 
         while (this.messageQueue.length > 0) {
             const message = this.messageQueue.shift();
@@ -160,12 +149,6 @@ class SimpleWebSocket {
             callback(data);
         }
     }
-
-    log(...args) {
-        if (this.options.debug) {
-            console.log('[WebSocket]', ...args);
-        }
-    }
 }
 
 export default class OnlineGame extends Game {
@@ -173,21 +156,17 @@ export default class OnlineGame extends Game {
         super();
         this.setTitle("Online Pong");
 
-        // Get room code from URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         this.roomCode = urlParams.get('room');
 
         if (!this.roomCode) {
-            console.error("No room code provided");
             RouterService.getInstance().navigateTo(`/start-game`);
             return;
         }
 
-        // Player identification
         this.playerNumber = parseInt(localStorage.getItem('current_player_number') || '0', 10);
         this.playerId = localStorage.getItem('current_player_id');
 
-        // Multiple sources for username in order of priority
         const usernameSources = [
             localStorage.getItem('current_username'),
             localStorage.getItem('username'),
@@ -195,28 +174,23 @@ export default class OnlineGame extends Game {
             localStorage.getItem('nickname')
         ];
 
-        // Use the first valid username
         this.username = null;
         for (const source of usernameSources) {
             if (source && source !== "undefined" && source !== "null") {
                 this.username = source;
-                console.log("Constructor using username:", this.username);
                 break;
             }
         }
 
-        // Initialize player username fields
         this.player1Username = this.playerNumber === 1 ? this.username : null;
         this.player2Username = this.playerNumber === 2 ? this.username : null;
 
-        // Game state
         this.socket = null;
         this.serverState = null;
         this.lastFrameTime = 0;
         this.fixedDeltaTime = 1000 / 60;
         this.accumulator = 0;
 
-        // Network state
         this._lastSentPosition = null;
         this._lastStatusUpdate = 0;
         this._lastDebugUpdate = 0;
@@ -227,7 +201,6 @@ export default class OnlineGame extends Game {
             connected: false
         };
 
-        // Setup space key handler for resuming game
         window.addEventListener('keydown', (e) => {
             if (e.key === ' ' && this.paused && this.playerNumber) {
                 this.resumeGame();
@@ -236,13 +209,11 @@ export default class OnlineGame extends Game {
 
         this.cleanupModals();
 
-        // Game constants
         this.paddleWidth = GameConstants.PADDLE_WIDTH;
         this.paddleHeight = GameConstants.PADDLE_HEIGHT;
         this.paddleSpeed = GameConstants.PADDLE_SPEED;
         this.ballSize = GameConstants.BALL_SIZE;
 
-        // Log what we've initialized with
         console.log("OnlineGame initialized with:", {
             roomCode: this.roomCode,
             playerNumber: this.playerNumber,
@@ -270,17 +241,11 @@ export default class OnlineGame extends Game {
 
         let html = await response.text();
 
-        // Let's log the HTML to see what we're working with
-        console.log("Game HTML content:", html.substring(0, 500) + "...");
-
         html = html.replace(
             '<div id="scoreContainer">',
             `<div id="networkStatus" class="network-status">
                 <div id="connectionIndicator" class="indicator disconnected"></div>
                 <span id="pingDisplay">--</span>
-            </div>
-            <div id="debugOverlay" class="debug-overlay">
-                <div id="debugInfo"></div>
             </div>
             <div id="scoreContainer">`
         );
@@ -313,37 +278,6 @@ export default class OnlineGame extends Game {
             .connected { background-color: #2ecc71; }
             .connecting { background-color: #f39c12; }
             .disconnected { background-color: #e74c3c; }
-
-            .debug-overlay {
-                position: absolute;
-                top: 10px;
-                right: 10px;
-                background: rgba(0, 0, 0, 0.7);
-                color: white;
-                padding: 10px;
-                border-radius: 4px;
-                font-family: monospace;
-                font-size: 12px;
-                z-index: 100;
-                display: block;
-            }
-
-            .key-indicator {
-                display: inline-block;
-                width: 20px;
-                height: 20px;
-                margin: 0 5px;
-                border-radius: 3px;
-                background-color: #333;
-                text-align: center;
-                line-height: 20px;
-            }
-
-            .key-active {
-                background-color: #2ecc71;
-                color: black;
-                font-weight: bold;
-            }
         </style>
         `;
 
@@ -351,7 +285,6 @@ export default class OnlineGame extends Game {
     }
 
     async onLoaded() {
-        // Try to get the real username from MyProfileProvider
         try {
             const { MyProfileProvider } = await import("../data/providers/MyProfileProvider.js");
             const myProfileProvider = MyProfileProvider.getInstance();
@@ -360,12 +293,9 @@ export default class OnlineGame extends Game {
             const profile = await myProfileProvider.getUserProfile(true);
 
             if (profile && profile.username) {
-                console.log("Got authenticated username:", profile.username);
-                // Store the real username and override localStorage
                 this.username = profile.username;
                 localStorage.setItem('current_username', this.username);
 
-                // Update player labels if we know our player number
                 if (this.playerNumber === 1 && document.getElementById('player1Label')) {
                     document.getElementById('player1Label').textContent = this.username;
                     this.player1Username = this.username;
@@ -375,18 +305,16 @@ export default class OnlineGame extends Game {
                 }
             }
         } catch (error) {
-            console.warn("Could not get profile info:", error);
+            // Profile info fetch failed
         }
 
         this.initGame();
         this.initializeSocket();
 
-        // Create a completely new close button with proper styling
         const closeButton = document.createElement('div');
-        closeButton.id = 'customCloseButton'; // Use a different ID to avoid CSS conflicts
+        closeButton.id = 'customCloseButton';
         closeButton.innerHTML = '&times;';
 
-        // Apply inline styles that override any CSS conflicts
         Object.assign(closeButton.style, {
             position: 'absolute',
             top: '20px',
@@ -401,13 +329,12 @@ export default class OnlineGame extends Game {
             fontSize: '28px',
             fontWeight: 'bold',
             color: 'white',
-            cursor: 'pointer !important', // Force cursor
+            cursor: 'pointer !important',
             boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
             transition: 'all 0.3s ease',
             zIndex: '10000'
         });
 
-        // Add hover effect with inline handlers for maximum compatibility
         closeButton.onmouseenter = function() {
             this.style.backgroundColor = '#c0392b';
             this.style.transform = 'scale(1.1)';
@@ -420,44 +347,27 @@ export default class OnlineGame extends Game {
             this.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
         };
 
-        // Add direct onclick function for maximum compatibility
-        const self = this; // Store reference to the class instance
+        const self = this;
         closeButton.onclick = function() {
-            console.log("Close button clicked!");
-
-            // Close socket
             if (self.socket) {
                 self.socket.disconnect();
             }
 
-            // Clean up modals
             self.cleanupModals();
 
-            // Use direct navigation
             window.location.href = '/start-game';
-            return false; // Prevent event bubbling
+            return false;
         };
 
-        // Remove the original button to avoid duplicates
         const oldCloseButton = document.getElementById('closeButton');
         if (oldCloseButton && oldCloseButton.parentNode) {
             oldCloseButton.parentNode.removeChild(oldCloseButton);
         }
 
-        // Add our new button to the body
         document.body.appendChild(closeButton);
 
         window.addEventListener('keydown', (e) => {
-            if (e.key === 'F10') {
-                const debugOverlay = document.getElementById('debugOverlay');
-                if (debugOverlay) {
-                    debugOverlay.style.display = debugOverlay.style.display === 'none' ? 'block' : 'none';
-                }
-            }
-
-            // Add Escape key as an alternative way to exit the game
             if (e.key === 'Escape') {
-                console.log("Escape key pressed, exiting game");
                 if (this.socket) this.socket.disconnect();
                 this.cleanupModals();
                 window.location.href = '/start-game';
@@ -512,8 +422,7 @@ export default class OnlineGame extends Game {
 
         this.socket = new SimpleWebSocket(wsUrl, {
             reconnectInterval: 1000,
-            maxReconnectAttempts: 5,
-            debug: true
+            maxReconnectAttempts: 5
         });
 
         this.socket.on('connect', this.handleConnect.bind(this));
@@ -558,14 +467,12 @@ export default class OnlineGame extends Game {
                 if (!this.upPressed) {
                     this.upPressed = true;
                     this.sendInput("up", true);
-                    console.log("UP key pressed");
                 }
             }
             if (e.key === "s" || e.key === "ArrowDown") {
                 if (!this.downPressed) {
                     this.downPressed = true;
                     this.sendInput("down", true);
-                    console.log("DOWN key pressed");
                 }
             }
         };
@@ -577,22 +484,18 @@ export default class OnlineGame extends Game {
                 if (this.upPressed) {
                     this.upPressed = false;
                     this.sendInput("up", false);
-                    console.log("UP key released");
                 }
             }
             if (e.key === "s" || e.key === "ArrowDown") {
                 if (this.downPressed) {
                     this.downPressed = false;
                     this.sendInput("down", false);
-                    console.log("DOWN key released");
                 }
             }
         };
 
         window.addEventListener('keydown', this._keyDownHandler);
         window.addEventListener('keyup', this._keyUpHandler);
-
-        console.log("Input handlers set up for player", this.playerNumber);
     }
 
     sendInput(key, isDown) {
@@ -610,87 +513,57 @@ export default class OnlineGame extends Game {
     gameLoop(timestamp) {
         if (this.gameOver) return;
 
-        // Calculate time since last frame
         const currentTime = timestamp || performance.now();
         let deltaTime = this.lastFrameTime ? currentTime - this.lastFrameTime : this.fixedDeltaTime;
         this.lastFrameTime = currentTime;
 
-        // Cap delta time to prevent spiraling with large gaps
         if (deltaTime > 100) deltaTime = 100;
 
-        // Fixed time step accumulation
         this.accumulator += deltaTime;
 
-        // Process input immediately for responsiveness
         this.processPlayerInput(deltaTime / 1000);
 
-        // Update with fixed time steps
         while (this.accumulator >= this.fixedDeltaTime) {
             this.update(this.fixedDeltaTime / 1000);
             this.accumulator -= this.fixedDeltaTime;
         }
 
-        // Render at display refresh rate
         this.draw();
 
-        // Update network status (rate limited)
         const now = currentTime;
         if (now - this._lastStatusUpdate > 500) {
             this.updateConnectionStatus();
             this._lastStatusUpdate = now;
-
-            // Update debug info if overlay is visible
-            const debugOverlay = document.getElementById('debugOverlay');
-            if (debugOverlay && debugOverlay.style.display === 'block') {
-                this.updateDebugInfo();
-            }
         }
 
-        // Continue loop
         requestAnimationFrame(this.gameLoop);
     }
 
     processPlayerInput(deltaTime) {
         if (!this.playerNumber) return;
 
-        // Always allow paddle movement, even when game is paused
-        // This allows players to position themselves while waiting for the ball to start
-
-        // Calculate paddle movement speed adjusted for frame rate
         const actualPaddleSpeed = this.paddleSpeed * deltaTime * 60;
 
-        // Debug input state
-        if (this.upPressed || this.downPressed) {
-            console.log("Processing input - Up:", this.upPressed, "Down:", this.downPressed);
-        }
-
-        // Update local paddle position based on input
         if (this.playerNumber === 1) {
             if (this.upPressed) {
                 this.player1Y = Math.max(0, this.player1Y - actualPaddleSpeed);
-                console.log("Moving P1 paddle up, new position:", this.player1Y);
             }
             if (this.downPressed) {
                 this.player1Y = Math.min(this.canvas.height - this.paddleHeight, this.player1Y + actualPaddleSpeed);
-                console.log("Moving P1 paddle down, new position:", this.player1Y);
             }
         } else if (this.playerNumber === 2) {
             if (this.upPressed) {
                 this.player2Y = Math.max(0, this.player2Y - actualPaddleSpeed);
-                console.log("Moving P2 paddle up, new position:", this.player2Y);
             }
             if (this.downPressed) {
                 this.player2Y = Math.min(this.canvas.height - this.paddleHeight, this.player2Y + actualPaddleSpeed);
-                console.log("Moving P2 paddle down, new position:", this.player2Y);
             }
         }
     }
 
     update(deltaTime) {
-        // Interpolate opponent paddle position
         this.interpolateOpponentPaddle();
 
-        // Send paddle position updates (rate limited)
         const now = Date.now();
         if (now - this.lastPaddleUpdate > this.paddleUpdateRate) {
             this.sendPaddlePosition();
@@ -701,25 +574,21 @@ export default class OnlineGame extends Game {
     interpolateOpponentPaddle() {
         if (!this.serverState) return;
 
-        // Simple interpolation factor (lower = smoother but more lag)
         const factor = 0.15;
 
         if (this.playerNumber === 1) {
-            // Player 1's opponent is Player 2
             const targetY = this.serverState.player_2_paddle_y;
             const diff = targetY - this.player2Y;
             if (Math.abs(diff) > 0.1) {
                 this.player2Y += diff * factor;
             }
         } else if (this.playerNumber === 2) {
-            // Player 2's opponent is Player 1
             const targetY = this.serverState.player_1_paddle_y;
             const diff = targetY - this.player1Y;
             if (Math.abs(diff) > 0.1) {
                 this.player1Y += diff * factor;
             }
         } else {
-            // Spectator mode - interpolate both paddles
             const target1Y = this.serverState.player_1_paddle_y;
             const target2Y = this.serverState.player_2_paddle_y;
 
@@ -746,67 +615,44 @@ export default class OnlineGame extends Game {
     }
 
     handleGameState(data) {
-        // Store the full server state
         this.serverState = { ...data };
 
-        // Update scores
         this.player1Score = data.player_1_score;
         this.player2Score = data.player_2_score;
         this.score1.textContent = this.player1Score;
         this.score2.textContent = this.player2Score;
 
-        // Update player labels with usernames from game state
         if (document.getElementById('player1Label')) {
-            // Always use the username from the server if available
             const player1Name = data.player_1_username || `Player 1`;
-            // Log username changes for debugging
-            if (this.player1Username !== player1Name) {
-                console.log(`Player 1 username changed from [${this.player1Username}] to [${player1Name}]`);
-            }
             document.getElementById('player1Label').textContent = player1Name;
-
-            // Store player 1 username for later use
             this.player1Username = player1Name;
         }
 
         if (document.getElementById('player2Label')) {
-            // Always use the username from the server if available
             const player2Name = data.player_2_username || `Player 2`;
-            // Log username changes for debugging
-            if (this.player2Username !== player2Name) {
-                console.log(`Player 2 username changed from [${this.player2Username}] to [${player2Name}]`);
-            }
             document.getElementById('player2Label').textContent = player2Name;
-
-            // Store player 2 username for later use
             this.player2Username = player2Name;
         }
 
-        // Use server's ball position directly (no prediction)
         this.ballX = data.ball_x;
         this.ballY = data.ball_y;
         this.ballSpeedX = data.ball_speed_x;
         this.ballSpeedY = data.ball_speed_y;
 
-        // Update game state
         this.paused = data.is_paused;
         this.lastLoser = data.last_loser;
 
-        // Apply gentle server correction for local paddle if needed
         if (this.playerNumber === 1) {
             const serverY = data.player_1_paddle_y;
             if (Math.abs(this.player1Y - serverY) > 20) {
-                // Apply a gentle correction (80% local, 20% server)
                 this.player1Y = this.player1Y * 0.8 + serverY * 0.2;
             }
         } else if (this.playerNumber === 2) {
             const serverY = data.player_2_paddle_y;
             if (Math.abs(this.player2Y - serverY) > 20) {
-                // Apply a gentle correction (80% local, 20% server)
                 this.player2Y = this.player2Y * 0.8 + serverY * 0.2;
             }
         } else {
-            // Spectator mode - use server positions directly
             this.player1Y = data.player_1_paddle_y;
             this.player2Y = data.player_2_paddle_y;
         }
@@ -843,8 +689,6 @@ export default class OnlineGame extends Game {
             this.ballSpeedY = data.ball_speed_y;
         }
 
-        this.showMessage(`Game resumed by Player ${data.player_number}`);
-
         this.flashBall();
     }
 
@@ -857,11 +701,8 @@ export default class OnlineGame extends Game {
 
         this.networkStatus.connected = true;
 
-        // Improved username handling
         try {
-            // If username is not set or invalid, try multiple sources
             if (!this.username || this.username === "undefined" || this.username === "null") {
-                // Try multiple sources in order of priority
                 const sources = [
                     localStorage.getItem('current_username'),
                     localStorage.getItem('username'),
@@ -870,31 +711,21 @@ export default class OnlineGame extends Game {
                     `Player ${this.playerNumber || "Unknown"}`
                 ];
 
-                // Use the first valid value
                 for (const source of sources) {
                     if (source && source !== "undefined" && source !== "null") {
                         this.username = source;
-                        console.log("Using username from source:", this.username);
                         break;
                     }
                 }
             }
 
-            // Double check we have something valid
             if (!this.username || this.username === "undefined" || this.username === "null") {
                 this.username = `Player ${this.playerNumber || "Unknown"}`;
-                console.warn("Falling back to generic username:", this.username);
             }
-
-            console.log("Final username being sent to server:", this.username);
         } catch (error) {
-            console.warn("Error handling username:", error);
             this.username = `Player ${this.playerNumber || "Unknown"}`;
         }
 
-        this.showMessage(`Connected! You are Player ${this.playerNumber}`);
-
-        // Update player label immediately based on our player number
         if (this.playerNumber === 1 && document.getElementById('player1Label')) {
             document.getElementById('player1Label').textContent = this.username;
             this.player1Username = this.username;
@@ -903,14 +734,6 @@ export default class OnlineGame extends Game {
             this.player2Username = this.username;
         }
 
-        // Log what we're sending to server
-        console.log("Sending join_game with:", {
-            player_id: this.playerId,
-            username: this.username,
-            player_number: this.playerNumber
-        });
-
-        // Send join request to server
         this.socket.send('join_game', {
             player_id: this.playerId,
             username: this.username
@@ -925,12 +748,10 @@ export default class OnlineGame extends Game {
         }
 
         this.networkStatus.connected = false;
-
-        this.showMessage("Connection lost. Attempting to reconnect...");
     }
 
     handleError(error) {
-        this.showMessage("Connection error. Please try refreshing the page.");
+        // Connection error handler
     }
 
     handleGameStateDelta(data) {
@@ -938,14 +759,12 @@ export default class OnlineGame extends Game {
             return;
         }
 
-        // Apply delta changes to stored server state
         Object.entries(data).forEach(([key, value]) => {
             if (key !== 'type' && key !== 'timestamp' && key !== 'is_full_state') {
                 this.serverState[key] = value;
             }
         });
 
-        // Process updated state
         this.handleGameState(this.serverState);
     }
 
@@ -953,37 +772,21 @@ export default class OnlineGame extends Game {
         const playerNumber = data.player_number;
         let username = data.username || 'Player ' + playerNumber;
 
-        // Log the player join event with details
-        console.log(`Player ${playerNumber} joined:`, {
-            username: username,
-            is_you: data.is_you,
-            my_player_number: this.playerNumber,
-            data: data
-        });
-
-        this.showMessage(`${username} joined the game`);
-
-        // Always update player labels with the username from server
-        // This ensures consistency between what all players see
         if (playerNumber === 1) {
             if (document.getElementById('player1Label')) {
-                console.log(`Setting Player 1 label to: ${username}`);
                 document.getElementById('player1Label').textContent = username;
             }
             this.player1Username = username;
 
-            // Store in server state if it exists
             if (this.serverState) {
                 this.serverState.player_1_username = username;
             }
         } else if (playerNumber === 2) {
             if (document.getElementById('player2Label')) {
-                console.log(`Setting Player 2 label to: ${username}`);
                 document.getElementById('player2Label').textContent = username;
             }
             this.player2Username = username;
 
-            // Store in server state if it exists
             if (this.serverState) {
                 this.serverState.player_2_username = username;
             }
@@ -995,7 +798,7 @@ export default class OnlineGame extends Game {
     }
 
     handlePlayerLeft(data) {
-        this.showMessage(`${data.username || 'Player ' + data.player_number} left the game`);
+        // Player left handler
     }
 
     handleGoalScored(data) {
@@ -1005,16 +808,6 @@ export default class OnlineGame extends Game {
         this.score2.textContent = this.player2Score;
 
         this.lastLoser = data.scorer === 1 ? 2 : 1;
-
-        const scorerUsername = data.scorer === 1 ?
-            (this.player1Username || "Player 1") :
-            (this.player2Username || "Player 2");
-
-        this.showMessage(`Goal! ${scorerUsername} scored`);
-
-        if (this.playerNumber === this.lastLoser) {
-            this.showMessage("Press SPACE to start the ball", 5000);
-        }
     }
 
     handleGameOver(data) {
@@ -1023,8 +816,6 @@ export default class OnlineGame extends Game {
         const winnerScore = data.winner === 1 ? data.player_1_score : data.player_2_score;
         const loserScore = data.winner === 1 ? data.player_2_score : data.player_1_score;
         const isWinner = (this.playerNumber === data.winner);
-
-        this.showMessage(`Game Over! ${winner} wins!`, 3000);
 
         this.showGameRecap(winner, winnerScore, loserScore, isWinner);
     }
@@ -1063,7 +854,6 @@ export default class OnlineGame extends Game {
             </div>
         `;
 
-        // Add styles to the modal
         const styles = document.createElement('style');
         styles.textContent = `
             .game-recap-modal {
@@ -1167,57 +957,36 @@ export default class OnlineGame extends Game {
             }
         `;
 
-        // Add the modal and styles to the document
         document.head.appendChild(styles);
         document.body.appendChild(recapModal);
 
-        // Add event listener to quit button - using addEventListener instead of onclick
         const quitButton = document.getElementById('quitButton');
         if (quitButton) {
             quitButton.addEventListener('click', () => {
-                console.log("Return to menu button clicked");
+                const modalEl = document.getElementById('gameRecapModal');
+                if (modalEl) {
+                    document.body.removeChild(modalEl);
+                }
+
+                document.querySelectorAll('.modal-backdrop').forEach(el => {
+                    if (el.parentNode) el.parentNode.removeChild(el);
+                });
+
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
 
                 try {
-                    // Force cleanup of the modal
-                    const modalEl = document.getElementById('gameRecapModal');
-                    if (modalEl) {
-                        document.body.removeChild(modalEl);
-                    }
-
-                    // Clean up any other modal artifacts
-                    document.querySelectorAll('.modal-backdrop').forEach(el => {
-                        if (el.parentNode) el.parentNode.removeChild(el);
-                    });
-
-                    // Reset body styles
-                    document.body.classList.remove('modal-open');
-                    document.body.style.overflow = '';
-                    document.body.style.paddingRight = '';
-
-                    // First try RouterService, then direct navigation as fallback
-                    try {
-                        RouterService.getInstance().navigateTo('/start-game');
-                    } catch (error) {
-                        console.error("RouterService navigation failed, using direct navigation", error);
-                        window.location.href = '/start-game';
-                    }
+                    RouterService.getInstance().navigateTo('/start-game');
                 } catch (error) {
-                    console.error("Error in quit button handler:", error);
-                    // Final fallback navigation
-                    window.location.replace('/start-game');
+                    window.location.href = '/start-game';
                 }
             });
-        } else {
-            console.error("Quit button not found in the DOM");
         }
     }
 
-    // These functions have been replaced by inline code in showGameRecap
-
     handleGamePaused(data) {
         this.paused = true;
-
-        this.showMessage(`Game paused by Player ${data.player_number}`);
     }
 
     pauseGame() {
@@ -1231,7 +1000,6 @@ export default class OnlineGame extends Game {
     resumeGame() {
         if (this.socket && this.playerNumber) {
             if (this.playerNumber !== this.lastLoser && this.player1Score + this.player2Score > 0) {
-                this.showMessage("Wait for the other player to start the ball");
                 return;
             }
 
@@ -1248,8 +1016,6 @@ export default class OnlineGame extends Game {
                 ball_speed_y: initialSpeedY
             });
 
-            this.showMessage(`Starting the ball...`);
-
             this.flashBall();
         }
     }
@@ -1259,7 +1025,6 @@ export default class OnlineGame extends Game {
 
         const position = this.playerNumber === 1 ? this.player1Y : this.player2Y;
 
-        // Only send if position has changed significantly
         if (this._lastSentPosition !== null &&
             Math.abs(this._lastSentPosition - position) <= 2) {
             return;
@@ -1273,62 +1038,12 @@ export default class OnlineGame extends Game {
         });
     }
 
-    showMessage(message, duration = 3000) {
-        const now = Date.now();
-        if (this._lastMessageTime && now - this._lastMessageTime < 500) {
-            return;
-        }
-        this._lastMessageTime = now;
-
-        let messageContainer = document.getElementById('messageContainer');
-        if (!messageContainer) {
-            messageContainer = document.createElement('div');
-            messageContainer.id = 'messageContainer';
-            messageContainer.style.position = 'absolute';
-            messageContainer.style.bottom = '20px';
-            messageContainer.style.left = '50%';
-            messageContainer.style.transform = 'translateX(-50%)';
-            messageContainer.style.zIndex = '1000';
-            document.body.appendChild(messageContainer);
-        }
-
-        while (messageContainer.children.length >= 3) {
-            messageContainer.removeChild(messageContainer.firstChild);
-        }
-
-        const messageElement = document.createElement('div');
-        messageElement.textContent = message;
-        messageElement.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-        messageElement.style.color = 'white';
-        messageElement.style.padding = '8px 16px';
-        messageElement.style.borderRadius = '4px';
-        messageElement.style.marginBottom = '8px';
-        messageElement.style.transition = 'opacity 0.5s';
-        messageElement.style.opacity = '0';
-
-        messageContainer.appendChild(messageElement);
-
-        setTimeout(() => {
-            messageElement.style.opacity = '1';
-        }, 10);
-
-        setTimeout(() => {
-            messageElement.style.opacity = '0';
-            setTimeout(() => {
-                if (messageElement.parentNode) {
-                    messageContainer.removeChild(messageElement);
-                }
-            }, 500);
-        }, duration);
-    }
-
     updateConnectionStatus() {
         const indicator = document.getElementById('connectionIndicator');
         const pingDisplay = document.getElementById('pingDisplay');
 
         if (!indicator || !pingDisplay) return;
 
-        // Update connection indicator
         if (this.socket && this.socket.connected) {
             indicator.classList.remove('disconnected', 'connecting');
             indicator.classList.add('connected');
@@ -1339,58 +1054,6 @@ export default class OnlineGame extends Game {
             indicator.classList.add('disconnected');
             pingDisplay.textContent = "Disconnected";
             pingDisplay.style.color = '#e74c3c'; // Red
-        }
-
-        // Add player number and input state to debug info
-        const debugInfo = document.getElementById('debugInfo');
-        if (debugInfo) {
-            const upState = this.upPressed ? "YES" : "no";
-            const downState = this.downPressed ? "YES" : "no";
-            const inputStateDiv = document.createElement('div');
-            inputStateDiv.innerHTML = `<strong>Input:</strong> UP=${upState}, DOWN=${downState}`;
-
-            // Replace if exists, otherwise append
-            const existingInputState = debugInfo.querySelector('[data-info="input-state"]');
-            if (existingInputState) {
-                existingInputState.replaceWith(inputStateDiv);
-            } else {
-                inputStateDiv.setAttribute('data-info', 'input-state');
-                debugInfo.appendChild(inputStateDiv);
-            }
-        }
-    }
-
-    updateDebugInfo() {
-        const debugInfo = document.getElementById('debugInfo');
-        if (!debugInfo) return;
-
-        // Create a more detailed debug display
-        debugInfo.innerHTML = `
-            <div><strong>Player:</strong> ${this.playerNumber || 'Spectator'}</div>
-            <div><strong>Connected:</strong> ${this.socket?.connected ? 'Yes' : 'No'}</div>
-            <div><strong>Game Paused:</strong> ${this.paused ? 'Yes' : 'No'}</div>
-            <div class="control-status">
-                <strong>Controls:</strong>
-                <span class="key-indicator ${this.upPressed ? 'key-active' : ''}">↑</span>
-                <span class="key-indicator ${this.downPressed ? 'key-active' : ''}">↓</span>
-            </div>
-            <div><strong>P1 Position:</strong> ${Math.round(this.player1Y)}</div>
-            <div><strong>P2 Position:</strong> ${Math.round(this.player2Y)}</div>
-            <div><strong>Ball:</strong> (${Math.round(this.ballX)}, ${Math.round(this.ballY)})</div>
-            <div><strong>Ball Speed:</strong> (${Math.round(this.ballSpeedX)}, ${Math.round(this.ballSpeedY)})</div>
-            <div><strong>Update Rate:</strong> ${this.paddleUpdateRate}ms</div>
-        `;
-
-        // Add key press event monitor
-        if (!this._debugKeyMonitor) {
-            this._debugKeyMonitor = true;
-
-            // Show key presses in console
-            window.addEventListener('keydown', (e) => {
-                if (['w', 's', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
-                    console.log(`Key pressed: ${e.key}`);
-                }
-            });
         }
     }
 }

@@ -30,10 +30,9 @@ except Exception as e:
 class GameManager:
     """Manages all game instances in memory"""
 
-    # Class variables for in-memory storage
-    _games = {}  # room_code -> GameState
-    _player_sessions = {}  # (room_code, player_id) -> PlayerSession
-    _player_to_room = {}  # player_id -> room_code
+    _games = {}
+    _player_sessions = {}
+    _player_to_room = {}
 
     _games = {}
     _player_sessions = {}
@@ -60,11 +59,9 @@ class GameManager:
         game = GameState(room_code)
         cls._games[room_code] = game
 
-        # Cache the initial state if Redis is available
         if REDIS_AVAILABLE:
             cls.cache_game_state(game)
 
-        # Schedule cleanup job if not already scheduled
         if not cls._cleanup_scheduled:
             cls._schedule_cleanup()
 
@@ -78,11 +75,9 @@ class GameManager:
         async def cleanup_job():
             while True:
                 try:
-                    # Sleep first to allow the server to start properly
                     await asyncio.sleep(settings.GAME_CLEANUP_INTERVAL)
                     logger.info("Running periodic game cleanup")
 
-                    # Get list of rooms to avoid modification during iteration
                     rooms = list(cls._games.keys())
 
                     for room_code in rooms:
@@ -90,7 +85,6 @@ class GameManager:
                         if not game:
                             continue
 
-                        # Delete finished games older than 1 hour
                         if game.status == 'FINISHED' and (time.time() - game.created_at > 3600):
                             logger.info(f"Cleaning up finished game: {room_code}")
                             cls.delete_game(room_code)
@@ -98,14 +92,12 @@ class GameManager:
                 except Exception as e:
                     logger.error(f"Error in cleanup job: {str(e)}")
 
-        # Get or create event loop
         try:
             loop = asyncio.get_event_loop()
         except RuntimeError:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
-        # Schedule the cleanup task
         loop.create_task(cleanup_job())
 
     @classmethod
@@ -114,7 +106,6 @@ class GameManager:
         if room_code in cls._games:
             return cls._games[room_code]
 
-        # Try to get from Redis if not in memory
         if REDIS_AVAILABLE:
             state_json = redis_client.get(f"game:{room_code}")
             if state_json:
@@ -122,7 +113,6 @@ class GameManager:
                     state_dict = json.loads(state_json)
                     game = GameState(room_code)
 
-                    # Populate the game state from the dictionary
                     for key, value in state_dict.items():
                         if key != 'timestamp' and hasattr(game, key):
                             setattr(game, key, value)
@@ -153,7 +143,6 @@ class GameManager:
         if REDIS_AVAILABLE:
             redis_client.delete(f"game:{room_code}")
 
-        # Remove associated player sessions
         keys_to_remove = []
         for key in cls._player_sessions:
             if key[0] == room_code:
@@ -216,7 +205,6 @@ class GameManager:
             else:
                 session.mark_disconnected()
 
-                # Log the disconnection for monitoring
                 game = cls.get_game(room_code)
                 if game:
                     player_type = "Unknown"
@@ -227,7 +215,6 @@ class GameManager:
 
                     logger.info(f"Player disconnected: {player_id} ({player_type}) from game {room_code}")
 
-                    # If game is waiting and this was the only player, mark for potential quick cleanup
                     if game.status == 'WAITING' and (
                         (game.player_1_id == player_id and not game.player_2_id) or
                         (game.player_2_id == player_id and not game.player_1_id)
@@ -236,7 +223,6 @@ class GameManager:
 
             return session
 
-        # If we're marking a session as connected but it doesn't exist, create it
         if connected and room_code and player_id:
             logger.warning(f"Attempted to update non-existent player session: {player_id} in {room_code}")
 
@@ -249,32 +235,28 @@ class GameManager:
         if not game:
             return None, username
 
-        # Check if player already has a session
         session = cls.get_player_session(room_code, player_id)
         if session:
             session.connected = True
             session.last_active = time.time()
             return session.player_number, username
 
-        # Assign player 1 position if available
         if not game.player_1_id:
             game.player_1_id = player_id
-            game.player_1_username = username  # Store username in game state
+            game.player_1_username = username
             cls.save_game(game)
 
             cls.add_player_session(room_code, player_id, 1, username)
             return 1, username
 
-        # Assign player 2 position if available
         elif not game.player_2_id:
             game.player_2_id = player_id
-            game.player_2_username = username  # Store username in game state
+            game.player_2_username = username
             cls.save_game(game)
 
             cls.add_player_session(room_code, player_id, 2, username)
             return 2, username
 
-        # Spectator mode
         return None, username
 
     @classmethod
@@ -305,8 +287,8 @@ class GameManager:
 
         try:
             game_data = {
-                'player_1': game.player_1_id,
-                'player_2': game.player_2_id,
+                'player_1': int(game.player_1_id) - 1,
+                'player_2': int(game.player_2_id) - 1,
                 'score_1': game.player_1_score,
                 'score_2': game.player_2_score,
             }

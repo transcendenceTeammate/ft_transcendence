@@ -120,7 +120,7 @@ CHANNEL_LAYERS = {
 }
 
 ##CORS_ALLOWED_ORIGINS = [
-##    'https://app.10.24.1.3.nip.io:8443',
+##    'https://app.192.168.1.20.nip.io:8443',
 ##]
 
 ##CORS_ALLOW_CREDENTIALS = True

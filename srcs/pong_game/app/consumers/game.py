@@ -344,15 +344,13 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def game_loop(self):
         """Main game loop with fixed update rate"""
         try:
-            frame_duration = 1 / SERVER_UPDATE_RATE  # 30 FPS
+            frame_duration = 1 / SERVER_UPDATE_RATE
 
             while True:
                 loop_start = time.time()
 
                 game = GameManager.get_game(self.room_code)
                 if not game or game.status == 'FINISHED':
-                    if game and game.status == 'FINISHED':
-                        await GameManager.record_game_result(game)
                     break
 
                 changed = False
@@ -371,13 +369,12 @@ class GameConsumer(AsyncWebsocketConsumer):
                 if changed:
                     GameManager.save_game(game)
 
-                # Send game state updates with delta compression
                 new_state = game.to_dict()
                 
                 if self.last_sent_state:
                     delta = GameManager.calculate_state_delta(self.last_sent_state, new_state)
                     
-                    if len(delta) > 2:  # If there are actual changes
+                    if len(delta) > 2:
                         await self.channel_layer.group_send(
                             self.room_group_name,
                             {
@@ -409,7 +406,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def handle_goal_scored(self, game, scorer):
         """Handle goal scored event"""
-        # Ensure we have the usernames in the event
         player_1_username = game.player_1_username or "Player 1"
         player_2_username = game.player_2_username or "Player 2"
         
@@ -430,18 +426,15 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def handle_game_over(self, game, winner):
         """Handle game over event and record game result"""
-        # Mark game as finished
         game.status = 'FINISHED'
         GameManager.save_game(game)
         
-        # Ensure we have the usernames in the event
         player_1_username = game.player_1_username or "Player 1"
         player_2_username = game.player_2_username or "Player 2"
         
         winner_username = player_1_username if winner == 1 else player_2_username
         logger.info(f"Game over - Winner: Player {winner} ({winner_username})")
         
-        # Send game over message to clients
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -455,7 +448,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             }
         )
         
-        # Record game result to user_management service
         try:
             logger.info(f"Recording game result for room {self.room_code}")
             await GameManager.record_game_result(game)
@@ -467,7 +459,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         state_dict = game.to_dict()
         self.last_sent_state = state_dict
         
-        # Log the state being sent with usernames for debugging
         logger.info(f"Sending full game state with usernames - P1: {state_dict.get('player_1_username')}, P2: {state_dict.get('player_2_username')}")
 
         await self.send(text_data=json.dumps({
