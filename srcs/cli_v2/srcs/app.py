@@ -68,7 +68,7 @@ class StartGameScreen(Screen):
                 self.app.room_code = result["room_code"]
                 self.app.player_id = result["player_id"]
                 self.app.username = username
-                await self.app.push_screen(LobbyScreen())
+                await self.app.switch_mode("lobby")
 
         elif event.button.id == "joinButton":
             if room_code:
@@ -77,7 +77,8 @@ class StartGameScreen(Screen):
                     self.app.room_code = result["room_code"]
                     self.app.player_id = result["player_id"]
                     self.app.username = username
-                    await self.app.push_screen(LobbyScreen())
+                    await self.app.switch_mode("lobby")
+
 
 
 class LobbyScreen(Screen):
@@ -94,7 +95,7 @@ class LobbyScreen(Screen):
         result = await self.app.services.game.check_room(self.app.room_code)
         if result.get("player_count") == 2:
             self.polling_task.stop()
-            await self.app.push_screen(PongGameScreen())
+            await self.app.switch_mode("pong")
 
 import asyncio
 from textual.screen import Screen
@@ -164,10 +165,13 @@ class PongGameScreen(Screen):
         await area.mount(self.ball)
 
         self.key_handler = PaddleKeyHandler(self.move_paddle)
-        self.set_interval(0.01, self.update_game)
+        self.update_time = self.set_interval(0.01, self.update_game)
 
-    def update_game(self):
+    async def update_game(self):
         state = self.game.get_game_state()
+        if state["status"] == "FINISHED":
+            await self.handle_game_over(state)
+            return
         area = self.query_one("#game-area", Static)
         w, h = area.size.width or 80, area.size.height or 24
 
@@ -211,14 +215,22 @@ class PongGameScreen(Screen):
             self.key_handler.key_pressed(key)
 
 
+    async def handle_game_over(self, data):
+        self.update_time.stop()
+        self.app.room_code = None
+        self.app.player_id = None
+        self.app.username = None
+        await self.app.switch_mode("start-screen")
+
+        
+
+
 
 class Application(App):
     MODES = {
         "home": HomeScreen,
         "login": LoginScreen,
         "signup": SignUpScreen,
-        # "profile": ProfileScreen,
-        # "menu": MainMenuScreen,
         "pong": PongGameScreen,
         "lobby": LobbyScreen,
         "start-screen": StartGameScreen,

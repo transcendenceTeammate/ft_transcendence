@@ -5,6 +5,7 @@ import websocket
 import time
 import ssl
 
+VERIFY_HTTP_CERTIFICATE = False
 
 class OnlinePongService:
     def __init__(self, room_code, player_id, username, server_url, token):
@@ -48,7 +49,10 @@ class OnlinePongService:
             on_close=self.on_close,
             on_error=self.on_error
         )
-        threading.Thread(target=self.ws.run_forever, kwargs={"sslopt": {"cert_reqs": ssl.CERT_NONE}}, daemon=True).start()
+        if VERIFY_HTTP_CERTIFICATE:
+            threading.Thread(target=self.ws.run_forever, daemon=True).start()
+        else:
+            threading.Thread(target=self.ws.run_forever, kwargs={"sslopt": {"cert_reqs": ssl.CERT_NONE}}, daemon=True).start()
 
     def on_open(self, ws):
         print("[WS] Connected")
@@ -86,6 +90,9 @@ class OnlinePongService:
                 self.callbacks["on_score"](data)
 
         elif event_type == "game_over":
+            # self.ws.close()
+            self.last_state["status"] = "FINISHED"
+            self.ws.close()
             if self.callbacks["on_game_over"]:
                 self.callbacks["on_game_over"](data)
 

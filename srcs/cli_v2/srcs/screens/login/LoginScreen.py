@@ -23,6 +23,7 @@ class LoginScreen(Screen):
         yield Button(label="Login", id="loginButton")
         yield Footer()
 
+
     @on(Button.Pressed)
     async def submit_handler(self, event: Button.Pressed) -> None:
         username = self.query_one("#usernameInput", Input).value.strip()
