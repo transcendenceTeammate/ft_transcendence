@@ -5,13 +5,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('JWT_SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
-
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -59,20 +56,12 @@ WSGI_APPLICATION = 'project.wsgi.application'
 ASGI_APPLICATION = 'project.asgi.application'
 
 
-# Database
-# We're using in-memory storage for game state, but Django still requires a database configuration
-# This uses SQLite but the app doesn't actually use any database models
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': ':memory:',  # In-memory SQLite database that's never actually used
+        'NAME': ':memory:',
     }
 }
-
-
-# Password validation
-# https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -98,13 +87,8 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
-
 STATIC_URL = 'static/'
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -118,12 +102,6 @@ CHANNEL_LAYERS = {
         },
     },
 }
-
-##CORS_ALLOWED_ORIGINS = [
-##    'https://app.192.168.1.20.nip.io:8443',
-##]
-
-##CORS_ALLOW_CREDENTIALS = True
 
 REDIS_HOST = 'redis'
 REDIS_PORT = 6379
@@ -142,7 +120,7 @@ CACHES = {
 
 USER_MANAGEMENT_URL = 'http://user-management:8000'
 
-FINISHED_GAME_TTL = 300  # Time to keep finished games (5 minutes)
-INACTIVE_GAME_TTL = 600  # Time to keep inactive games (10 minutes)
-DISCONNECTED_PLAYER_TTL = 120  # Time to keep disconnected player sessions (2 minutes)
-CLEANUP_INTERVAL = 60  # How often to run cleanup job (1 minute)
+FINISHED_GAME_TTL = 300
+INACTIVE_GAME_TTL = 600
+DISCONNECTED_PLAYER_TTL = 120
+CLEANUP_INTERVAL = 60
