@@ -80,7 +80,8 @@ def signup(request):
 			"picture": user.profile.picture.url if user.profile.picture else None
 		})
 		response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.10.18.185.214.nip.io')
-		return response
+
+    return response
 
 	return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -153,7 +154,8 @@ def get_access_token(request):
 		client_id = "VOTRE_CLIENT_ID"
 		client_secret = "VOTRE_CLIENT_SECRET"
 		redirect_uri = "http://10.18.185.214.nip.io:8443/auth42/"
-		code = request.POST.get("code")
+
+    code = request.POST.get("code")
 
 		url = "https://api.intra.42.fr/oauth/token"
 		data = {
