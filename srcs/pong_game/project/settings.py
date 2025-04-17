@@ -1,18 +1,12 @@
 from pathlib import Path
 import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('JWT_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -66,12 +60,13 @@ ASGI_APPLICATION = 'project.asgi.application'
 
 
 # Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+# We're using in-memory storage for game state, but Django still requires a database configuration
+# This uses SQLite but the app doesn't actually use any database models
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': ':memory:',  # In-memory SQLite database that's never actually used
     }
 }
 
@@ -93,10 +88,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
-
-# Internationalization
-# https://docs.djangoproject.com/en/5.1/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
 
@@ -128,6 +119,10 @@ CHANNEL_LAYERS = {
     },
 }
 
+##CORS_ALLOWED_ORIGINS = [
+##    'https://app.192.168.1.20.nip.io:8443',
+##]
+
 ##CORS_ALLOW_CREDENTIALS = True
 
 REDIS_HOST = 'redis'
@@ -144,3 +139,10 @@ CACHES = {
         }
     }
 }
+
+USER_MANAGEMENT_URL = 'http://user-management:8000'
+
+FINISHED_GAME_TTL = 300  # Time to keep finished games (5 minutes)
+INACTIVE_GAME_TTL = 600  # Time to keep inactive games (10 minutes)
+DISCONNECTED_PLAYER_TTL = 120  # Time to keep disconnected player sessions (2 minutes)
+CLEANUP_INTERVAL = 60  # How often to run cleanup job (1 minute)

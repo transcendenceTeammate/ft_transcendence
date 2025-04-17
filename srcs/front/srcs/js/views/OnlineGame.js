@@ -1,8 +1,11 @@
 import AbstractView from "./AbstractView.js";
 import Game from "./Game.js";
 import GameConstants from "../core/GameConstants.js";
+import { RouterService } from "../services/router/RouterService.js";
+import CONFIG from "../config.js";
 
-class EnhancedWebSocket {
+
+class SimpleWebSocket {
     constructor(url, options = {}) {
         this.url = url;
         this.options = {
@@ -16,18 +19,13 @@ class EnhancedWebSocket {
         this.reconnectAttempts = 0;
         this.isConnecting = false;
         this.eventHandlers = {};
-        this.lastConnectionState = WebSocket.CLOSED;
-        this.latencyMeasurements = [];
-        this.lastPingSent = 0;
-        this.avgLatency = 50;
         this.messageQueue = [];
-        this.sequenceNumber = 0;
-        this.lastAcknowledgedSequence = 0;
+        this.connected = false;
+        this.avgLatency = 50;
     }
 
     connect() {
         if (this.isConnecting) return;
-
         this.isConnecting = true;
 
         try {
@@ -35,27 +33,41 @@ class EnhancedWebSocket {
 
             this.socket.onopen = (event) => {
                 this.isConnecting = false;
+                this.connected = true;
                 this.reconnectAttempts = 0;
                 this.emit('connect', event);
-
                 this.processQueue();
             };
 
             this.socket.onmessage = (event) => {
-                this.handleIncomingMessage(event);
+                try {
+                    const data = JSON.parse(event.data);
+
+                    if (data.type === 'ping') {
+                        this.socket.send(JSON.stringify({
+                            type: 'pong',
+                            time: data.time,
+                            timestamp: Date.now()
+                        }));
+                        return;
+                    }
+
+                    if (data.type) {
+                        this.emit(data.type, data);
+                    }
+                } catch (error) {
+                    // Error parsing message
+                }
             };
 
             this.socket.onclose = (event) => {
                 this.isConnecting = false;
-
-                if (this.lastConnectionState === WebSocket.OPEN) {
-                    this.emit('disconnect', event);
-                }
-
-                this.lastConnectionState = this.socket.readyState;
+                this.connected = false;
+                this.emit('disconnect', event);
 
                 if (!event.wasClean && this.reconnectAttempts < this.options.maxReconnectAttempts) {
-                    this.attemptReconnect();
+                    this.reconnectAttempts++;
+                    setTimeout(() => this.connect(), this.options.reconnectInterval);
                 }
             };
 
@@ -64,39 +76,20 @@ class EnhancedWebSocket {
                 this.emit('error', error);
             };
 
-            this.lastConnectionState = WebSocket.CONNECTING;
-
         } catch (error) {
             this.isConnecting = false;
             this.emit('error', error);
-            this.attemptReconnect();
-        }
-    }
 
-    attemptReconnect() {
-        this.reconnectAttempts++;
-
-        setTimeout(() => {
-            this.connect();
-        }, this.options.reconnectInterval);
-    }
-
-    disconnect() {
-        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-            this.socket.close(1000, "Normal closure");
+            this.reconnectAttempts++;
+            setTimeout(() => this.connect(), this.options.reconnectInterval);
         }
     }
 
     send(type, data = {}) {
-        if (['key_event', 'paddle_position', 'client_prediction'].includes(type)) {
-            this.sequenceNumber++;
-            data.sequence = this.sequenceNumber;
-        }
-
         const message = JSON.stringify({
             type,
             ...data,
-            client_time: Date.now()
+            timestamp: Date.now()
         });
 
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
@@ -122,61 +115,10 @@ class EnhancedWebSocket {
         }
     }
 
-    handleIncomingMessage(event) {
-        try {
-            const data = JSON.parse(event.data);
-
-            if (data.type === 'ping') {
-                console.log("Ping received, sending pong with time:", data.time);
-                this.send('pong', { time: data.time });
-                return;
-            }
-
-            if (data.type === 'input_ack' && data.sequence) {
-                const rtt = Date.now() - data.server_time;
-                console.log("Input ACK received, RTT:", rtt, "ms");
-                this.updateLatencyMeasurement(rtt);
-                this.lastAcknowledgedSequence = Math.max(this.lastAcknowledgedSequence, data.sequence);
-                return;
-            }
-
-            if (data.type === 'prediction_ack' && data.sequence) {
-                const rtt = Date.now() - data.server_time;
-                this.updateLatencyMeasurement(rtt);
-                this.emit('prediction_ack', data);
-                return;
-            }
-
-            if (data.type) {
-                this.emit(data.type, data);
-            }
-
-        } catch (error) {
-            if (this.options.debug) {
-                console.log('Error parsing WebSocket message:', error);
-            }
+    disconnect() {
+        if (this.socket) {
+            this.socket.close(1000, "Normal closure");
         }
-    }
-
-    updateLatencyMeasurement(rtt) {
-        const latency = rtt / 2;
-        console.log(`RTT: ${rtt}ms, Calculated latency: ${latency}ms`);
-        
-        this.latencyMeasurements.push(latency);
-        if (this.latencyMeasurements.length > 10) {
-            this.latencyMeasurements.shift();
-        }
-        
-        // Calculate average with outlier rejection
-        if (this.latencyMeasurements.length > 3) {
-            const sorted = [...this.latencyMeasurements].sort((a, b) => a - b);
-            const withoutExtremes = sorted.slice(1, -1);
-            this.avgLatency = withoutExtremes.reduce((sum, val) => sum + val, 0) / withoutExtremes.length || 50;
-        } else {
-            this.avgLatency = this.latencyMeasurements.reduce((sum, val) => sum + val, 0) / this.latencyMeasurements.length || 50;
-        }
-        
-        console.log("New average latency:", this.avgLatency, "ms");
     }
 
     getLatency() {
@@ -207,12 +149,6 @@ class EnhancedWebSocket {
             callback(data);
         }
     }
-
-    log(...args) {
-        if (this.options.debug) {
-            console.log('[WebSocket]', ...args);
-        }
-    }
 }
 
 export default class OnlineGame extends Game {
@@ -224,31 +160,45 @@ export default class OnlineGame extends Game {
         this.roomCode = urlParams.get('room');
 
         if (!this.roomCode) {
-            console.error("No room code provided");
-            window.location.href = '/start-game';
+            RouterService.getInstance().navigateTo(`/start-game`);
             return;
         }
 
         this.playerNumber = parseInt(localStorage.getItem('current_player_number') || '0', 10);
         this.playerId = localStorage.getItem('current_player_id');
-        this.username = localStorage.getItem('current_username');
+
+        const usernameSources = [
+            localStorage.getItem('current_username'),
+            localStorage.getItem('username'),
+            sessionStorage.getItem('username'),
+            localStorage.getItem('nickname')
+        ];
+
+        this.username = null;
+        for (const source of usernameSources) {
+            if (source && source !== "undefined" && source !== "null") {
+                this.username = source;
+                break;
+            }
+        }
+
+        this.player1Username = this.playerNumber === 1 ? this.username : null;
+        this.player2Username = this.playerNumber === 2 ? this.username : null;
 
         this.socket = null;
-        this.lastReceivedState = null;
-        this.predictionEnabled = true;
-        this.reconciliationEnabled = true;
-
-        this.pendingInputs = [];
+        this.serverState = null;
+        this.lastFrameTime = 0;
+        this.fixedDeltaTime = 1000 / 60;
+        this.accumulator = 0;
 
         this._lastSentPosition = null;
         this._lastStatusUpdate = 0;
         this._lastDebugUpdate = 0;
         this._lastMessageTime = 0;
         this.lastPaddleUpdate = 0;
-
+        this.paddleUpdateRate = 50;
         this.networkStatus = {
-            connected: false,
-            latency: 0
+            connected: false
         };
 
         window.addEventListener('keydown', (e) => {
@@ -288,9 +238,6 @@ export default class OnlineGame extends Game {
                 <div id="connectionIndicator" class="indicator disconnected"></div>
                 <span id="pingDisplay">--</span>
             </div>
-            <div id="debugOverlay" class="debug-overlay">
-                <div id="debugInfo"></div>
-            </div>
             <div id="scoreContainer">`
         );
 
@@ -322,20 +269,6 @@ export default class OnlineGame extends Game {
             .connected { background-color: #2ecc71; }
             .connecting { background-color: #f39c12; }
             .disconnected { background-color: #e74c3c; }
-
-            .debug-overlay {
-                position: absolute;
-                top: 10px;
-                right: 10px;
-                background: rgba(0, 0, 0, 0.7);
-                color: white;
-                padding: 10px;
-                border-radius: 4px;
-                font-family: monospace;
-                font-size: 12px;
-                z-index: 100;
-                display: none;
-            }
         </style>
         `;
 
@@ -343,21 +276,96 @@ export default class OnlineGame extends Game {
     }
 
     async onLoaded() {
-        this.initGame();
+        try {
+            const { MyProfileProvider } = await import("../data/providers/MyProfileProvider.js");
+            const myProfileProvider = MyProfileProvider.getInstance();
+            await myProfileProvider.updateProfile();
 
+            const profile = await myProfileProvider.getUserProfile(true);
+
+            if (profile && profile.username) {
+                this.username = profile.username;
+                localStorage.setItem('current_username', this.username);
+
+                if (this.playerNumber === 1 && document.getElementById('player1Label')) {
+                    document.getElementById('player1Label').textContent = this.username;
+                    this.player1Username = this.username;
+                } else if (this.playerNumber === 2 && document.getElementById('player2Label')) {
+                    document.getElementById('player2Label').textContent = this.username;
+                    this.player2Username = this.username;
+                }
+            }
+        } catch (error) {
+            // Profile info fetch failed
+        }
+
+        this.initGame();
         this.initializeSocket();
 
+        const closeButton = document.createElement('div');
+        closeButton.id = 'customCloseButton';
+        closeButton.innerHTML = '&times;';
+
+        Object.assign(closeButton.style, {
+            position: 'absolute',
+            top: '20px',
+            right: '20px',
+            width: '50px',
+            height: '50px',
+            backgroundColor: '#e74c3c',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '28px',
+            fontWeight: 'bold',
+            color: 'white',
+            cursor: 'pointer !important',
+            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
+            transition: 'all 0.3s ease',
+            zIndex: '10000'
+        });
+
+        closeButton.onmouseenter = function() {
+            this.style.backgroundColor = '#c0392b';
+            this.style.transform = 'scale(1.1)';
+            this.style.boxShadow = '0 6px 12px rgba(0, 0, 0, 0.4)';
+        };
+
+        closeButton.onmouseleave = function() {
+            this.style.backgroundColor = '#e74c3c';
+            this.style.transform = 'scale(1.0)';
+            this.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
+        };
+
+        const self = this;
+        closeButton.onclick = function() {
+            if (self.socket) {
+                self.socket.disconnect();
+            }
+
+            self.cleanupModals();
+
+            RouterService.getInstance().navigateTo('/start-game');
+            return false;
+        };
+
+        const oldCloseButton = document.getElementById('closeButton');
+        if (oldCloseButton && oldCloseButton.parentNode) {
+            oldCloseButton.parentNode.removeChild(oldCloseButton);
+        }
+
+        document.body.appendChild(closeButton);
+
         window.addEventListener('keydown', (e) => {
-            if (e.key === 'F10') {
-                const debugOverlay = document.getElementById('debugOverlay');
-                if (debugOverlay) {
-                    debugOverlay.style.display = debugOverlay.style.display === 'none' ? 'block' : 'none';
-                }
+            if (e.key === 'Escape') {
+                if (this.socket) this.socket.disconnect();
+                this.cleanupModals();
+                RouterService.getInstance().navigateTo('/start-game');
             }
         });
 
         this.gameLoop = this.gameLoop.bind(this);
-
         requestAnimationFrame(this.gameLoop);
     }
 
@@ -398,15 +406,14 @@ export default class OnlineGame extends Game {
     initializeSocket() {
         const token = this.getAuthToken();
 
-        let wsUrl = `${CONFIG.BASE_URL}/ws/game/${this.roomCode}/`;
+        let wsUrl = `${CONFIG.BASE_URL.replace(/^http/, "ws")}/ws/game/${this.roomCode}/`;
         if (token) {
             wsUrl += `?token=${encodeURIComponent(token)}`;
         }
 
-        this.socket = new EnhancedWebSocket(wsUrl, {
+        this.socket = new SimpleWebSocket(wsUrl, {
             reconnectInterval: 1000,
-            maxReconnectAttempts: 5,
-            debug: true // Enable debugging
+            maxReconnectAttempts: 5
         });
 
         this.socket.on('connect', this.handleConnect.bind(this));
@@ -437,28 +444,26 @@ export default class OnlineGame extends Game {
     }
 
     setupNetworkedInput() {
-        window.removeEventListener('keydown', this._keyDownHandler);
-        window.removeEventListener('keyup', this._keyUpHandler);
+        if (this._keyDownHandler) {
+            window.removeEventListener('keydown', this._keyDownHandler);
+        }
+        if (this._keyUpHandler) {
+            window.removeEventListener('keyup', this._keyUpHandler);
+        }
 
         this._keyDownHandler = (e) => {
             if (!this.playerNumber) return;
 
-            let keyChanged = false;
-
-            if (this.playerNumber === 1 || this.playerNumber === 2) {
-                if (e.key === "w" || e.key === "ArrowUp") {
-                    if (!this.upPressed) {
-                        this.upPressed = true;
-                        keyChanged = true;
-                        this.sendInput("up", true);
-                    }
+            if (e.key === "w" || e.key === "ArrowUp") {
+                if (!this.upPressed) {
+                    this.upPressed = true;
+                    this.sendInput("up", true);
                 }
-                if (e.key === "s" || e.key === "ArrowDown") {
-                    if (!this.downPressed) {
-                        this.downPressed = true;
-                        keyChanged = true;
-                        this.sendInput("down", true);
-                    }
+            }
+            if (e.key === "s" || e.key === "ArrowDown") {
+                if (!this.downPressed) {
+                    this.downPressed = true;
+                    this.sendInput("down", true);
                 }
             }
         };
@@ -466,22 +471,16 @@ export default class OnlineGame extends Game {
         this._keyUpHandler = (e) => {
             if (!this.playerNumber) return;
 
-            let keyChanged = false;
-
-            if (this.playerNumber === 1 || this.playerNumber === 2) {
-                if (e.key === "w" || e.key === "ArrowUp") {
-                    if (this.upPressed) {
-                        this.upPressed = false;
-                        keyChanged = true;
-                        this.sendInput("up", false);
-                    }
+            if (e.key === "w" || e.key === "ArrowUp") {
+                if (this.upPressed) {
+                    this.upPressed = false;
+                    this.sendInput("up", false);
                 }
-                if (e.key === "s" || e.key === "ArrowDown") {
-                    if (this.downPressed) {
-                        this.downPressed = false;
-                        keyChanged = true;
-                        this.sendInput("down", false);
-                    }
+            }
+            if (e.key === "s" || e.key === "ArrowDown") {
+                if (this.downPressed) {
+                    this.downPressed = false;
+                    this.sendInput("down", false);
                 }
             }
         };
@@ -503,39 +502,39 @@ export default class OnlineGame extends Game {
     }
 
     gameLoop(timestamp) {
-        requestAnimationFrame(this.gameLoop);
-
         if (this.gameOver) return;
 
-        const now = timestamp || performance.now();
-        const deltaTime = this.lastFrameTime ? (now - this.lastFrameTime) / 1000 : 0.016; // Convert to seconds
-        this.lastFrameTime = now;
+        const currentTime = timestamp || performance.now();
+        let deltaTime = this.lastFrameTime ? currentTime - this.lastFrameTime : this.fixedDeltaTime;
+        this.lastFrameTime = currentTime;
 
-        const cappedDelta = Math.min(deltaTime, 0.1); // Max 100ms
+        if (deltaTime > 100) deltaTime = 100;
 
-        this.processPlayerInput(cappedDelta);
-        this.updateWithPrediction(cappedDelta);
+        this.accumulator += deltaTime;
+
+        this.processPlayerInput(deltaTime / 1000);
+
+        while (this.accumulator >= this.fixedDeltaTime) {
+            this.update(this.fixedDeltaTime / 1000);
+            this.accumulator -= this.fixedDeltaTime;
+        }
+
         this.draw();
 
-        if (!this._lastStatusUpdate || now - this._lastStatusUpdate > 500) {
+        const now = currentTime;
+        if (now - this._lastStatusUpdate > 500) {
             this.updateConnectionStatus();
             this._lastStatusUpdate = now;
         }
 
-        const debugOverlay = document.getElementById('debugOverlay');
-        if (debugOverlay && debugOverlay.style.display === 'block') {
-            if (!this._lastDebugUpdate || now - this._lastDebugUpdate > 500) {
-                this.updateDebugInfo();
-                this._lastDebugUpdate = now;
-            }
-        }
+        requestAnimationFrame(this.gameLoop);
     }
 
     processPlayerInput(deltaTime) {
         if (!this.playerNumber) return;
-        
+
         const actualPaddleSpeed = this.paddleSpeed * deltaTime * 60;
-        
+
         if (this.playerNumber === 1) {
             if (this.upPressed) {
                 this.player1Y = Math.max(0, this.player1Y - actualPaddleSpeed);
@@ -552,32 +551,40 @@ export default class OnlineGame extends Game {
             }
         }
     }
-    updateWithPrediction(deltaTime) {
-        if (this.predictionEnabled && this.playerNumber) {
 
-            this.interpolateOpponentPaddle(deltaTime);
+    update(deltaTime) {
+        this.interpolateOpponentPaddle();
 
-            const now = Date.now();
-            if (now - this.lastPaddleUpdate > 16) {
-                this.sendPaddlePosition();
-                this.lastPaddleUpdate = now;
-            }
+        const now = Date.now();
+        if (now - this.lastPaddleUpdate > this.paddleUpdateRate) {
+            this.sendPaddlePosition();
+            this.lastPaddleUpdate = now;
         }
     }
 
-    interpolateOpponentPaddle(deltaTime) {
-        const factor = 0.35 * (deltaTime * 60);
-    
+    interpolateOpponentPaddle() {
+        if (!this.serverState) return;
+
+        const factor = 0.15;
+
         if (this.playerNumber === 1) {
-            const diff = this.opponentPaddleTarget - this.player2Y;
+            const targetY = this.serverState.player_2_paddle_y;
+            const diff = targetY - this.player2Y;
             if (Math.abs(diff) > 0.1) {
                 this.player2Y += diff * factor;
             }
         } else if (this.playerNumber === 2) {
-            const diff = this.opponentPaddleTarget - this.player1Y;
+            const targetY = this.serverState.player_1_paddle_y;
+            const diff = targetY - this.player1Y;
             if (Math.abs(diff) > 0.1) {
                 this.player1Y += diff * factor;
             }
+        } else {
+            const target1Y = this.serverState.player_1_paddle_y;
+            const target2Y = this.serverState.player_2_paddle_y;
+
+            this.player1Y += (target1Y - this.player1Y) * factor;
+            this.player2Y += (target2Y - this.player2Y) * factor;
         }
     }
 
@@ -599,55 +606,46 @@ export default class OnlineGame extends Game {
     }
 
     handleGameState(data) {
-        this.lastReceivedState = { ...data };
+        this.serverState = { ...data };
 
         this.player1Score = data.player_1_score;
         this.player2Score = data.player_2_score;
+        this.score1.textContent = this.player1Score;
+        this.score2.textContent = this.player2Score;
 
-        // Debug the paddle positions
-        console.log(`Received paddle positions - P1: ${data.player_1_paddle_y}, P2: ${data.player_2_paddle_y}`);
-        console.log(`Current player number: ${this.playerNumber}`);
+        if (document.getElementById('player1Label')) {
+            const player1Name = data.player_1_username || `Player 1`;
+            document.getElementById('player1Label').textContent = player1Name;
+            this.player1Username = player1Name;
+        }
 
-        if (this.playerNumber === 1) {
-            this.opponentPaddleTarget = data.player_2_paddle_y;
-            console.log(`Player 1: Setting opponent (P2) paddle target to ${this.opponentPaddleTarget}`);
-        } else if (this.playerNumber === 2) {
-            this.opponentPaddleTarget = data.player_1_paddle_y;
-            console.log(`Player 2: Setting opponent (P1) paddle target to ${this.opponentPaddleTarget}`);
-        } else {
-            // Spectator mode
-            this.player1Y = data.player_1_paddle_y;
-            this.player2Y = data.player_2_paddle_y;
-            console.log(`Spectator: Setting both paddles directly - P1: ${this.player1Y}, P2: ${this.player2Y}`);
+        if (document.getElementById('player2Label')) {
+            const player2Name = data.player_2_username || `Player 2`;
+            document.getElementById('player2Label').textContent = player2Name;
+            this.player2Username = player2Name;
         }
 
         this.ballX = data.ball_x;
         this.ballY = data.ball_y;
         this.ballSpeedX = data.ball_speed_x;
         this.ballSpeedY = data.ball_speed_y;
+
         this.paused = data.is_paused;
+        this.lastLoser = data.last_loser;
 
-        this.score1.textContent = this.player1Score;
-        this.score2.textContent = this.player2Score;
-
-        if (this.reconciliationEnabled && this.playerNumber) {
-            if (this.playerNumber === 1) {
-                this.reconcilePlayerPaddle(data.player_1_paddle_y, 1);
-            } else if (this.playerNumber === 2) {
-                this.reconcilePlayerPaddle(data.player_2_paddle_y, 2);
+        if (this.playerNumber === 1) {
+            const serverY = data.player_1_paddle_y;
+            if (Math.abs(this.player1Y - serverY) > 20) {
+                this.player1Y = this.player1Y * 0.8 + serverY * 0.2;
             }
-        }
-    }
-
-    reconcilePlayerPaddle(serverPaddleY, playerNum) {
-        const clientPaddleY = playerNum === 1 ? this.player1Y : this.player2Y;
-
-        if (Math.abs(serverPaddleY - clientPaddleY) > 10) {
-            if (playerNum === 1) {
-                this.player1Y = serverPaddleY * 0.1 + clientPaddleY * 0.9;
-            } else {
-                this.player2Y = serverPaddleY * 0.1 + clientPaddleY * 0.9;
+        } else if (this.playerNumber === 2) {
+            const serverY = data.player_2_paddle_y;
+            if (Math.abs(this.player2Y - serverY) > 20) {
+                this.player2Y = this.player2Y * 0.8 + serverY * 0.2;
             }
+        } else {
+            this.player1Y = data.player_1_paddle_y;
+            this.player2Y = data.player_2_paddle_y;
         }
     }
 
@@ -682,8 +680,6 @@ export default class OnlineGame extends Game {
             this.ballSpeedY = data.ball_speed_y;
         }
 
-        this.showMessage(`Game resumed by Player ${data.player_number}`);
-
         this.flashBall();
     }
 
@@ -696,7 +692,38 @@ export default class OnlineGame extends Game {
 
         this.networkStatus.connected = true;
 
-        this.showMessage(`Connected! You are Player ${this.playerNumber}`);
+        try {
+            if (!this.username || this.username === "undefined" || this.username === "null") {
+                const sources = [
+                    localStorage.getItem('current_username'),
+                    localStorage.getItem('username'),
+                    sessionStorage.getItem('username'),
+                    localStorage.getItem('nickname'),
+                    `Player ${this.playerNumber || "Unknown"}`
+                ];
+
+                for (const source of sources) {
+                    if (source && source !== "undefined" && source !== "null") {
+                        this.username = source;
+                        break;
+                    }
+                }
+            }
+
+            if (!this.username || this.username === "undefined" || this.username === "null") {
+                this.username = `Player ${this.playerNumber || "Unknown"}`;
+            }
+        } catch (error) {
+            this.username = `Player ${this.playerNumber || "Unknown"}`;
+        }
+
+        if (this.playerNumber === 1 && document.getElementById('player1Label')) {
+            document.getElementById('player1Label').textContent = this.username;
+            this.player1Username = this.username;
+        } else if (this.playerNumber === 2 && document.getElementById('player2Label')) {
+            document.getElementById('player2Label').textContent = this.username;
+            this.player2Username = this.username;
+        }
 
         this.socket.send('join_game', {
             player_id: this.playerId,
@@ -712,34 +739,57 @@ export default class OnlineGame extends Game {
         }
 
         this.networkStatus.connected = false;
-
-        this.showMessage("Connection lost. Attempting to reconnect...");
     }
 
     handleError(error) {
-        this.showMessage("Connection error. Please try refreshing the page.");
+        // Connection error handler
     }
 
     handleGameStateDelta(data) {
-        if (!this.lastReceivedState) {
+        if (!this.serverState) {
             return;
         }
 
         Object.entries(data).forEach(([key, value]) => {
-            if (key !== 'type' && key !== 'timestamp' && key !== 'sequence') {
-                this.lastReceivedState[key] = value;
+            if (key !== 'type' && key !== 'timestamp' && key !== 'is_full_state') {
+                this.serverState[key] = value;
             }
         });
 
-        this.handleGameState(this.lastReceivedState);
+        this.handleGameState(this.serverState);
     }
 
     handlePlayerJoined(data) {
-        this.showMessage(`${data.username || 'Player ' + data.player_number} joined the game`);
+        const playerNumber = data.player_number;
+        let username = data.username || 'Player ' + playerNumber;
+
+        if (playerNumber === 1) {
+            if (document.getElementById('player1Label')) {
+                document.getElementById('player1Label').textContent = username;
+            }
+            this.player1Username = username;
+
+            if (this.serverState) {
+                this.serverState.player_1_username = username;
+            }
+        } else if (playerNumber === 2) {
+            if (document.getElementById('player2Label')) {
+                document.getElementById('player2Label').textContent = username;
+            }
+            this.player2Username = username;
+
+            if (this.serverState) {
+                this.serverState.player_2_username = username;
+            }
+        }
+
+        if (data.is_you && this.playerNumber === playerNumber) {
+            this.username = username;
+        }
     }
 
     handlePlayerLeft(data) {
-        this.showMessage(`${data.username || 'Player ' + data.player_number} left the game`);
+        // Player left handler
     }
 
     handleGoalScored(data) {
@@ -749,25 +799,185 @@ export default class OnlineGame extends Game {
         this.score2.textContent = this.player2Score;
 
         this.lastLoser = data.scorer === 1 ? 2 : 1;
-
-        const scorer = data.scorer === 1 ? "Player 1" : "Player 2";
-        this.showMessage(`Goal! ${scorer} scored`);
-
-        if (this.playerNumber === this.lastLoser) {
-            this.showMessage("Press SPACE to start the ball", 5000);
-        }
     }
 
     handleGameOver(data) {
         this.gameOver = true;
+        const winner = data.winner === 1 ? "Player 1" : "Player 2";
+        const winnerScore = data.winner === 1 ? data.player_1_score : data.player_2_score;
+        const loserScore = data.winner === 1 ? data.player_2_score : data.player_1_score;
+        const isWinner = (this.playerNumber === data.winner);
 
-        this.showGameOverPopup(data.winner === 1 ? "Player 1" : "Player 2");
+        this.showGameRecap(winner, winnerScore, loserScore, isWinner);
+    }
+
+    showGameRecap(winner, winnerScore, loserScore, isWinner) {
+        const existingModal = document.getElementById('gameRecapModal');
+        if (existingModal) {
+            document.body.removeChild(existingModal);
+        }
+
+        const recapModal = document.createElement('div');
+        recapModal.id = 'gameRecapModal';
+        recapModal.classList.add('game-recap-modal');
+
+        const resultMessage = isWinner ?
+            'Congratulations! You won!' :
+            'Game over! Better luck next time!';
+
+        const winnerName = winner === "Player 1" ? (this.player1Username || "Player 1") :
+                                                 (this.player2Username || "Player 2");
+
+        recapModal.innerHTML = `
+            <div class="game-recap-content">
+                <h2 class="game-recap-title">${resultMessage}</h2>
+                <div class="game-recap-score">
+                    <div class="score-display">
+                        <span class="score-label">Final Score</span>
+                        <div class="score-numbers">
+                            <span class="score-value">${winnerScore}</span>
+                            <span class="score-divider">-</span>
+                            <span class="score-value">${loserScore}</span>
+                        </div>
+                        <span class="winner-name">${winnerName} wins!</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const styles = document.createElement('style');
+        styles.textContent = `
+            .game-recap-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.7);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+                animation: fadeIn 0.3s ease-out;
+            }
+
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+
+            .game-recap-title {
+                color: ${isWinner ? '#4caf50' : '#e74c3c'};
+                margin-top: 0;
+                font-size: 28px;
+                margin-bottom: 20px;
+            }
+
+            .game-recap-content {
+                position: relative;
+                background-color: #222;
+                border-radius: 8px;
+                padding: 30px;
+                width: 80%;
+                max-width: 500px;
+                text-align: center;
+                box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+                border: 2px solid #444;
+            }
+
+            .game-recap-score {
+                background-color: #333;
+                border-radius: 8px;
+                padding: 20px;
+                margin-bottom: 30px;
+            }
+
+            .score-label {
+                display: block;
+                color: #ccc;
+                font-size: 16px;
+                margin-bottom: 10px;
+            }
+
+            .score-numbers {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-bottom: 10px;
+            }
+
+            .score-value {
+                font-size: 48px;
+                font-weight: bold;
+                color: white;
+            }
+
+            .score-divider {
+                font-size: 36px;
+                margin: 0 15px;
+                color: #666;
+            }
+
+            .winner-name {
+                display: block;
+                color: ${isWinner ? '#4caf50' : '#e74c3c'};
+                font-size: 20px;
+                font-weight: bold;
+                margin-top: 10px;
+            }
+
+            .recap-button {
+                padding: 15px 30px;
+                border: none;
+                border-radius: 4px;
+                font-size: 18px;
+                font-weight: bold;
+                cursor: pointer;
+                transition: all 0.2s;
+                text-transform: uppercase;
+                background-color: #e74c3c;
+                color: white;
+                width: 100%;
+                max-width: 250px;
+                position: relative;
+                z-index: 10000;
+            }
+
+            .quit-button:hover {
+                background-color: #c0392b;
+            }
+        `;
+
+        document.head.appendChild(styles);
+        document.body.appendChild(recapModal);
+
+        const quitButton = document.getElementById('quitButton');
+        if (quitButton) {
+            quitButton.addEventListener('click', () => {
+                const modalEl = document.getElementById('gameRecapModal');
+                if (modalEl) {
+                    document.body.removeChild(modalEl);
+                }
+
+                document.querySelectorAll('.modal-backdrop').forEach(el => {
+                    if (el.parentNode) el.parentNode.removeChild(el);
+                });
+
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+
+                try {
+                    RouterService.getInstance().navigateTo('/start-game');
+                } catch (error) {
+                    RouterService.getInstance().navigateTo('/start-game');
+                }
+            });
+        }
     }
 
     handleGamePaused(data) {
         this.paused = true;
-
-        this.showMessage(`Game paused by Player ${data.player_number}`);
     }
 
     pauseGame() {
@@ -781,7 +991,6 @@ export default class OnlineGame extends Game {
     resumeGame() {
         if (this.socket && this.playerNumber) {
             if (this.playerNumber !== this.lastLoser && this.player1Score + this.player2Score > 0) {
-                this.showMessage("Wait for the other player to start the ball");
                 return;
             }
 
@@ -798,8 +1007,6 @@ export default class OnlineGame extends Game {
                 ball_speed_y: initialSpeedY
             });
 
-            this.showMessage(`Starting the ball...`);
-
             this.flashBall();
         }
     }
@@ -809,67 +1016,17 @@ export default class OnlineGame extends Game {
 
         const position = this.playerNumber === 1 ? this.player1Y : this.player2Y;
 
-        // Handle the case where _lastSentPosition might be null/undefined
-        if (this._lastSentPosition !== null && this._lastSentPosition !== undefined) {
-            if (Math.abs(this._lastSentPosition - position) <= 1) return;
+        if (this._lastSentPosition !== null &&
+            Math.abs(this._lastSentPosition - position) <= 2) {
+            return;
         }
-        
+
         this._lastSentPosition = position;
-        
-        console.log(`Sending paddle position: ${position} for player ${this.playerNumber}`);
+
         this.socket.send('paddle_position', {
             player_number: this.playerNumber,
             position: position
         });
-    }
-
-    showMessage(message, duration = 3000) {
-        const now = Date.now();
-        if (this._lastMessageTime && now - this._lastMessageTime < 500) {
-            return;
-        }
-        this._lastMessageTime = now;
-
-        let messageContainer = document.getElementById('messageContainer');
-        if (!messageContainer) {
-            messageContainer = document.createElement('div');
-            messageContainer.id = 'messageContainer';
-            messageContainer.style.position = 'absolute';
-            messageContainer.style.bottom = '20px';
-            messageContainer.style.left = '50%';
-            messageContainer.style.transform = 'translateX(-50%)';
-            messageContainer.style.zIndex = '1000';
-            document.body.appendChild(messageContainer);
-        }
-
-        while (messageContainer.children.length >= 3) {
-            messageContainer.removeChild(messageContainer.firstChild);
-        }
-
-        const messageElement = document.createElement('div');
-        messageElement.textContent = message;
-        messageElement.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-        messageElement.style.color = 'white';
-        messageElement.style.padding = '8px 16px';
-        messageElement.style.borderRadius = '4px';
-        messageElement.style.marginBottom = '8px';
-        messageElement.style.transition = 'opacity 0.5s';
-        messageElement.style.opacity = '0';
-
-        messageContainer.appendChild(messageElement);
-
-        setTimeout(() => {
-            messageElement.style.opacity = '1';
-        }, 10);
-
-        setTimeout(() => {
-            messageElement.style.opacity = '0';
-            setTimeout(() => {
-                if (messageElement.parentNode) {
-                    messageContainer.removeChild(messageElement);
-                }
-            }, 500);
-        }, duration);
     }
 
     updateConnectionStatus() {
@@ -878,44 +1035,16 @@ export default class OnlineGame extends Game {
 
         if (!indicator || !pingDisplay) return;
 
-        if (this.networkStatus.connected) {
+        if (this.socket && this.socket.connected) {
             indicator.classList.remove('disconnected', 'connecting');
             indicator.classList.add('connected');
+            pingDisplay.textContent = `P${this.playerNumber || "S"} Connected`;
+            pingDisplay.style.color = '#2ecc71'; // Green
         } else {
             indicator.classList.remove('connected', 'connecting');
             indicator.classList.add('disconnected');
+            pingDisplay.textContent = "Disconnected";
+            pingDisplay.style.color = '#e74c3c'; // Red
         }
-
-        if (this.socket) {
-            const latency = Math.round(this.socket.getLatency() || 0);
-            pingDisplay.textContent = `${latency}ms`;
-
-            if (latency < 50) {
-                pingDisplay.style.color = '#2ecc71';
-            } else if (latency < 100) {
-                pingDisplay.style.color = '#f39c12';
-            } else {
-                pingDisplay.style.color = '#e74c3c';
-            }
-        }
-    }
-
-    updateDebugInfo() {
-        const debugInfo = document.getElementById('debugInfo');
-        if (!debugInfo) return;
-
-        const info = {
-            'Player': this.playerNumber || 'Spectator',
-            'Connected': this.networkStatus.connected ? 'Yes' : 'No',
-            'Ping': `${Math.round(this.socket?.getLatency() || 0)} ms`,
-            'Ball Speed': `${Math.round(this.ballSpeedX)}, ${Math.round(this.ballSpeedY)}`
-        };
-
-        let html = '';
-        for (const [key, value] of Object.entries(info)) {
-            html += `<div><strong>${key}:</strong> ${value}</div>`;
-        }
-
-        debugInfo.innerHTML = html;
     }
 }

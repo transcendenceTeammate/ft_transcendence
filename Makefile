@@ -18,6 +18,9 @@ run:
 	mkdir -p ./data/postgres
 	mkdir -p ./data/media
 	mkdir -p ./data/ssl
+	chmod 777 ./data/postgres
+	chmod 777 ./data/media
+	chmod 777 ./data/ssl
 	docker compose up -d
 
 # Stop the application
@@ -27,6 +30,14 @@ stop:
 # Clean up containers, images, and volumes
 clean:
 	docker compose down -v --rmi all
+
+# Complete Docker system cleanup
+deep-clean:
+	docker compose down
+	docker compose down -v --rmi all
+	docker system prune -af
+	docker volume prune -f
+	rm -rf ./data/postgres/* ./data/media/* ./data/ssl/*
 
 # Rebuild from scratch
 re: clean build run

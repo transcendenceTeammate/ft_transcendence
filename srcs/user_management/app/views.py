@@ -60,7 +60,7 @@ def login(request):
 	response = Response({
 		"user": serializer.data
 	})
-	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.127.0.0.1.nip.io')
+	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.192.168.1.20.nip.io')
 	return response
 
 @api_view(['POST'])
@@ -79,7 +79,7 @@ def signup(request):
 			"type": user.profile.type,
 			"picture": user.profile.picture.url if user.profile.picture else None
 		})
-		response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.127.0.0.1.nip.io')
+		response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.192.168.1.20.nip.io')
 		return response
 
 	return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -142,10 +142,29 @@ def auth42(request):
 	access_token = AccessToken.for_user(user)
 
 	response = HttpResponseRedirect(os.getenv('BASE_URL') + '/start-game')
-	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.127.0.0.1.nip.io')
+	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.192.168.1.20.nip.io')
 
 	return response
 
+
+
+def get_access_token(request):
+	if request.method == "POST":
+		client_id = "VOTRE_CLIENT_ID"
+		client_secret = "VOTRE_CLIENT_SECRET"
+		redirect_uri = "http://192.168.1.20.nip.io:8443/auth42/"
+		code = request.POST.get("code")
+
+		url = "https://api.intra.42.fr/oauth/token"
+		data = {
+			"grant_type": "authorization_code",
+			"client_id": client_id,
+			"client_secret": client_secret,
+			"code": code,
+			"redirect_uri": redirect_uri,
+		}
+		response = requests.post(url, data=data)
+		return JsonResponse(response.json(), safe=False)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -287,37 +306,43 @@ def list_friends(request):
 	})
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def create_game(request):
-	player_1_id = request.data.get('player_1')
-	player_2_id = request.data.get('player_2')
-	score_1 = request.data.get('score_1')
-	score_2 = request.data.get('score_2')
+    player_1_id = request.data.get('player_1')
+    player_2_id = request.data.get('player_2')
+    score_1 = request.data.get('score_1')
+    score_2 = request.data.get('score_2')
 
-	if not all([player_1_id, player_2_id, score_1, score_2]):
-		return Response({"error": "All fields (player_1, player_2, score_1, score_2) are required."}, status=status.HTTP_400_BAD_REQUEST)
+    if any(field is None for field in [player_1_id, player_2_id, score_1, score_2]):
+        return Response({"error": "All fields (player_1, player_2, score_1, score_2) are required."}, status=status.HTTP_400_BAD_REQUEST)
 
-	try:
-		player_1 = Profile.objects.get(user__id=player_1_id)
-		player_2 = Profile.objects.get(user__id=player_2_id)
-	except Profile.DoesNotExist:
-		return Response({"error": "One or both users not found."}, status=status.HTTP_404_NOT_FOUND)
+    try:
+        player_1_id = int(player_1_id)
+        player_2_id = int(player_2_id)
+    except (ValueError, TypeError):
+        return Response({"error": "Invalid player IDs"}, status=status.HTTP_400_BAD_REQUEST)
 
-	if player_1 == player_2:
-		return Response({"error": "A user cannot play against themselves."}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        player_1 = Profile.objects.get(id=player_1_id)
+        player_2 = Profile.objects.get(id=player_2_id)
+    except Profile.DoesNotExist:
+        return Response({"error": "One or both users not found."}, status=status.HTTP_404_NOT_FOUND)
 
-	player_1_wins = int(score_1) > int(score_2)
-	player_2_wins = int(score_2) > int(score_1)
+    if player_1 == player_2:
+        return Response({"error": "A user cannot play against themselves."}, status=status.HTTP_400_BAD_REQUEST)
 
-	game_history = GameHistory.objects.create()
+    player_1_wins = int(score_1) > int(score_2)
+    player_2_wins = int(score_2) > int(score_1)
 
-	GameUserData.objects.create(game=game_history, user=player_1, score=score_1, is_winner=player_1_wins)
-	GameUserData.objects.create(game=game_history, user=player_2, score=score_2, is_winner=player_2_wins)
+    game_history = GameHistory.objects.create()
 
-	return Response({
-		"message": "Game recorded successfully.",
-		"game": GameHistorySerializer(game_history).data
-	}, status=status.HTTP_201_CREATED)
+    GameUserData.objects.create(game=game_history, user=player_1, score=score_1, is_winner=player_1_wins)
+    GameUserData.objects.create(game=game_history, user=player_2, score=score_2, is_winner=player_2_wins)
+
+    return Response({
+        "message": "Game recorded successfully.",
+        "game": GameHistorySerializer(game_history).data
+    }, status=status.HTTP_201_CREATED)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
