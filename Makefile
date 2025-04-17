@@ -1,7 +1,13 @@
-.PHONY: all build run stop clean rebuild logs test frontend-logs backend-logs cli-game
+.PHONY: all build run stop clean rebuild logs test frontend-logs backend-logs cli-game setup-env
 
 # Default target
-all: build run
+all: setup-env build run
+
+# Update .env with local IP
+setup-env:
+	@chmod +x setup_env.sh
+	@./setup_env.sh
+
 
 # Build all services
 build:

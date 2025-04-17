@@ -3,6 +3,7 @@ import { FriendsList } from "../components/FriendList.js";
 import { Navbar } from "../components/Navbar.js";
 import { ProfileDetailCard } from "../components/ProfileDetailCard.js";
 import { GameHistoryComponent } from "../components/GameHistory.js";
+import { GameStatsComponent } from "../components/GameStats.js";
 
 export default class extends AbstractView {
 	constructor() {
@@ -17,6 +18,7 @@ export default class extends AbstractView {
 		this.navbar = await Navbar.create();
 		this.friendsComponent = await FriendsList.create();
 		this.gameHistoryComponent = await GameHistoryComponent.create();
+		this.gameStatsComponent = await GameStatsComponent.create();
 		this.profileDetailCard = await ProfileDetailCard.create();
 
 		return `
@@ -36,6 +38,9 @@ export default class extends AbstractView {
 
 			<div class="col-6 offset-2 mt-5">
 				${this.gameHistoryComponent.render()}
+			</div>
+			<div class="col-6 offset-2 mt-5">
+				${this.gameStatsComponent.render()}
 			</div>
 		</main>
 	</div>

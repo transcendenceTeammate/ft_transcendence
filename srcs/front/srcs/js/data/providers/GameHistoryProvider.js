@@ -2,8 +2,9 @@ import { Stream } from "../../core/Stream.js";
 import { BackendApi } from "../api/backendApi.js";
 import { MockedBackendApi } from "../api/mockedBackendApi.js";
 
-function createHistoryRecord({ player1 = "", score1 = 0, player2 = "", score2 = 0, result = false } = {}) {
+function createHistoryRecord({ date = "", player1 = "", score1 = 0, player2 = "", score2 = 0, result = false } = {}) {
     return {
+        date,
         player1,
         score1,
         player2,
@@ -33,6 +34,7 @@ export class GameHistoryProvider {
 
         let gameHistory = rawHistoryData.games.map((game) => {
             return createHistoryRecord({
+            date: game.date,
             player1: game.PlayerA_nickname,
             score1: game.PlayerA_score,
             player2: game.PlayerB_nickname,

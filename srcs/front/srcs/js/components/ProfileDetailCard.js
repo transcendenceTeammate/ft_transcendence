@@ -1,6 +1,4 @@
 
-
-
 import { Component } from "../core/Component.js";
 import { MyProfileProvider } from "../data/providers/MyProfileProvider.js";
 

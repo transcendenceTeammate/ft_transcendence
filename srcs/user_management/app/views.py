@@ -359,6 +359,7 @@ def get_game_history(request):
 
 		if opponent_game_data:
 			game_history.append({
+				"game_date": game_data.game.date,
 				"PlayerA_nickname": game_data.user.nickname,
 				"PlayerA_score": game_data.score,
 				"PlayerA_isWinner": game_data.is_winner,
