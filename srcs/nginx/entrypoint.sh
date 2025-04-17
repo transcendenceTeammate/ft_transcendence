@@ -21,7 +21,8 @@ if [ ! -f "$CERT_PATH" ] || [ ! -f "$KEY_PATH" ]; then
       -subj "/C=AT/ST=W/L=W/O=42/OU=42k/CN=$DOMAIN_ROOT"
 fi
 
-envsubst '${BASE_URL} ${API_URL}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
+export DOMAIN_ROOT
+envsubst '${BASE_URL} ${API_URL} ${DOMAIN_ROOT}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
 envsubst '${BASE_URL}' < /etc/nginx/snippets/cors.conf.template > /etc/nginx/snippets/cors.conf
 
 echo "NGINX configuration ready with domain: $DOMAIN_ROOT"
