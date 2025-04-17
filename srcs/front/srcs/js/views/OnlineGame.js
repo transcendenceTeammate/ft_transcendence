@@ -213,15 +213,6 @@ export default class OnlineGame extends Game {
         this.paddleHeight = GameConstants.PADDLE_HEIGHT;
         this.paddleSpeed = GameConstants.PADDLE_SPEED;
         this.ballSize = GameConstants.BALL_SIZE;
-
-        console.log("OnlineGame initialized with:", {
-            roomCode: this.roomCode,
-            playerNumber: this.playerNumber,
-            playerId: this.playerId,
-            username: this.username,
-            player1Username: this.player1Username,
-            player2Username: this.player2Username
-        });
     }
 
     cleanupModals() {
