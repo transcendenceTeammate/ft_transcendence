@@ -3,18 +3,29 @@ import json
 import threading
 import websocket
 import time
+import ssl
 
 
 class OnlinePongService:
-    def __init__(self, room_code, player_id, username, server_url):
+    def __init__(self, room_code, player_id, username, server_url, token):
         self.room_code = room_code
         self.player_id = player_id
         self.username = username
         self.server_url = server_url
+        self.token = token
 
         self.ws = None
         self.connected = False
-        self.last_state = {}
+        self.last_state = {
+            "ball_x": 0,
+            "ball_y": 0,
+            "player_1_paddle_y": 0,
+            "player_2_paddle_y": 0,
+            "player_1_score": 0,
+            "player_2_score": 0,
+            "status": "WAITING",
+            "is_paused": False
+        }
         self.is_you = False
         self.player_number = None
         self.sequence = 0
@@ -25,8 +36,11 @@ class OnlinePongService:
             "on_game_over": None  # Callback when game ends
         }
 
+        print("Init Pong Online Service")
+
     def connect(self):
-        url = f"{self.server_url}/ws/game/{self.room_code}/?token="
+        print("Connect Pong Online Service")
+        url = f"{self.server_url}/ws/game/{self.room_code}/?token=${self.token}"
         self.ws = websocket.WebSocketApp(
             url,
             on_message=self.on_message,
@@ -34,7 +48,7 @@ class OnlinePongService:
             on_close=self.on_close,
             on_error=self.on_error
         )
-        threading.Thread(target=self.ws.run_forever, daemon=True).start()
+        threading.Thread(target=self.ws.run_forever, kwargs={"sslopt": {"cert_reqs": ssl.CERT_NONE}}, daemon=True).start()
 
     def on_open(self, ws):
         print("[WS] Connected")
@@ -82,15 +96,47 @@ class OnlinePongService:
         if self.ws and self.connected:
             self.ws.send(json.dumps(payload))
 
-    def move_paddle(self, position):
-        """Send your paddle position to the server."""
+    def send_keypress(self, key, is_pressed):
+        {"type":"key_event","key":key,"is_down": is_pressed,"player_number":self.player_number,"timestamp":int(time.time() * 1000)}
+
+    def move_paddle(self, position_delta):
         if self.player_number:
             self.sequence += 1
+            key = "player_1_paddle_y" if self.player_number == 1 else "player_2_paddle_y"
+            current_position = self.last_state[key]
+
+            
+            paddle_height = 120
+            game_height = 600
+
+            new_position = max(0, min(game_height - paddle_height, current_position + position_delta))
+            self.last_state[key] = new_position
+
             self.send({
                 "type": "paddle_position",
                 "player_number": self.player_number,
-                "position": position,
+                "position": new_position,
                 "sequence": self.sequence,
+                "timestamp": int(time.time() * 1000)
+            })
+            
+    def resume_game(self):
+        if self.ws and self.player_number and self.last_state.get("is_paused"):
+            last_loser = self.last_state.get("last_loser")
+            player_1_score = self.last_state.get("player_1_score", 0)
+            player_2_score = self.last_state.get("player_2_score", 0)
+
+            if self.player_number != last_loser and (player_1_score + player_2_score > 0):
+                return
+
+            initial_speed_x = -7 if last_loser == 1 else 7
+            initial_speed_y = (1 if time.time() % 2 > 1 else -1) * 5
+
+            self.send({
+                "type": "resume_game",
+                "player_number": self.player_number,
+                "ball_speed_x": initial_speed_x,
+                "ball_speed_y": initial_speed_y,
                 "timestamp": int(time.time() * 1000)
             })
 

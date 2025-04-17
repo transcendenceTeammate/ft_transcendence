@@ -8,5 +8,5 @@ dependencies = [
     "httpx>=0.28.1",
     "textual>=3.0.1",
     "textual-dev>=1.7.0",
-    "websocket>=0.2.1",
+    "websocket-client>=1.8.0",
 ]

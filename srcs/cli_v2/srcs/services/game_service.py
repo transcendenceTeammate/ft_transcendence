@@ -5,6 +5,8 @@ import httpx
 from .auth_service import AuthService
 
 BASE_URL = os.getenv("BASE_URL", "https://app.127.0.0.1.nip.io:8443")
+USER_MGMT_URL = os.getenv("USER_MGMT_URL", "https://api.app.127.0.0.1.nip.io:8443")
+
 VERIFY_HTTP_CERTIFICATE = False
 
 class GameService:
@@ -24,7 +26,7 @@ class GameService:
             if username:
                 payload["username"] = username
             response = await client.post(
-                f"{BASE_URL}/api/room/create/",
+                f"{USER_MGMT_URL}/api/room/create/",
                 headers=self._get_headers(),
                 json=payload
             )
@@ -38,7 +40,7 @@ class GameService:
             if username:
                 payload["username"] = username
             response = await client.post(
-                f"{BASE_URL}/api/room/join/",
+                f"{USER_MGMT_URL}/api/room/join/",
                 headers=self._get_headers(),
                 json=payload
             )
@@ -47,7 +49,7 @@ class GameService:
     async def check_room(self, room_code: str):
         async with httpx.AsyncClient(verify=VERIFY_HTTP_CERTIFICATE) as client:
             response = await client.get(
-                f"{BASE_URL}/api/room/check/{room_code}/",
+                f"{USER_MGMT_URL}/api/room/check/{room_code}/",
                 headers=self._get_headers()
             )
             return response.json()

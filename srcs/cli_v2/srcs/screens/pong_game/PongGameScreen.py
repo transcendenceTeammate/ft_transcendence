@@ -159,7 +159,7 @@ class PongGameScreen(Screen):
             room_code="7UMIEH",
             player_id="23",
             username="asdasd",
-            server_url="ws://localhost:8000"  # Adjust as needed
+            server_url="wss://app.127.0.0.1.nip.io:8443"
         )
 
         self.game.set_callback("on_update", self.update_from_server)

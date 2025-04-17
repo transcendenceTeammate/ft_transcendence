@@ -53,14 +53,13 @@ class BallWidget(Static):
 class StartGameScreen(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
-        yield Input(placeholder="Enter your username", id="usernameInput")
         yield Button("Create Room", id="createButton")
         yield Input(placeholder="Enter Room Code", id="roomCodeInput")
         yield Button("Join Room", id="joinButton")
         yield Footer()
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
-        username = self.query_one("#usernameInput", Input).value or "Guest"
+        username = self.app.services.auth.get_username()
         room_code = self.query_one("#roomCodeInput", Input).value.strip().upper()
 
         if event.button.id == "createButton":
@@ -86,22 +85,47 @@ class LobbyScreen(Screen):
         yield Header()
         yield Label("Waiting for opponent...", id="lobbyMessage")
         yield Label(f"Room Code: {self.app.room_code}", id="roomCodeLabel")
-        yield Button("Leave Lobby", id="leaveButton")
         yield Footer()
 
     async def on_mount(self):
-        self.set_interval(2.0, self.poll_room)
+        self.polling_task = self.set_interval(2.0, self.poll_room)
 
     async def poll_room(self):
         result = await self.app.services.game.check_room(self.app.room_code)
         if result.get("player_count") == 2:
+            self.polling_task.stop()
             await self.app.push_screen(PongGameScreen())
 
-    async def on_button_pressed(self, event: Button.Pressed):
-        if event.button.id == "leaveButton":
-            await self.app.pop_screen()
+import asyncio
+from textual.screen import Screen
+from textual.app import ComposeResult
+from textual.widgets import Static
+from textual.widgets._digits import Digits
+from textual import events
 
+# --- Gestion différée des touches ---
+class PaddleKeyHandler:
+    def __init__(self, callback, delay_ms=200):
+        self._delay = delay_ms / 1000
+        self._callback = callback
+        self._tasks: dict[str, asyncio.Task] = {}
 
+    def key_pressed(self, key: str):
+        # Redémarre un timer pour cette touche
+        if key in self._tasks and not self._tasks[key].done():
+            self._tasks[key].cancel()
+        else:
+            self._callback(key, True)
+        self._tasks[key] = asyncio.create_task(self._delayed_release(key))
+
+    async def _delayed_release(self, key: str):
+        try:
+            await asyncio.sleep(self._delay)
+            self._callback(key, False)
+        except asyncio.CancelledError:
+            pass
+
+# --- Ton écran de jeu ---
 class PongGameScreen(Screen):
     CSS = """
     Screen { background: black; }
@@ -126,9 +150,10 @@ class PongGameScreen(Screen):
             room_code=self.app.room_code,
             player_id=self.app.player_id,
             username=self.app.username,
-            server_url=self.app.ws_url
+            server_url=self.app.ws_url,
+            token=self.app.services.auth.get_access_token()
         )
-        await self.game.connect()
+        self.game.connect()
 
         self.left_paddle = PaddleWidget("▌", classes="paddle")
         self.right_paddle = PaddleWidget("▐", classes="paddle")
@@ -138,30 +163,52 @@ class PongGameScreen(Screen):
         await area.mount(self.right_paddle)
         await area.mount(self.ball)
 
+        self.key_handler = PaddleKeyHandler(self.move_paddle)
         self.set_interval(0.01, self.update_game)
 
     def update_game(self):
-        state = self.game.get_state()
+        state = self.game.get_game_state()
         area = self.query_one("#game-area", Static)
         w, h = area.size.width or 80, area.size.height or 24
 
         self.left_paddle.styles.offset = (0, int(state["left_paddle"] * h / 600))
         self.right_paddle.styles.offset = (w - 1, int(state["right_paddle"] * h / 600))
         self.ball.styles.offset = (
-            int(state["ball"][0] * w / 800),
-            int(state["ball"][1] * h / 600),
+            int(float(state["ball"][0]) * float(w) / 800.0),
+            int(float(state["ball"][1]) * float(h) / 600.0),
         )
 
         self.query_one("#score", Digits).update(f"{state['score'][0]:02} - {state['score'][1]:02}")
 
+    def move_paddle(self, key: str, pressed: bool):
+        direction_map = {
+            "a": -10, "q": 10,
+            "up": -10, "down": 10
+        }
+
+        # if key in direction_map:
+        print("SEND : ", key, pressed)
+        self.game.send_keypress(key, pressed)
+
+            # direction = direction_map[key] if pressed else 0
+            # self.game.move_paddle(direction)
+
     async def on_key(self, event: events.Key):
         key = event.key
-        if key in ["a", "q"]:
-            direction = -10 if key == "a" else 10
-            await self.game.move_paddle("left", direction)
-        elif key in ["up", "down"]:
-            direction = -10 if key == "up" else 10
-            await self.game.move_paddle("right", direction)
+        direction_map = {
+            "a": -1, "q": 1,
+            "up": -1, "down": 1
+        }
+
+        if key == "space":
+            self.game.resume_game()
+
+        if key in direction_map:
+            direction = direction_map[key]
+            self.game.move_paddle(direction * 25)
+        if key in ["a", "q", "up", "down"]:
+            
+            self.key_handler.key_pressed(key)
 
 
 
@@ -183,9 +230,9 @@ class Application(App):
         self.room_code = None
         self.player_id = None
         self.username = None
-        self.ws_url = "ws://localhost:8000"
+        self.ws_url = "wss://app.127.0.0.1.nip.io:8443"
         super().__init__()
 
     async def on_mount(self) -> None:
-        await self.switch_mode("login")
+        await self.switch_mode("home")
 
