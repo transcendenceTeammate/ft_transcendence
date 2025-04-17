@@ -25,6 +25,8 @@ services:
     build:
       context: ./srcs/nginx
       dockerfile: Dockerfile
+    env_file:
+      - .env
     ports:
       - "8443:443"
     depends_on:
