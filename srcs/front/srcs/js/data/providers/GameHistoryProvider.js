@@ -15,7 +15,7 @@ function createHistoryRecord({ date = "", player1 = "", score1 = 0, player2 = ""
 
 export class GameHistoryProvider {
     static _instance = null;
-    
+
     constructor() {
         this._backend = new BackendApi();
         this._history = Stream.withDefault([]);
@@ -33,18 +33,26 @@ export class GameHistoryProvider {
         let rawHistoryData = await this._backend.getUserGameHistory();
 
         let gameHistory = rawHistoryData.games.map((game) => {
+            const formattedDate = new Date(game.game_date).toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+
             return createHistoryRecord({
-            date: game.date,
-            player1: game.PlayerA_nickname,
-            score1: game.PlayerA_score,
-            player2: game.PlayerB_nickname,
-            score2: game.PlayerB_score,
-            result: game.PlayerA_isWinner
+                date: formattedDate,
+                player1: game.PlayerA_nickname,
+                score1: game.PlayerA_score,
+                player2: game.PlayerB_nickname,
+                score2: game.PlayerB_score,
+                result: game.PlayerA_isWinner
             });
         });
 
         this._history.value = gameHistory;
-
         return this._history.value;
     }
 
