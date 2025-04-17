@@ -346,7 +346,7 @@ export default class OnlineGame extends Game {
 
             self.cleanupModals();
 
-            window.location.href = '/start-game';
+            RouterService.getInstance().navigateTo('/start-game');
             return false;
         };
 
@@ -361,7 +361,7 @@ export default class OnlineGame extends Game {
             if (e.key === 'Escape') {
                 if (this.socket) this.socket.disconnect();
                 this.cleanupModals();
-                window.location.href = '/start-game';
+                RouterService.getInstance().navigateTo('/start-game');
             }
         });
 
@@ -970,7 +970,7 @@ export default class OnlineGame extends Game {
                 try {
                     RouterService.getInstance().navigateTo('/start-game');
                 } catch (error) {
-                    window.location.href = '/start-game';
+                    RouterService.getInstance().navigateTo('/start-game');
                 }
             });
         }
