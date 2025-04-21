@@ -60,7 +60,7 @@ def login(request):
 	response = Response({
 		"user": serializer.data
 	})
-	domain = f".app.{os.getenv('LOC_IP')}.nip.io"
+	domain = os.getenv('DOMAIN_NAME')
 	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain=domain)
 	return response
 
@@ -80,7 +80,7 @@ def signup(request):
 			"type": user.profile.type,
 			"picture": user.profile.picture.url if user.profile.picture else None
 		})
-		domain = f".app.{os.getenv('LOC_IP')}.nip.io"
+		domain = os.getenv('DOMAIN_NAME')
 		response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain=domain)
 		return response
 
@@ -144,7 +144,7 @@ def auth42(request):
 	access_token = AccessToken.for_user(user)
 
 	response = HttpResponseRedirect(os.getenv('BASE_URL') + '/start-game')
-	domain = f".app.{os.getenv('LOC_IP')}.nip.io"
+	domain = os.getenv('DOMAIN_NAME')
 	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain=domain)
 	return response
 
