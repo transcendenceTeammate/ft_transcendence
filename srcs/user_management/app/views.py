@@ -148,26 +148,6 @@ def auth42(request):
 	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain=domain)
 	return response
 
-
-
-def get_access_token(request):
-	if request.method == "POST":
-		client_id = "VOTRE_CLIENT_ID"
-		client_secret = "VOTRE_CLIENT_SECRET"
-		redirect_uri = "https" + os.getenv('API_URL') + "/auth42/"
-		code = request.POST.get("code")
-
-		url = "https://api.intra.42.fr/oauth/token"
-		data = {
-			"grant_type": "authorization_code",
-			"client_id": client_id,
-			"client_secret": client_secret,
-			"code": code,
-			"redirect_uri": redirect_uri,
-		}
-		response = requests.post(url, data=data)
-		return JsonResponse(response.json(), safe=False)
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_info(request):
