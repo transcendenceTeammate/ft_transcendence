@@ -34,8 +34,7 @@ make
 
 ### 3️⃣ Set Up the Environment
 
-**Fill in the `.env` file.**  
-Replace the values of `CLIENT_ID=` and `CLIENT_SECRET=` with your own.
+**Fill in the `.env` file the values of `CLIENT_ID=` and `CLIENT_SECRET=` with your own.
 
 ### 4️⃣ Access the Web Interface  
 Open your browser and go to the URL:  
