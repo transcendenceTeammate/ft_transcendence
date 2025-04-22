@@ -34,22 +34,27 @@ make
 
 ### 3️⃣ Set Up the Environment
 
-Fill in the `.env` file the values of `CLIENT_ID=` and `CLIENT_SECRET=` with your own.
+Fill in the `.env` file the values of `CLIENT_ID=` and `CLIENT_SECRET=`, you can find these credentials on your 42 Intranet.
 
-### 4️⃣ Access the Web Interface  
+### 4️⃣ Relaunch the App
+```bash  
+make
+```
+
+### 5️⃣ Access the Web Interface  
 Open your browser and go to the URL:  
 🌐 [https://localhost:8443](https://localhost:8443)  
 
-### 5️⃣ Sign In 🔐  
+### 6️⃣ Sign In 🔐  
 Authenticate using:  
 - 42 Intra login (OAuth2)  
 - Or register a custom account  
 
-### 6️⃣ Play the Game 🎮  
+### 7️⃣ Play the Game 🎮  
 Choose from multiple game modes:  
 - 🧍‍♂️ **Local Game**: Play 1v1 on the same machine  
 - 🏆 **Local Tournament**: Set up a mini bracket with friends  
-- 🌍 **Online Matchmaking**: Play against others online in real-time  
+- 🌍 **Online Matchmaking**: Play online against a specific opponent using a room code.
 
 Have fun and may the best player win! 🏓💥  
 
