@@ -23,7 +23,6 @@ class GameState:
         self.player_1_id = None
         self.player_2_id = None
         
-        # Add player usernames
         self.player_1_username = None
         self.player_2_username = None
         
@@ -80,13 +79,11 @@ class GameState:
         if self.is_paused:
             return 0
         
-        # Update the ball position
         self.ball_x += self.ball_speed_x
         self.ball_y += self.ball_speed_y
         
         ball_radius = self.ball_size / 2
         
-        # Ball collision with top and bottom walls
         if self.ball_y - ball_radius <= 0:
             self.ball_y = ball_radius
             self.ball_speed_y *= -1
@@ -94,27 +91,22 @@ class GameState:
             self.ball_y = self.canvas_height - ball_radius
             self.ball_speed_y *= -1
         
-        # Ball collision with paddles
         if (self.ball_x - ball_radius <= self.paddle_width and 
             self.ball_y >= self.player_1_paddle_y and 
             self.ball_y <= self.player_1_paddle_y + self.paddle_height):
             
-            # Calculate reflection angle based on where ball hits paddle
             paddle_center = self.player_1_paddle_y + self.paddle_height / 2
             relative_intersect_y = self.ball_y - paddle_center
             normalized_intersect = relative_intersect_y / (self.paddle_height / 2)
             angle = normalized_intersect * ANGLE_LIMIT
             
-            # Reflect the ball
-            self.ball_x = self.paddle_width + ball_radius  # Ensure ball isn't stuck in paddle
-            self.ball_speed_x = abs(self.ball_speed_x)  # Ensure ball moves right
-            self.ball_speed_y = angle * 6  # Set vertical speed based on hit position
+            self.ball_x = self.paddle_width + ball_radius
+            self.ball_speed_x = abs(self.ball_speed_x)
+            self.ball_speed_y = angle * 6
             
-            # Apply speed increase for more challenge over time
             self.ball_speed_x *= SPEED_INCREASE_FACTOR
             self.ball_speed_y *= SPEED_INCREASE_FACTOR
             
-            # Apply rubber-banding if one player is dominating
             if self.player_1_score > self.player_2_score + 3:
                 self.ball_speed_x *= RUBBER_BAND_FACTOR
                 self.ball_speed_y *= RUBBER_BAND_FACTOR
@@ -123,43 +115,37 @@ class GameState:
               self.ball_y >= self.player_2_paddle_y and 
               self.ball_y <= self.player_2_paddle_y + self.paddle_height):
             
-            # Calculate reflection angle based on where ball hits paddle
             paddle_center = self.player_2_paddle_y + self.paddle_height / 2
             relative_intersect_y = self.ball_y - paddle_center
             normalized_intersect = relative_intersect_y / (self.paddle_height / 2)
             angle = normalized_intersect * ANGLE_LIMIT
             
-            # Reflect the ball
-            self.ball_x = self.canvas_width - self.paddle_width - ball_radius  # Ensure ball isn't stuck in paddle
-            self.ball_speed_x = -abs(self.ball_speed_x)  # Ensure ball moves left
-            self.ball_speed_y = angle * 6  # Set vertical speed based on hit position
+            self.ball_x = self.canvas_width - self.paddle_width - ball_radius
+            self.ball_speed_x = -abs(self.ball_speed_x)
+            self.ball_speed_y = angle * 6
             
-            # Apply speed increase for more challenge over time
             self.ball_speed_x *= SPEED_INCREASE_FACTOR
             self.ball_speed_y *= SPEED_INCREASE_FACTOR
             
-            # Apply rubber-banding if one player is dominating
             if self.player_2_score > self.player_1_score + 3:
                 self.ball_speed_x *= RUBBER_BAND_FACTOR
                 self.ball_speed_y *= RUBBER_BAND_FACTOR
         
-        # Check for goals (ball crossing left/right boundaries)
         if self.ball_x - ball_radius <= 0:
             self.player_2_score += 1
             self.last_loser = 1
             self.reset_ball()
-            return 2  # Player 2 scored
+            return 2
             
         elif self.ball_x + ball_radius >= self.canvas_width:
             self.player_1_score += 1
             self.last_loser = 2
             self.reset_ball()
-            return 1  # Player 1 scored
+            return 1
         
-        # Update timestamp of last state change
         self.last_update = time.time() * 1000
         
-        return 0  # No goal
+        return 0
     
     def check_for_winner(self):
         """Check if a player has won the game"""

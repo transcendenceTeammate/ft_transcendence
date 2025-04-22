@@ -27,6 +27,14 @@ stop:
 clean:
 	docker compose down -v --rmi all
 
+# Complete Docker system cleanup
+deep-clean:
+	docker compose down
+	docker compose down -v --rmi all
+	docker system prune -af
+	docker volume prune -f
+	rm -rf ./data/postgres/* ./data/media/* ./data/ssl/*
+
 # Rebuild from scratch
 re: clean build run
 

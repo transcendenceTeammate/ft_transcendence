@@ -15,7 +15,7 @@ class Profile(models.Model):
 		('42', '42'),
 	]
 	
-	user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+	user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='profile')
 	nickname = models.CharField(max_length=100, blank=True)
 	picture = models.ImageField(upload_to=upload_to, null=True, blank=True)
 	type = models.CharField(max_length=5, choices=USER_TYPE_CHOICES, default='PENG')

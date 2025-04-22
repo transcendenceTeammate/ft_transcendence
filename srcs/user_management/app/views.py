@@ -60,7 +60,8 @@ def login(request):
 	response = Response({
 		"user": serializer.data
 	})
-	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.10.24.1.3.nip.io')
+	domain = os.getenv('DOMAIN_NAME')
+	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain=domain)
 	return response
 
 @api_view(['POST'])
@@ -79,7 +80,8 @@ def signup(request):
 			"type": user.profile.type,
 			"picture": user.profile.picture.url if user.profile.picture else None
 		})
-		response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.10.24.1.3.nip.io')
+		domain = os.getenv('DOMAIN_NAME')
+		response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain=domain)
 		return response
 
 	return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -142,29 +144,9 @@ def auth42(request):
 	access_token = AccessToken.for_user(user)
 
 	response = HttpResponseRedirect(os.getenv('BASE_URL') + '/start-game')
-	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain='.app.10.24.1.3.nip.io')
-
+	domain = os.getenv('DOMAIN_NAME')
+	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain=domain)
 	return response
-
-
-
-def get_access_token(request):
-	if request.method == "POST":
-		client_id = "VOTRE_CLIENT_ID"
-		client_secret = "VOTRE_CLIENT_SECRET"
-		redirect_uri = "http://10.24.1.3.nip.io:8443/auth42/"
-		code = request.POST.get("code")
-
-		url = "https://api.intra.42.fr/oauth/token"
-		data = {
-			"grant_type": "authorization_code",
-			"client_id": client_id,
-			"client_secret": client_secret,
-			"code": code,
-			"redirect_uri": redirect_uri,
-		}
-		response = requests.post(url, data=data)
-		return JsonResponse(response.json(), safe=False)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -312,13 +294,24 @@ def create_game(request):
     player_2_id = request.data.get('player_2')
     score_1 = request.data.get('score_1')
     score_2 = request.data.get('score_2')
+    
+    api_key = os.getenv('API_KEY')
 
-    if not all([player_1_id, player_2_id, score_1, score_2]):
+    if api_key != request.headers.get('X-API-Key'):
+        return Response({"error": "Invalid API key"}, status=status.HTTP_401_UNAUTHORIZED)
+
+    if any(field is None for field in [player_1_id, player_2_id, score_1, score_2]):
         return Response({"error": "All fields (player_1, player_2, score_1, score_2) are required."}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        player_1 = Profile.objects.get(id=player_1_id - 1)
-        player_2 = Profile.objects.get(id=player_2_id - 1)
+        player_1_id = int(player_1_id)
+        player_2_id = int(player_2_id)
+    except (ValueError, TypeError):
+        return Response({"error": "Invalid player IDs"}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        player_1 = Profile.objects.get(user_id=player_1_id)
+        player_2 = Profile.objects.get(user_id=player_2_id)
     except Profile.DoesNotExist:
         return Response({"error": "One or both users not found."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -353,6 +346,7 @@ def get_game_history(request):
 
 		if opponent_game_data:
 			game_history.append({
+				"game_date": game_data.game.date,
 				"PlayerA_nickname": game_data.user.nickname,
 				"PlayerA_score": game_data.score,
 				"PlayerA_isWinner": game_data.is_winner,

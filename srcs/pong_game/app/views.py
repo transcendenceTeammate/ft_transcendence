@@ -20,7 +20,6 @@ def create_room(request):
     logger.info("Create room request received")
 
     try:
-        # Check for explicit username in request body
         requested_username = None
         try:
             data = json.loads(request.body)
@@ -34,40 +33,23 @@ def create_room(request):
         username = None
         auth_header = request.headers.get('Authorization')
 
-        logger.info(f"Auth header: {auth_header}")
-
-        # Try to get username from JWT token
         if auth_header and auth_header.startswith('Bearer '):
             token = auth_header.split(' ')[1]
             try:
                 payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
                 user_id = str(payload.get('user_id'))
-                logger.info(f"Decoded token payload: {payload}")
-                username = payload.get('username')
-                logger.info(f"Extracted user_id from token: {user_id}, username: {username}")
             except Exception as e:
                 logger.error(f"Error decoding token: {str(e)}")
 
-        # If username was provided in request body, use it instead of JWT username
         if requested_username:
             username = requested_username
             logger.info(f"Using username from request body: {username}")
 
-        # Fallback for guests
-        if not user_id:
-            user_id = f"guest-{random.randint(1000, 9999)}"
-            # Only use default guest username if no username was provided
-            if not username:
-                username = f"Guest-{user_id.split('-')[1]}"
-            logger.warning(f"Using generated user_id: {user_id}, username: {username}")
-
-        # Create new game with generated room code
         room_code = GameManager.generate_room_code()
         logger.info(f"Generated room code: {room_code}")
 
         game = GameManager.create_game(room_code)
         game.player_1_id = user_id
-        # Store username in game state
         game.player_1_username = username
         GameManager.save_game(game)
 
@@ -109,7 +91,6 @@ def join_room(request):
                 'error': 'Room code is required'
             }, status=400)
 
-        # Check for explicit username in request body
         requested_username = data.get('username')
         if requested_username:
             logger.info(f"Username provided in request body: {requested_username}")
@@ -120,33 +101,25 @@ def join_room(request):
 
         logger.info(f"Auth header: {auth_header}")
 
-        # Try to get username from JWT token
         if auth_header and auth_header.startswith('Bearer '):
             token = auth_header.split(' ')[1]
             try:
                 payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-                logger.info(f"Decoded token payload: {payload}")
                 user_id = str(payload.get('user_id'))
-                username = payload.get('username')
-                logger.info(f"Join room - extracted user_id from token: {user_id}, username: {username}")
             except Exception as e:
                 logger.error(f"Join room - error decoding token: {str(e)}")
 
-        # If username was provided in request body, use it instead of JWT username
         if requested_username:
             username = requested_username
-            logger.info(f"Using username from request body: {username}")
 
-        # Fallback for guests
-        if not user_id:
-            user_id = f"guest-{random.randint(1000, 9999)}"
-            # Only use default guest username if no username was provided
-            if not username:
-                username = f"Guest-{user_id.split('-')[1]}"
-            logger.warning(f"Join room - using generated user_id: {user_id}, username: {username}")
-
-        # Check if room exists
         game = GameManager.get_game(room_code)
+        
+        if user_id == game.player_1_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'You are already in this game'
+            }, status=400)  
+        
         if not game:
             return JsonResponse({
                 'success': False,
@@ -159,12 +132,10 @@ def join_room(request):
                 'error': 'Game has already ended'
             }, status=400)
 
-        # Check if room is full or player is rejoining
         if game.player_1_id and game.player_2_id:
             if user_id in [game.player_1_id, game.player_2_id]:
                 player_number = 2 if user_id == game.player_2_id else 1
 
-                # Store the username in the game state for rejoining players
                 if player_number == 1:
                     game.player_1_username = username
                 else:
@@ -172,7 +143,6 @@ def join_room(request):
                 
                 GameManager.save_game(game)
 
-                # Update player session for reconnection
                 session = GameManager.get_player_session(room_code, user_id)
                 if session:
                     GameManager.update_player_session(room_code, user_id, connected=True)
@@ -194,10 +164,8 @@ def join_room(request):
                     'error': 'Room is full'
                 }, status=400)
 
-        # Assign player number
         player_number = 1 if not game.player_1_id else 2
 
-        # Update game state
         if player_number == 1:
             game.player_1_id = user_id
             game.player_1_username = username
@@ -209,7 +177,6 @@ def join_room(request):
 
         GameManager.save_game(game)
 
-        # Add player session
         GameManager.add_player_session(room_code, user_id, player_number, username)
 
         logger.info(f"Player {player_number} joined room {room_code}: {user_id}, username: {username}")
@@ -238,7 +205,6 @@ def check_room(request, room_code):
     logger.info(f"Checking room {room_code}")
 
     try:
-        # Get game from manager
         game = GameManager.get_game(room_code)
         if not game:
             logger.warning(f"Room {room_code} not found")
@@ -247,13 +213,11 @@ def check_room(request, room_code):
                 'error': 'Room not found'
             }, status=404)
 
-        # Count players
         player_count = (
             (1 if game.player_1_id else 0) +
             (1 if game.player_2_id else 0)
         )
 
-        # Count active sessions (connected players)
         active_sessions = 0
         if game.player_1_id:
             session = GameManager.get_player_session(room_code, game.player_1_id)
@@ -281,6 +245,72 @@ def check_room(request, room_code):
         })
     except Exception as e:
         logger.exception(f"Error checking room {room_code}: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def cancel_room(request):
+    """
+    Cancels a game room when a player decides to close the waiting modal.
+    """
+    logger.info("Cancel room request received")
+
+    try:
+        data = json.loads(request.body)
+        room_code = data.get('room_code')
+
+        if not room_code:
+            return JsonResponse({
+                'success': False,
+                'error': 'Room code is required'
+            }, status=400)
+
+        user_id = None
+        auth_header = request.headers.get('Authorization')
+        
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
+            try:
+                payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+                user_id = str(payload.get('user_id'))
+                logger.info(f"Extracted user_id from token: {user_id}")
+            except Exception as e:
+                logger.error(f"Error decoding token: {str(e)}")
+
+        game = GameManager.get_game(room_code)
+        if not game:
+            logger.warning(f"Room {room_code} not found for cancellation")
+            return JsonResponse({
+                'success': False,
+                'error': 'Room not found'
+            }, status=404)
+
+        if user_id and game.player_1_id and user_id != game.player_1_id:
+            logger.warning(f"User {user_id} is not authorized to cancel room {room_code}")
+            return JsonResponse({
+                'success': False,
+                'error': 'Only the room creator can cancel the room'
+            }, status=403)
+
+        if game.status != 'WAITING' or game.player_2_id:
+            logger.warning(f"Cannot cancel room {room_code}: game already in progress or has both players")
+            return JsonResponse({
+                'success': False,
+                'error': 'Cannot cancel: game already in progress or has both players'
+            }, status=400)
+
+        logger.info(f"Canceling room {room_code}")
+        GameManager.delete_game(room_code)
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Room {room_code} has been canceled'
+        })
+    except Exception as e:
+        logger.exception(f"Error canceling room: {str(e)}")
         return JsonResponse({
             'success': False,
             'error': str(e)

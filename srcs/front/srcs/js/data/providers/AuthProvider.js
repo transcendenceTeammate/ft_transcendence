@@ -33,6 +33,7 @@ export class AuthProvider {
         const accessToken = getCookie('access_token');
 
         if (!accessToken || isJwtExpired(accessToken)) {
+            this.logout();
             return false;
         }
 
@@ -42,7 +43,7 @@ export class AuthProvider {
             return true;
         } catch (error) {
             console.error("Token verification failed:", error);
-            this._onUserDisconnected();
+            this.logout();
             return false;
         }
     }
