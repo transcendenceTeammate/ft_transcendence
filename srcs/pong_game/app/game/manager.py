@@ -292,7 +292,7 @@ class GameManager:
                 'score_1': game.player_1_score,
                 'score_2': game.player_2_score,
             }
-            api_key = os.getenv('API_KEY')
+            api_key = os.getenv('INTERNAL_API_TOKEN')
             async with aiohttp.ClientSession() as session:
                 url = f"{settings.USER_MANAGEMENT_URL}/api/game/add/"
                 headers = {'Content-Type': 'application/json', 'X-API-Key': api_key}

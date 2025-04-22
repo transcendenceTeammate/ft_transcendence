@@ -5,8 +5,6 @@ services:
       - postgres_data:/var/lib/postgresql/data
     env_file:
       - .env
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -26,13 +24,15 @@ services:
       context: ./srcs/nginx
       dockerfile: Dockerfile
     ports:
-      - "8443:443"
+      - "${EXTERNAL_PORT}:443"
     depends_on:
       - user-management
       - pong-game
     volumes:
       - ssl_data:/etc/nginx/ssl
       - media_data:/app/media
+    env_file:
+      - .env
 
   front-static:
     build:

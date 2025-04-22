@@ -419,7 +419,7 @@ export default class OnlineGame extends Game {
     initializeSocket() {
         const token = this.getAuthToken();
 
-        let wsUrl = `${CONFIG.BASE_URL.replace(/^http/, "ws")}/ws/game/${this.roomCode}/`;
+        let wsUrl = `${CONFIG.APP_URL.replace(/^http/, "ws")}/ws/game/${this.roomCode}/`;
         if (token) {
             wsUrl += `?token=${encodeURIComponent(token)}`;
         }

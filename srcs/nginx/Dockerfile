@@ -7,12 +7,16 @@ RUN apt-get update && \
 
 RUN mkdir -p /etc/nginx/ssl
 
-COPY conf/default.conf /etc/nginx/conf.d/default.conf
-COPY conf/snippets /etc/nginx/snippets
+COPY conf/default.conf.template /etc/nginx/templates/default.conf.template
+COPY conf/snippets /etc/nginx/templates/snippets
 COPY conf/nginx.conf /etc/nginx/nginx.conf
 COPY entrypoint.sh /entrypoint.sh
 
+RUN rm -rf /etc/nginx/conf.d/default.conf
+
 RUN chmod +x /entrypoint.sh
 
-ENTRYPOINT ["dumb-init", "--"]
-CMD ["/entrypoint.sh"]
+# ENTRYPOINT ["dumb-init", "--"]
+
+
+CMD ["nginx", "-g", "daemon off;"]

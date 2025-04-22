@@ -60,7 +60,7 @@ def login(request):
 	response = Response({
 		"user": serializer.data
 	})
-	domain = os.getenv('DOMAIN_NAME')
+	domain = os.getenv('APP_SUBDOMAIN') + os.getenv('BASE_DOMAIN')
 	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain=domain)
 	return response
 
@@ -80,7 +80,7 @@ def signup(request):
 			"type": user.profile.type,
 			"picture": user.profile.picture.url if user.profile.picture else None
 		})
-		domain = os.getenv('DOMAIN_NAME')
+		domain = os.getenv('APP_SUBDOMAIN') + os.getenv('BASE_DOMAIN')
 		response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain=domain)
 		return response
 
@@ -143,8 +143,8 @@ def auth42(request):
 
 	access_token = AccessToken.for_user(user)
 
-	response = HttpResponseRedirect(os.getenv('BASE_URL') + '/start-game')
-	domain = os.getenv('DOMAIN_NAME')
+	response = HttpResponseRedirect(os.getenv('APP_URL') + '/start-game')
+	domain = os.getenv('APP_SUBDOMAIN') + os.getenv('BASE_DOMAIN')
 	response.set_cookie('access_token', str(access_token), httponly=False, secure=True, samesite='Lax', domain=domain)
 	return response
 
@@ -295,7 +295,7 @@ def create_game(request):
     score_1 = request.data.get('score_1')
     score_2 = request.data.get('score_2')
     
-    api_key = os.getenv('API_KEY')
+    api_key = os.getenv('INTERNAL_API_TOKEN')
 
     if api_key != request.headers.get('X-API-Key'):
         return Response({"error": "Invalid API key"}, status=status.HTTP_401_UNAUTHORIZED)
