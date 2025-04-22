@@ -30,24 +30,27 @@ class BallWidget(Static):
 
 
 class PaddleKeyHandler:
-    def __init__(self, callback, delay_ms=200):
+    def __init__(self, delay_ms=400):
         self._delay = delay_ms / 1000
-        self._callback = callback
-        self._tasks: dict[str, asyncio.Task] = {}
+        self._pressed_keys: dict[str, float] = {}  # tracks active keys
 
     def key_pressed(self, key: str):
-        if key in self._tasks and not self._tasks[key].done():
-            self._tasks[key].cancel()
-        else:
-            self._callback(key, True)
-        self._tasks[key] = asyncio.create_task(self._delayed_release(key))
+        now = time.monotonic()
+        self._pressed_keys[key] = now
 
-    async def _delayed_release(self, key: str):
-        try:
-            await asyncio.sleep(self._delay)
-            self._callback(key, False)
-        except asyncio.CancelledError:
-            pass
+    def release_expired_keys(self):
+        now = time.monotonic()
+        keys_to_release = []
+        for key, pressed_time in self._pressed_keys.items():
+            if now - pressed_time >= self._delay:
+                keys_to_release.append(key)
+
+        for key in keys_to_release:
+            del self._pressed_keys[key]
+
+    def is_key_pressed(self, key: str) -> bool:
+        return key in self._pressed_keys
+
 
 class PongGameScreen(Screen):
     CSS = """
@@ -92,10 +95,25 @@ class PongGameScreen(Screen):
         await area.mount(self.right_paddle)
         await area.mount(self.ball)
 
-        self.key_handler = PaddleKeyHandler(self.move_paddle)
+        self.key_handler = PaddleKeyHandler()
         self.update_time = self.set_interval(0.01, self.update_game)
 
     def update_game(self):
+        self.key_handler.release_expired_keys()
+
+        active_keys = list(self.key_handler._pressed_keys.keys())
+        direction_map = {
+            "a": -1, "q": 1,
+            "up": -1, "down": 1
+        }
+
+        # Move paddle continuously based on currently "pressed" keys
+        for key in active_keys:
+            if key in direction_map:
+                direction = direction_map[key]
+                self.game.move_paddle(direction * 10)  # Adjust movement scalar as needed
+
+
         state = self.game.get_game_state()
         if state["status"] == "FINISHED":
             self.handle_game_over(state)
@@ -112,19 +130,6 @@ class PongGameScreen(Screen):
 
         self.query_one("#score", Digits).update(f"{state['score'][0]:02} - {state['score'][1]:02}")
 
-    def move_paddle(self, key: str, pressed: bool):
-        direction_map = {
-            "a": -10, "q": 10,
-            "up": -10, "down": 10
-        }
-
-        # if key in direction_map:
-        print("SEND : ", key, pressed)
-        self.game.send_keypress(key, pressed)
-
-            # direction = direction_map[key] if pressed else 0
-            # self.game.move_paddle(direction)
-
     async def on_key(self, event: events.Key):
         key = event.key
         direction_map = {
@@ -135,13 +140,12 @@ class PongGameScreen(Screen):
         if key == "space":
             self.game.resume_game()
 
-        if key in direction_map:
-            direction = direction_map[key]
-            self.game.move_paddle(direction * 25)
+        # if key in direction_map:
+        #     direction = direction_map[key]
+            # self.game.move_paddle(direction * 25)
         if key in ["a", "q", "up", "down"]:
             
             self.key_handler.key_pressed(key)
-
 
     def handle_game_over(self, data):
         self.update_time.stop()
