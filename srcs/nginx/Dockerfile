@@ -16,7 +16,7 @@ RUN rm -rf /etc/nginx/conf.d/default.conf
 
 RUN chmod +x /entrypoint.sh
 
-# ENTRYPOINT ["dumb-init", "--"]
+ENTRYPOINT ["/entrypoint.sh"]
 
 
 CMD ["nginx", "-g", "daemon off;"]

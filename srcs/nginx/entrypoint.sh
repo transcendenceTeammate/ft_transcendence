@@ -47,7 +47,7 @@ fi
 
 CERT_PATH="/etc/nginx/ssl/localhost.crt"
 KEY_PATH="/etc/nginx/ssl/localhost.key"
-CN_PATH="${BASE_DOMAIN%.nip.io}"
+CN_PATH="${BASE_DOMAIN}"
 
 if [ ! -f "$CERT_PATH" ] || [ ! -f "$KEY_PATH" ]; then
     echo "Generating SSL certificate..."
