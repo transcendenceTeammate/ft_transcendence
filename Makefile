@@ -1,4 +1,4 @@
-.PHONY: all build run stop clean rebuild logs test frontend-logs backend-logs cli-game setup-env
+.PHONY: all build run stop clean rebuild logs test frontend-logs backend-logs install-uv setup-env
 
 # Default target
 all: setup-env build run
@@ -60,5 +60,5 @@ test:
 dev: build run logs
 
 # CLI Game specific commands
-cli-game:
-	docker compose run --rm cli_game
+install-uv:
+	curl -LsSf https://astral.sh/uv/install.sh | sh
