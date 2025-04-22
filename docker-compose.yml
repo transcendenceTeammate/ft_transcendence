@@ -68,16 +68,6 @@ services:
     env_file:
       - .env
 
-  cli-game:
-    build:
-      context: ./srcs/cli_game
-      dockerfile: Dockerfile
-    container_name: cli-game
-    depends_on:
-      - user-management
-    stdin_open: true
-    tty: true
-
 volumes:
   postgres_data:
     driver: local
