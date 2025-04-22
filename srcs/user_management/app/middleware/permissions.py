@@ -9,7 +9,7 @@ class HasValidApiKey(BasePermission):
         if not api_key:
             return False
 
-        expected_api_key = os.getenv('API_KEY')
+        expected_api_key = os.getenv('INTERNAL_API_TOKEN')
         if api_key != f"ApiKey {expected_api_key}":
             return False
 

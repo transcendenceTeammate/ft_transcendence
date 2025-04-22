@@ -1,22 +1,22 @@
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
-    server_name 10.24.5.3.nip.io;
+    server_name ${BASE_DOMAIN};
 
     ssl_certificate /etc/nginx/ssl/localhost.crt;
     ssl_certificate_key /etc/nginx/ssl/localhost.key;
     ssl_protocols TLSv1.2 TLSv1.3;
 
     location / {
-        include snippets/cors.conf;
-        return 301 https://app.10.24.5.3.nip.io:8443;
+        include conf.d/snippets/cors.conf;
+        return 301 ${APP_URL};
     }
 }
 
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
-    server_name api.app.10.24.5.3.nip.io;
+    server_name ${API_SUBDOMAIN}${BASE_DOMAIN};
 
     ssl_certificate /etc/nginx/ssl/localhost.crt;
     ssl_certificate_key /etc/nginx/ssl/localhost.key;
@@ -25,7 +25,7 @@ server {
     location /api/room/ {
         proxy_pass http://pong-game:8000;
         client_max_body_size 5M;
-        include snippets/cors.conf;
+        include conf.d/snippets/cors.conf;
         error_page 400 @return_400;
         error_page 403 @return_403;
         error_page 405 @return_405;
@@ -35,7 +35,7 @@ server {
     location / {
         proxy_pass http://user-management:8000;
         client_max_body_size 5M;
-        include snippets/cors.conf;
+        include conf.d/snippets/cors.conf;
         error_page 400 @return_400;
         error_page 403 @return_403;
         error_page 405 @return_405;
@@ -44,8 +44,8 @@ server {
 
     location /ws/ {
         proxy_pass http://user-management:8000;
-        include snippets/websocket.conf;
-        include snippets/cors.conf;
+        include conf.d/snippets/websocket.conf;
+        include conf.d/snippets/cors.conf;
 
         error_page 400 @return_400;
         error_page 403 @return_403;
@@ -62,7 +62,7 @@ server {
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
-    server_name app.10.24.5.3.nip.io;
+    server_name ${APP_SUBDOMAIN}${BASE_DOMAIN};
 
     ssl_certificate /etc/nginx/ssl/localhost.crt;
     ssl_certificate_key /etc/nginx/ssl/localhost.key;
@@ -70,7 +70,7 @@ server {
 
     location / {
         proxy_pass http://front-static:80;
-        include snippets/cors.conf;
+        include conf.d/snippets/cors.conf;
     }
 
     location /media {
@@ -79,11 +79,11 @@ server {
 
     location /ws {
         proxy_pass http://pong-game:8000;
-        include snippets/websocket.conf;
+        include conf.d/snippets/websocket.conf;
     }
 
     location /wsapi {
         proxy_pass http://pong-game:8000;
-        include snippets/websocket.conf;
+        include conf.d/snippets/websocket.conf;
     }
 }

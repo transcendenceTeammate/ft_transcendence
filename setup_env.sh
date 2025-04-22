@@ -20,12 +20,12 @@ if [ -z "$LOCAL_IP" ]; then
   exit 1
 fi
 
-DOMAIN_NAME="${LOCAL_IP}.nip.io"
-NEW_SECRET=$(openssl rand -base64 64 | tr -d '\n')
+BASE_DOMAIN="${LOCAL_IP}.nip.io"
+JWT_SECRET=$(openssl rand -base64 64 | tr -d '\n')
+INTERNAL_API_TOKEN=$(openssl rand -base64 64 | tr -d '\n')
 
-perl -pi -e "s/{domain_name}/$DOMAIN_NAME/g" "$ENV_FILE"
-perl -pi -e "s|{api_url}|https://api.app.${DOMAIN_NAME}:8443|g" "$ENV_FILE"
-perl -pi -e "s|{base_url}|https://app.${DOMAIN_NAME}:8443|g" "$ENV_FILE"
-perl -pi -e "s|^JWT_SECRET_KEY=.*|JWT_SECRET_KEY=$NEW_SECRET|" "$ENV_FILE"
+perl -pi -e "s/{base_domain}/$BASE_DOMAIN/g" "$ENV_FILE"
+perl -pi -e "s;{jwt_secret_key};$JWT_SECRET;g" "$ENV_FILE"
+perl -pi -e "s;{internal_api_token};$INTERNAL_API_TOKEN;g" "$ENV_FILE"
 
 echo "✅ .env successfully updated"
