@@ -4,20 +4,19 @@ import os
 import httpx
 import json
 
-USER_MGMT_URL = os.getenv("USER_MGMT_URL", "https://api.app.127.0.0.1.nip.io:8443")
-VERIFY_HTTP_CERTIFICATE = False
 
 class AuthenticationError(Exception):
     pass
 
 class AuthService:
-    def __init__(self):
+    def __init__(self, app):
         self.access_token = None
         self.username = None
+        self.app = app
 
     async def _post(self, endpoint: str, data: dict) -> dict:
-        url = f"{USER_MGMT_URL}{endpoint}"
-        async with httpx.AsyncClient(verify=VERIFY_HTTP_CERTIFICATE) as client:
+        url = f"{self.app.config.matchmaking_url}{endpoint}"
+        async with httpx.AsyncClient(verify=self.app.config.verify_cert) as client:
             response = await client.post(
                 url,
                 json=data,

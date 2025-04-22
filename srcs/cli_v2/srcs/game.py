@@ -1,4 +1,158 @@
 
+import asyncio
+from textual.screen import Screen
+from textual.app import ComposeResult
+from textual.widgets import Static
+from textual.widgets._digits import Digits
+from textual.containers import Container
+from textual import events
+
+
+class PaddleWidget(Static):
+    """A widget that represents a paddle.
+    
+    The paddle is rendered as a fixed block of the paddle character with a configurable size.
+    The widget is positioned absolutely by updating its 'offset' style.
+    """
+    def __init__(self, paddle_char: str, size: int = 5, **kwargs) -> None:
+        content = "\n".join([paddle_char] * size)
+        super().__init__(content, **kwargs)
+
+
+class BallWidget(Static):
+    """A widget that represents the ball.
+    
+    It simply renders the ball character and is absolutely positioned.
+    """
+    def __init__(self, **kwargs) -> None:
+        super().__init__("◉", **kwargs)
+
+
+
+class PaddleKeyHandler:
+    def __init__(self, callback, delay_ms=200):
+        self._delay = delay_ms / 1000
+        self._callback = callback
+        self._tasks: dict[str, asyncio.Task] = {}
+
+    def key_pressed(self, key: str):
+        if key in self._tasks and not self._tasks[key].done():
+            self._tasks[key].cancel()
+        else:
+            self._callback(key, True)
+        self._tasks[key] = asyncio.create_task(self._delayed_release(key))
+
+    async def _delayed_release(self, key: str):
+        try:
+            await asyncio.sleep(self._delay)
+            self._callback(key, False)
+        except asyncio.CancelledError:
+            pass
+
+class PongGameScreen(Screen):
+    CSS = """
+    Screen { background: black; }
+    #score { dock: top; color: white; text-align: center; }
+    #game-wrapper {
+    align-horizontal: center;
+    content-align: center middle;
+    height: auto;
+    }
+    #game-area { position: relative; width: 50%; border: round grey; }
+    .paddle, .ball { position: absolute; }
+    .paddle { width: 3; height: 5; }
+    .ball { width: 1; height: 1; }
+    """
+
+    def compose(self):
+        yield Digits("", id="score")
+        with Container(id="game-wrapper"):
+            yield Static("", id="game-area")
+
+    async def on_mount(self):
+        area = self.query_one("#game-area", Static)
+        area_width = area.size.width or 80
+        area_height = int(area_width * 240 / 800)
+        area.styles.height = area_height
+
+        self.game = OnlinePongService(
+            room_code=self.app.room_code,
+            player_id=self.app.player_id,
+            username=self.app.username,
+            server_url=self.app.config.ws_url,
+            token=self.app.services.auth.get_access_token()
+        )
+        self.game.connect()
+
+        self.left_paddle = PaddleWidget("▌", classes="paddle")
+        self.right_paddle = PaddleWidget("▐", classes="paddle")
+        self.ball = BallWidget(classes="ball")
+
+        await area.mount(self.left_paddle)
+        await area.mount(self.right_paddle)
+        await area.mount(self.ball)
+
+        self.key_handler = PaddleKeyHandler(self.move_paddle)
+        self.update_time = self.set_interval(0.01, self.update_game)
+
+    def update_game(self):
+        state = self.game.get_game_state()
+        if state["status"] == "FINISHED":
+            self.handle_game_over(state)
+            return
+        area = self.query_one("#game-area", Static)
+        w, h = area.size.width or 80, area.size.height or 24
+
+        self.left_paddle.styles.offset = (0, int(state["left_paddle"] * h / 600))
+        self.right_paddle.styles.offset = (w - 1, int(state["right_paddle"] * h / 600))
+        self.ball.styles.offset = (
+            int(float(state["ball"][0]) * float(w) / 800.0),
+            int(float(state["ball"][1]) * float(h) / 600.0),
+        )
+
+        self.query_one("#score", Digits).update(f"{state['score'][0]:02} - {state['score'][1]:02}")
+
+    def move_paddle(self, key: str, pressed: bool):
+        direction_map = {
+            "a": -10, "q": 10,
+            "up": -10, "down": 10
+        }
+
+        # if key in direction_map:
+        print("SEND : ", key, pressed)
+        self.game.send_keypress(key, pressed)
+
+            # direction = direction_map[key] if pressed else 0
+            # self.game.move_paddle(direction)
+
+    async def on_key(self, event: events.Key):
+        key = event.key
+        direction_map = {
+            "a": -1, "q": 1,
+            "up": -1, "down": 1
+        }
+
+        if key == "space":
+            self.game.resume_game()
+
+        if key in direction_map:
+            direction = direction_map[key]
+            self.game.move_paddle(direction * 25)
+        if key in ["a", "q", "up", "down"]:
+            
+            self.key_handler.key_pressed(key)
+
+
+    def handle_game_over(self, data):
+        self.update_time.stop()
+        self.app.room_code = None
+        self.app.player_id = None
+        self.app.username = None
+        self.app.pop_screen()
+
+
+
+
 import json
 import threading
 import websocket
@@ -27,14 +181,13 @@ class OnlinePongService:
             "status": "WAITING",
             "is_paused": False
         }
-        self.is_you = False
         self.player_number = None
         self.sequence = 0
 
         self.callbacks = {
-            "on_update": None,  # Callback to update the game (UI, etc)
-            "on_score": None,   # Callback for scoring events
-            "on_game_over": None  # Callback when game ends
+            "on_update": None,
+            "on_score": None,
+            "on_game_over": None
         }
 
         print("Init Pong Online Service")

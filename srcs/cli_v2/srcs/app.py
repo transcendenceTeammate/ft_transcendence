@@ -1,56 +1,38 @@
-from typing import Literal
+from textual.app import App
+
 
 from textual.app import App, ComposeResult, on
-from textual.widgets import Input, Header, Footer, Button, Label, Pretty, Digits, Static
+from textual.widgets import Input, Header, Footer, Button, Label, Pretty
 from textual.screen import ModalScreen, Screen
-from rich.panel import Panel
-from rich.align import Align
-from textual.validation import Function, Number, ValidationResult, Validator
-from textual import events
 
-
+from srcs.game import PongGameScreen
 from srcs.services.services_registry import ServiceRegistry
-from srcs.screens.home.HomeScreen import HomeScreen
-# from srcs.screens.lobby.LobbyScreen import LobbyScreen
-# from srcs.screens.login.LoginScreen import LoginScreen
-# from srcs.screens.pong_game.PongGameScreen import PongGameScreen
-from srcs.screens.signup.SignupScreen import SignUpScreen
-from srcs.screens.login.LoginScreen import LoginScreen
-# from srcs.screens.signup.SignupScreen import SignUpScreen
-from srcs.screens.start_game.StartGameScreen import StartGameScreen
 
 
+from srcs.config import Config
 
 
-from srcs.services.game_service import GameService
-from srcs.services.online_pong import OnlinePongService
-# from srcs.widgets.paddle import PaddleWidget
-# from srcs.widgets.ball import BallWidget
+class LobbyScreen(Screen):
+    def compose(self) -> ComposeResult:
+        yield Header()
+        yield Label("Waiting for opponent...", id="lobbyMessage")
+        yield Label(f"Room Code: {self.app.room_code}", id="roomCodeLabel")
+        yield Footer()
 
+    def on_mount(self):
+        self.polling_task = self.set_interval(2.0, self.poll_room)
 
-
-class PaddleWidget(Static):
-    """A widget that represents a paddle.
-    
-    The paddle is rendered as a fixed block of the paddle character with a configurable size.
-    The widget is positioned absolutely by updating its 'offset' style.
-    """
-    def __init__(self, paddle_char: str, size: int = 5, **kwargs) -> None:
-        content = "\n".join([paddle_char] * size)
-        super().__init__(content, **kwargs)
-
-
-class BallWidget(Static):
-    """A widget that represents the ball.
-    
-    It simply renders the ball character and is absolutely positioned.
-    """
-    def __init__(self, **kwargs) -> None:
-        super().__init__("◉", **kwargs)
-
+    async def poll_room(self):
+        result = await self.app.services.game.check_room(self.app.room_code)
+        if result.get("player_count") == 2:
+            self.polling_task.stop()
+            pongGameScreen = PongGameScreen()
+            self.app.switch_screen(pongGameScreen)
+           
 
 
 class StartGameScreen(Screen):
+    
     def compose(self) -> ComposeResult:
         yield Header()
         yield Button("Create Room", id="createButton")
@@ -65,186 +47,143 @@ class StartGameScreen(Screen):
         if event.button.id == "createButton":
             result = await self.app.services.game.create_room(username=username)
             if result.get("success"):
-                self.app.room_code = result["room_code"]
-                self.app.player_id = result["player_id"]
-                self.app.username = username
-                await self.app.switch_mode("lobby")
-
+                self.open_lobby(result["room_code"], result["player_id"], username)
+        
         elif event.button.id == "joinButton":
             if room_code:
                 result = await self.app.services.game.join_room(room_code, username=username)
                 if result.get("success"):
-                    self.app.room_code = result["room_code"]
-                    self.app.player_id = result["player_id"]
-                    self.app.username = username
-                    await self.app.switch_mode("lobby")
+                    self.open_lobby(result["room_code"], result["player_id"], username)
+                    
+    def open_lobby(self, room_code, player_id, username):
+        self.app.room_code = room_code
+        self.app.player_id = player_id
+        self.app.username = username
+        lobbyScreen = LobbyScreen()
+        self.app.push_screen(lobbyScreen)
 
 
 
-class LobbyScreen(Screen):
+class LoginScreen(Screen):
+    app: "Application"
+
+    BINDINGS = [
+        ("escape", "app.pop_screen()", "Back to home"),
+    ]
+
     def compose(self) -> ComposeResult:
-        yield Header()
-        yield Label("Waiting for opponent...", id="lobbyMessage")
-        yield Label(f"Room Code: {self.app.room_code}", id="roomCodeLabel")
+        yield Header(name="Login")
+        yield Input(placeholder="Username", id="usernameInput")
+        yield Input(placeholder="Password", password=True, id="passwordInput")
+        yield Button(label="Login", id="loginButton")
         yield Footer()
 
-    async def on_mount(self):
-        self.polling_task = self.set_interval(2.0, self.poll_room)
 
-    async def poll_room(self):
-        result = await self.app.services.game.check_room(self.app.room_code)
-        if result.get("player_count") == 2:
-            self.polling_task.stop()
-            await self.app.switch_mode("pong")
+    @on(Button.Pressed)
+    async def submit_handler(self, event: Button.Pressed) -> None:
+        username = self.query_one("#usernameInput", Input).value.strip()
+        password = self.query_one("#passwordInput", Input).value.strip()
 
-import asyncio
-from textual.screen import Screen
-from textual.app import ComposeResult
-from textual.widgets import Static
-from textual.widgets._digits import Digits
-from textual import events
-
-# --- Gestion différée des touches ---
-class PaddleKeyHandler:
-    def __init__(self, callback, delay_ms=200):
-        self._delay = delay_ms / 1000
-        self._callback = callback
-        self._tasks: dict[str, asyncio.Task] = {}
-
-    def key_pressed(self, key: str):
-        # Redémarre un timer pour cette touche
-        if key in self._tasks and not self._tasks[key].done():
-            self._tasks[key].cancel()
-        else:
-            self._callback(key, True)
-        self._tasks[key] = asyncio.create_task(self._delayed_release(key))
-
-    async def _delayed_release(self, key: str):
+        if not username or not password:
+            self.notify("Please enter both username and password.", severity="warning")
+            return
         try:
-            await asyncio.sleep(self._delay)
-            self._callback(key, False)
-        except asyncio.CancelledError:
-            pass
+            await self.app.services.auth.login(username, password)
+            startGameScreen = StartGameScreen()
+            self.app.switch_screen(startGameScreen)
+            self.notify(
+                f"Welcome back, {username}!",
+                title="Login Success",
+                timeout=3
+            )
+        except Exception as e:
+            self.notify(
+                f"Login failed: {str(e)}",
+                title="Login Error",
+                severity="error",
+                timeout=4
+            )
 
-# --- Ton écran de jeu ---
-class PongGameScreen(Screen):
-    CSS = """
-    Screen { background: black; }
-    #score { dock: top; color: white; text-align: center; }
-    #game-area { position: relative; width: 100%; border: round grey; }
-    .paddle, .ball { position: absolute; }
-    .paddle { width: 3; height: 5; }
-    .ball { width: 1; height: 1; }
-    """
+
+
+class SignupScreen(Screen):
+    app: "Application"
+
+    BINDINGS = [
+        ("escape", "app.pop_screen()", "Back to home"),
+    ]
 
     def compose(self) -> ComposeResult:
-        yield Digits("", id="score")
-        yield Static("", id="game-area")
+        yield Header(name="Signup")
+        yield Input(placeholder="Username", id="usernameInput")
+        yield Input(placeholder="Password", password=True, id="passwordInput")
+        yield Button(label="Signup", id="signupButton")
+        yield Footer()
 
-    async def on_mount(self):
-        area = self.query_one("#game-area", Static)
-        area_width = area.size.width or 80
-        area_height = int(area_width * 240 / 800)
-        area.styles.height = area_height
 
-        self.game = OnlinePongService(
-            room_code=self.app.room_code,
-            player_id=self.app.player_id,
-            username=self.app.username,
-            server_url=self.app.ws_url,
-            token=self.app.services.auth.get_access_token()
-        )
-        self.game.connect()
+    @on(Button.Pressed)
+    async def submit_handler(self, event: Button.Pressed) -> None:
+        username = self.query_one("#usernameInput", Input).value.strip()
+        password = self.query_one("#passwordInput", Input).value.strip()
 
-        self.left_paddle = PaddleWidget("▌", classes="paddle")
-        self.right_paddle = PaddleWidget("▐", classes="paddle")
-        self.ball = BallWidget(classes="ball")
-
-        await area.mount(self.left_paddle)
-        await area.mount(self.right_paddle)
-        await area.mount(self.ball)
-
-        self.key_handler = PaddleKeyHandler(self.move_paddle)
-        self.update_time = self.set_interval(0.01, self.update_game)
-
-    async def update_game(self):
-        state = self.game.get_game_state()
-        if state["status"] == "FINISHED":
-            await self.handle_game_over(state)
+        if not username or not password:
+            self.notify("Please enter both username and password.", severity="warning")
             return
-        area = self.query_one("#game-area", Static)
-        w, h = area.size.width or 80, area.size.height or 24
-
-        self.left_paddle.styles.offset = (0, int(state["left_paddle"] * h / 600))
-        self.right_paddle.styles.offset = (w - 1, int(state["right_paddle"] * h / 600))
-        self.ball.styles.offset = (
-            int(float(state["ball"][0]) * float(w) / 800.0),
-            int(float(state["ball"][1]) * float(h) / 600.0),
-        )
-
-        self.query_one("#score", Digits).update(f"{state['score'][0]:02} - {state['score'][1]:02}")
-
-    def move_paddle(self, key: str, pressed: bool):
-        direction_map = {
-            "a": -10, "q": 10,
-            "up": -10, "down": 10
-        }
-
-        # if key in direction_map:
-        print("SEND : ", key, pressed)
-        self.game.send_keypress(key, pressed)
-
-            # direction = direction_map[key] if pressed else 0
-            # self.game.move_paddle(direction)
-
-    async def on_key(self, event: events.Key):
-        key = event.key
-        direction_map = {
-            "a": -1, "q": 1,
-            "up": -1, "down": 1
-        }
-
-        if key == "space":
-            self.game.resume_game()
-
-        if key in direction_map:
-            direction = direction_map[key]
-            self.game.move_paddle(direction * 25)
-        if key in ["a", "q", "up", "down"]:
-            
-            self.key_handler.key_pressed(key)
+        try:
+            await self.app.services.auth.signup(username, password)
+            startGameScreen = StartGameScreen()
+            self.app.switch_screen(startGameScreen)
+            self.notify(
+                f"Welcome, {username}!",
+                title="Signup Success",
+                timeout=3
+            )
+        except Exception as e:
+            self.notify(
+                f"Signup failed: {str(e)}",
+                title="Signup Error",
+                severity="error",
+                timeout=4
+            )
 
 
-    async def handle_game_over(self, data):
-        self.update_time.stop()
-        self.app.room_code = None
-        self.app.player_id = None
-        self.app.username = None
-        await self.app.switch_mode("start-screen")
+class ConnectionScreen(Screen):
+    app: "Application"
+    BINDINGS = [
+    ]
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=True)
+        yield Button(label="Login", id="loginPageButton")
+        yield Button(label="SignUp", id="signupPageButton")
+        yield Footer()
 
-        
+    @on(Button.Pressed)
+    def button_pressed(self, event: Button.Pressed) -> None:
+        match event.button.id:
+            case "loginPageButton":
+                loginScreen = LoginScreen()
+                self.app.push_screen(loginScreen)
+            case "signupPageButton":
+                signupScreen = SignupScreen()
+                self.app.push_screen(signupScreen)
 
 
 
 class Application(App):
-    MODES = {
-        "home": HomeScreen,
-        "login": LoginScreen,
-        "signup": SignUpScreen,
-        "pong": PongGameScreen,
-        "lobby": LobbyScreen,
-        "start-screen": StartGameScreen,
-    }
 
-    def __init__(self, config_setting="Default Setting"):
-        self.config_setting = config_setting
-        self.services = ServiceRegistry()
+    def __init__(self, config: Config):
+        self.services = ServiceRegistry(self)
         self.room_code = None
         self.player_id = None
         self.username = None
-        self.ws_url = "wss://app.127.0.0.1.nip.io:8443"
+        self.config = config
+
         super().__init__()
 
-    async def on_mount(self) -> None:
-        await self.switch_mode("home")
+    SCREENS = {
+        "connection": ConnectionScreen,
+    }
+
+    def on_mount(self) -> None:
+        self.push_screen("connection")
 
